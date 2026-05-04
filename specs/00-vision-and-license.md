@@ -199,3 +199,5 @@ Any future fork that touches a foundational decision requires an ADR (spec 08).
 ## Revisions
 
 Addressed in this revision: R-001, R-002, R-003, R-007, R-013, R-040, R-046, R-047.
+
+**v0.3 revision (2026-05-04):** clarified the license-compatibility precondition for `verbatim` lifts. When an upstream's license is incompatible with the kit's MIT-for-code policy (copyleft, share-alike, GPL-style), the kit authors from patterns under `customization` rather than lifts expression — see [`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md). The four sourcing modes themselves are unchanged; only the precondition for picking `verbatim` is tightened.

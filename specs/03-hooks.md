@@ -9,20 +9,25 @@
 Specify the security hook bundle for v1, the install paths, the `settings.json`
 registration block, and the per-hook acceptance test recipe.
 
-## Hook bundle (v1) — sourcing mode: `verbatim`
+## Hook bundle (v1) — sourcing mode: `customization`
 
-Six hooks, all lifted from the Ultimate Guide's `examples/hooks/` folder (CC0). Each
-script's header comment cites the source path. Lift policy: verbatim with header
-attribution. Style rewrites are deferred to a post-v1 ADR if anyone wants to do them.
+Six hooks. The kit authors original shell expression that implements the documented
+patterns; `github.com/FlorianBruniaux/claude-code-ultimate-guide/examples/hooks/bash/`
+is cited as conceptual prior art via per-file header comments. Each hook's header
+cites the upstream pattern reference URL plus its own license note: *"based on
+patterns from <upstream> (CC BY-SA 4.0 — patterns documented; expression authored
+independently)."* No bytes from the upstream are copied. See
+[`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md)
+for why this changed from `verbatim`.
 
-| File | Source path | Trigger | Action |
+| File | Pattern reference | Trigger | Action |
 |---|---|---|---|
-| `dangerous-actions-blocker.sh` | `examples/hooks/dangerous-actions-blocker.sh` | PreToolUse on `Bash` | Block destructive commands (`rm -rf /`, DB drops, `chmod 777 /`, etc.) |
-| `pre-commit-secrets.sh` | `examples/hooks/pre-commit-secrets.sh` | PreToolUse on `Bash(git commit:*)` | Scan staged diff for secret patterns; block commit if any match |
-| `output-secrets-scanner.sh` | `examples/hooks/output-secrets-scanner.sh` | PostToolUse on every tool | Scan tool output for API keys / tokens / credentials before display |
-| `file-guard.sh` | `examples/hooks/file-guard.sh` | PreToolUse on `Edit`/`Write` | Block modification of `.env`, `*.pem`, `id_rsa*`, `credentials.json`, `.aws/credentials` |
-| `claudemd-scanner.sh` | `examples/hooks/claudemd-scanner.sh` | SessionStart | Scan all `CLAUDE.md` files in the workspace for prompt-injection patterns |
-| `mcp-config-integrity.sh` | `examples/hooks/mcp-config-integrity.sh` | SessionStart | Compute SHA-256 of `.mcp.json`, compare to last-known-good in `~/.claude/.mcp-hashes/`. CVE-2025-54135 / 54136 mitigation. |
+| `dangerous-actions-blocker.sh` | `examples/hooks/bash/dangerous-actions-blocker.sh` | PreToolUse on `Bash` | Block destructive commands (`rm -rf /`, DB drops, `chmod 777 /`, etc.) |
+| `pre-commit-secrets.sh` | `examples/hooks/bash/pre-commit-secrets.sh` | PreToolUse on `Bash(git commit:*)` | Scan staged diff for secret patterns; block commit if any match |
+| `output-secrets-scanner.sh` | `examples/hooks/bash/output-secrets-scanner.sh` | PostToolUse on every tool | Scan tool output for API keys / tokens / credentials before display |
+| `file-guard.sh` | `examples/hooks/bash/file-guard.sh` | PreToolUse on `Edit`/`Write` | Block modification of `.env`, `*.pem`, `id_rsa*`, `credentials.json`, `.aws/credentials` |
+| `claudemd-scanner.sh` | `examples/hooks/bash/claudemd-scanner.sh` | SessionStart | Scan all `CLAUDE.md` files in the workspace for prompt-injection patterns |
+| `mcp-config-integrity.sh` | `examples/hooks/bash/mcp-config-integrity.sh` | SessionStart | Compute SHA-256 of `.mcp.json`, compare to last-known-good in `~/.claude/.mcp-hashes/`. CVE-2025-54135 / 54136 mitigation. |
 
 ### Per-hook acceptance test (manual-recipe form)
 
@@ -185,3 +190,14 @@ subsection removed; deferred candidates moved to BACKLOG.md per spec 08), R-016
 (`claude-test-hook` removed; replaced with concrete manual-test recipes per hook),
 R-017 (settings-merge algorithm pinned in spec 05; cross-link added to Depends on),
 R-018 (Depends on header explicitly cites Claude Code hook schema verification).
+
+**v0.3 revision (2026-05-04):** hook bundle reclassified from `verbatim` to
+`customization` after Phase 2 of the v0.1 implementation run discovered the upstream
+is licensed CC BY-SA 4.0 (not CC0 1.0 as originally assumed). Share-alike is
+incompatible with the kit's MIT-for-code policy, so the hooks are now authored from
+the documented patterns rather than lifted verbatim. Per-hook header comments cite
+the upstream as pattern reference, not source. Decision #3 ("Lift mode: `verbatim`
+with header attribution") is re-opened and resolved as `customization`. See
+[`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md).
+Upstream path corrected from `examples/hooks/<name>.sh` to
+`examples/hooks/bash/<name>.sh` (factual fix from the same Phase 2 discovery).

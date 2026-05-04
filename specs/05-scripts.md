@@ -119,9 +119,12 @@ including credentials per the optics-management finding). `audit-scan.sh` covers
 entry (e.g., changed the `command` path), the script preserves their edit and skips
 the entry. `--force` overwrites; `--dry-run` reports the divergence.
 
-### 2. `audit-scan.sh` — sourcing mode: `verbatim`
+### 2. `audit-scan.sh` — sourcing mode: `customization`
 
-Lifted from `examples/scripts/audit-scan.sh` (CC0). Header comment cites source.
+Authored from the patterns documented in
+`github.com/FlorianBruniaux/claude-code-ultimate-guide/examples/scripts/audit-scan.sh`
+(upstream is CC BY-SA 4.0; we cite as pattern reference, do not lift expression —
+see [`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md)).
 Scans a Claude Code config and reports security/quality issues in human-readable
 or JSON format.
 
@@ -145,10 +148,11 @@ or JSON format.
 - Plugin versions match `~/.claude/plugins/installed_plugins.json` (no stale entries
   per the registered marketplaces) → **info**.
 
-**Sourcing:** lift the framework's `audit-scan.sh` verbatim, then add the
-inline-credential and MCP-policy checks specific to our kit. The added checks live
-in a clearly-labeled "Kit additions" block at the bottom of the file so upstream
-changes can still be merged manually.
+**Sourcing:** the whole script is original expression. The kit-specific checks
+(inline-credential and MCP-policy) live in a clearly-labeled "Kit-specific checks"
+block at the bottom of the file so the structure stays modular. Header comment
+cites the upstream pattern reference per the format documented in spec 00 §"Sourcing
+modes" for `customization`.
 
 ### 3. `scripts/test-fixtures/` — sourcing mode: net-new
 
@@ -218,3 +222,10 @@ tilde-expansion behavior, settings.local.json scope, manual-edit conflict resolu
 all stated explicitly), R-022 (`--no-backup` flag removed — backups are mandatory),
 R-023 (`--hooks <list>` flag removed — bundle is bundle), R-024 (test fixtures added
 in `scripts/test-fixtures/`; acceptance criteria reproducible via fixtures).
+
+**v0.3 revision (2026-05-04):** `audit-scan.sh` reclassified from `verbatim` to
+`customization` for the same upstream-license reason as the hook bundle (CC BY-SA
+4.0 not CC0). The "Kit additions" block becomes "Kit-specific checks" — there are
+no longer "additions on top of an upstream lift" because the whole script is now
+original expression. See
+[`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md).
