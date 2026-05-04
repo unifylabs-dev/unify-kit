@@ -18,6 +18,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Node
+node_modules/
+
 # Claude Code workspace state (not part of the kit)
 .claude/sessions/
 .claude/projects/
