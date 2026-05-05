@@ -133,9 +133,15 @@ The MCP vetting policy. Inherits the Ultimate Guide's 5-step workflow as a patte
 4. **Removing an MCP** — when, why, who decides.
 5. **Project-level vs. user-level MCPs** — clarify scoping.
 
-### 5. `templates/security-checklist.md` — sourcing mode: `verbatim-with-light-edit`
+### 5. `templates/security-checklist.md` — sourcing mode: `customization`
 
-Lifted from `examples/skills/security-checklist.md` (CC0). The diff is bounded to:
+Authored from the patterns documented in
+`github.com/FlorianBruniaux/claude-code-ultimate-guide/examples/skills/security-checklist.md`
+(upstream is CC BY-SA 4.0; we cite as pattern reference, do not lift expression —
+see [`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md)).
+The 3-bullet diff *intent* is preserved (kept all 10 OWASP categories; dropped
+threat-db / 655-malicious-skills catalog references; added a labeled
+`## Stack example: Next.js` block):
 
 | Edit class | Specifics |
 |---|---|
@@ -237,3 +243,14 @@ single source of truth for command vocab + reviewer mapping), R-011 (mechanical 
 replaces "1 hour" hand-wave), R-013 (every artifact tagged with sourcing mode),
 R-040 (examples deferred to v1.1), R-045 (security-checklist diff bounded to a
 3-bullet rule).
+
+**v0.3 revision (2026-05-04):** `templates/security-checklist.md` reclassified
+from `verbatim-with-light-edit` to `customization` for the same upstream-license
+reason as the hook bundle, `audit-scan.sh`, and the consumer GH Actions workflow
+(CC BY-SA 4.0 not CC0). The 3-bullet diff *intent* is preserved (OWASP categories
+kept, threat-db references dropped, Next.js example block added) but every word
+is now original kit-authored prose; the upstream is cited as `Pattern reference:`
+in the file's HTML comment header. See
+[`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md)
+— ADR 0001 scope is extended to cover this reclassification (the third batch
+under the same precedent).

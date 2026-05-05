@@ -1,8 +1,8 @@
-# 0001 — Hook bundle, audit-scan, and GH Actions workflow reclassified from `verbatim` to `customization`
+# 0001 — Hook bundle, audit-scan, GH Actions workflow, and security-checklist reclassified from `verbatim` / `verbatim-with-light-edit` to `customization`
 
 - **Status:** accepted
 - **Date:** 2026-05-04
-- **Decision:** The six security hooks (`dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`), `scripts/audit-scan.sh`, AND the consumer-shipped GitHub Actions workflow (`github-actions/claude-code-review.yml` + `github-actions/prompts/code-review.md`) are sourced as **`customization`** per spec 00, not **`verbatim`**. The phase author writes original shell expression that implements the documented patterns; `github.com/FlorianBruniaux/claude-code-ultimate-guide` is cited as conceptual prior art via per-file header comments ("based on patterns from …, expression authored"). No bytes from the upstream are copied into the kit.
+- **Decision:** The six security hooks (`dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`), `scripts/audit-scan.sh`, the consumer-shipped GitHub Actions workflow (`github-actions/claude-code-review.yml` + `github-actions/prompts/code-review.md`), AND `templates/security-checklist.md` are sourced as **`customization`** per spec 00 — not **`verbatim`** (hooks / audit-scan / workflow) or **`verbatim-with-light-edit`** (security-checklist). The phase author writes original shell expression that implements the documented patterns; `github.com/FlorianBruniaux/claude-code-ultimate-guide` is cited as conceptual prior art via per-file header comments ("based on patterns from …, expression authored"). No bytes from the upstream are copied into the kit.
 - **Context:** Specs 00, 03, and 05 were drafted on the assumption that FlorianBruniaux/claude-code-ultimate-guide is licensed CC0 1.0. Phase 2 of the v0.1 implementation run discovered the actual license is **CC BY-SA 4.0** (verified via three independent signals: GitHub's SPDX detection, the upstream root `LICENSE` file, and the README badge). CC BY-SA 4.0 is a copyleft Creative Commons license whose share-alike clause requires derivative works to be licensed under CC BY-SA 4.0 or a CC-listed compatible license. MIT — the kit's policy for shipped code per spec 00 §"License" — is not on that compatibility list. Lifting the upstream hooks verbatim into `hooks/*.sh` and shipping under MIT would create real legal risk for adopters, not a stylistic mismatch. Phase 2 halted at sub-batch A step 1 per the spec's "do not silently lift" hard rule.
 - **Consequences:**
   - Spec 03 §"Hook bundle (v1)" reclassifies the six hooks from `verbatim` to `customization`. The "Source path" column becomes "Pattern reference" — a non-load-bearing pointer to where the pattern can be observed, not a license-bound source.
@@ -35,7 +35,13 @@ Phase 4 of the v0.1 implementation run shipped the consumer GitHub Actions workf
 
 - `specs/04-github-actions.md` — `## v1 workflow shipped` heading reclassified `verbatim` → `customization`; v0.3 revision footer extended.
 
-The reasoning is identical to the original scope: CC BY-SA 4.0 share-alike is incompatible with the kit's MIT-for-code policy, so the kit authors expression originally and cites the upstream as conceptual prior art only.
+**Scope extension (2026-05-04, post-Phase 5):**
+
+Phase 5 shipped `templates/security-checklist.md` under the same `customization` posture. Spec 02 §5 originally specified `verbatim-with-light-edit` with a 3-bullet diff rule (kept OWASP, dropped threat-db references, added Next.js example block). The 3-bullet *intent* is preserved, but the prose itself is now 100% kit-authored — none of the upstream wording survives. Scope of this ADR is extended retroactively to cover the reclassification.
+
+- `specs/02-templates.md` — `### 5. security-checklist.md` heading reclassified `verbatim-with-light-edit` → `customization`; v0.3 revision footer added.
+
+The reasoning is identical across all three extensions: CC BY-SA 4.0 share-alike is incompatible with the kit's MIT-for-code policy, so the kit authors expression originally and cites the upstream as conceptual prior art only. The pattern is now well-established — any future `verbatim` or `verbatim-with-light-edit` lift from a copyleft upstream should default-reclassify to `customization` without re-litigating, and any further scope extensions to this ADR should follow the same shape.
 
 ## Verification — share-alike incompatibility (citations)
 
