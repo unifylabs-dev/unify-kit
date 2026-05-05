@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "command": "~/.claude/hooks/dangerous-actions-blocker.sh", "type": "command" }] },
+      { "matcher": "Bash(git commit:*)", "hooks": [{ "command": "~/.claude/hooks/pre-commit-secrets.sh", "type": "command" }] },
+      { "matcher": "Edit|Write", "hooks": [{ "command": "~/.claude/hooks/file-guard.sh", "type": "command" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [{ "command": "~/.claude/hooks/output-secrets-scanner.sh", "type": "command" }] }
+    ],
+    "SessionStart": [
+      { "matcher": "*", "hooks": [
+        { "command": "~/.claude/hooks/claudemd-scanner.sh", "type": "command" },
+        { "command": "~/.claude/hooks/mcp-config-integrity.sh", "type": "command" }
+      ]}
+    ]
+  }
+}
