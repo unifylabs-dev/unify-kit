@@ -1,8 +1,8 @@
-# 0001 — Hook bundle reclassified from `verbatim` to `customization`
+# 0001 — Hook bundle, audit-scan, and GH Actions workflow reclassified from `verbatim` to `customization`
 
 - **Status:** accepted
 - **Date:** 2026-05-04
-- **Decision:** The six security hooks (`dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`) and `scripts/audit-scan.sh` are sourced as **`customization`** per spec 00, not **`verbatim`**. The phase author writes original shell expression that implements the documented patterns; `github.com/FlorianBruniaux/claude-code-ultimate-guide` is cited as conceptual prior art via per-file header comments ("based on patterns from …, expression authored"). No bytes from the upstream are copied into the kit.
+- **Decision:** The six security hooks (`dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`), `scripts/audit-scan.sh`, AND the consumer-shipped GitHub Actions workflow (`github-actions/claude-code-review.yml` + `github-actions/prompts/code-review.md`) are sourced as **`customization`** per spec 00, not **`verbatim`**. The phase author writes original shell expression that implements the documented patterns; `github.com/FlorianBruniaux/claude-code-ultimate-guide` is cited as conceptual prior art via per-file header comments ("based on patterns from …, expression authored"). No bytes from the upstream are copied into the kit.
 - **Context:** Specs 00, 03, and 05 were drafted on the assumption that FlorianBruniaux/claude-code-ultimate-guide is licensed CC0 1.0. Phase 2 of the v0.1 implementation run discovered the actual license is **CC BY-SA 4.0** (verified via three independent signals: GitHub's SPDX detection, the upstream root `LICENSE` file, and the README badge). CC BY-SA 4.0 is a copyleft Creative Commons license whose share-alike clause requires derivative works to be licensed under CC BY-SA 4.0 or a CC-listed compatible license. MIT — the kit's policy for shipped code per spec 00 §"License" — is not on that compatibility list. Lifting the upstream hooks verbatim into `hooks/*.sh` and shipping under MIT would create real legal risk for adopters, not a stylistic mismatch. Phase 2 halted at sub-batch A step 1 per the spec's "do not silently lift" hard rule.
 - **Consequences:**
   - Spec 03 §"Hook bundle (v1)" reclassifies the six hooks from `verbatim` to `customization`. The "Source path" column becomes "Pattern reference" — a non-load-bearing pointer to where the pattern can be observed, not a license-bound source.
@@ -21,13 +21,21 @@
 
 ## Affected files
 
-Spec patches landed in the same commit as this ADR:
+Spec patches landed in the same commit as this ADR (initial scope: hooks + audit-scan):
 
 - `specs/00-vision-and-license.md` — Revisions footer extended with a v0.3 revision note.
 - `specs/03-hooks.md` — Hook bundle section heading reclassified `verbatim` → `customization`; "Source path" → "Pattern reference"; per-hook header comment template updated; Revisions footer extended.
 - `specs/05-scripts.md` — `audit-scan.sh` reclassified `verbatim` → `customization`; "Kit additions" framing updated to "kit-specific checks within an originally-authored script"; Revisions footer extended.
 
 Phase-2 spec (in run-dir + GitHub issue #3) revised to reflect the new classification: drops the upstream-license verification gate, replaces "lift verbatim" steps with "author from documented patterns," updates header-comment templates, retains the same deliverables and verification surface.
+
+**Scope extension (2026-05-04, post-Phase 4):**
+
+Phase 4 of the v0.1 implementation run shipped the consumer GitHub Actions workflow under the same `customization` posture for the same upstream-license reason. Scope of this ADR is extended retroactively to cover that reclassification. The phase author authored the workflow YAML and prompt originally; per-file headers cite `github.com/FlorianBruniaux/claude-code-ultimate-guide/examples/github-actions/` as `Pattern reference:`, not `Source:`.
+
+- `specs/04-github-actions.md` — `## v1 workflow shipped` heading reclassified `verbatim` → `customization`; v0.3 revision footer extended.
+
+The reasoning is identical to the original scope: CC BY-SA 4.0 share-alike is incompatible with the kit's MIT-for-code policy, so the kit authors expression originally and cites the upstream as conceptual prior art only.
 
 ## Verification — share-alike incompatibility (citations)
 

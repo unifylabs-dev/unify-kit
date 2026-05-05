@@ -12,7 +12,7 @@ review. Plus the externalized prompt and consumer adoption flow.
 The kit's own internal CI (which lints these workflow YAMLs and runs against this
 repo) is specified separately in spec 09 — not to be confused with what we ship.
 
-## v1 workflow shipped — sourcing mode: `verbatim` (with consumer config)
+## v1 workflow shipped — sourcing mode: `customization`
 
 ### `claude-code-review.yml` — comment-triggered tiered PR review
 
@@ -134,3 +134,14 @@ section-header grep gated by kit CI), R-019 (decision #5 cleaned up — pin + ma
 bumps + no phantom upgrade-bot), R-020 (v2 stretch workflows removed from spec body;
 moved to BACKLOG), R-021 (`CLAUDE_MD_PATH` workflow input added with graceful
 missing-file handling).
+
+**v0.3 revision (2026-05-04):** workflow YAML reclassified from `verbatim` to
+`customization` for the same upstream-license reason as the hook bundle and
+`audit-scan.sh` (CC BY-SA 4.0 not CC0). Header attribution wording changed from
+`Source:` (verbatim) to `Pattern reference:` (customization). The kit authors
+the workflow expression originally; the upstream
+`github.com/FlorianBruniaux/claude-code-ultimate-guide/examples/github-actions/`
+is cited as conceptual prior art only. See
+[`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md)
+— that ADR's scope is extended to cover GH Actions YAML; the reasoning is
+identical (share-alike incompatible with the kit's MIT-for-code policy).
