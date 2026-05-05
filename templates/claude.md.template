@@ -1,0 +1,90 @@
+<!--
+templates/claude.md.template
+Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+Distilled minimal stack-agnostic core. Structurally inspired by but not lifted
+from the Ultimate Guide CLAUDE.md example. Project-specific identifiers belong
+in the consumer's filled-in copy, not here.
+Authored: 2026-05-04
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}}
+
+> {{ONE_LINE_DESCRIPTION}}
+
+This file is project memory for Claude Code. Keep it accurate; stale entries
+teach errors. Update in the same commit as the code change that invalidates a
+section. Stack-specific patterns live in `templates/snippets/` and are appended
+here à la carte by consumers on Next.js (or skipped on other stacks).
+
+## 1. Project Overview
+
+- **Name**: {{PROJECT_NAME}}
+- **Description**: {{ONE_LINE_DESCRIPTION}}
+- **Repository**: {{REPO_URL}}
+- **Stack**: {{STACK}}
+
+## 2. Architecture
+
+Replace this skeleton with the project-specific architecture summary; cross-link
+to `docs/architecture.md` if it exists.
+
+- **Entry points**: <describe the user-visible entry points — web, CLI, jobs>
+- **Data layer**: <describe persistence — database engine, schema-management approach, key tables>
+- **External services**: <list third-party integrations and their roles>
+
+## 3. Conventions
+
+- **Branch naming**: `<topic>/<short-slug>` (e.g., `auth/idle-timeout`).
+- **Commit convention**: Conventional Commits encouraged (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- **File naming**: follow the canonical style for {{LANG}} (lowercase-dash for shell, kebab-case for routes, PascalCase for components — adapt per stack).
+- **Component patterns**: keep concerns local; lift state up only when two siblings need it.
+- **Imports**: project-specific path-aliases; avoid deep relative paths (`../../../`).
+- **Error handling**: never swallow errors silently — log, surface, or propagate.
+
+## 4. Issue-Driven Development
+
+Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
+gated workflow (analysis → branch → planning → TDD → verification → review prep
+→ review → PR) ships in the `superpowers` + `compound-engineering` plugins. See
+`templates/cheatsheet.md.template` for the daily command list — this file does
+not restate it.
+
+## 5. TDD Enforcement
+
+Red-Green-Refactor. Don't modify existing passing tests to accommodate new code;
+if existing tests break, fix the implementation, not the tests. If GREEN fails
+3 times for the same acceptance criterion, stop and ask for help. The
+`superpowers:test-driven-development` skill enforces this.
+
+## 6. Test Strategy
+
+- **Pyramid**: unit / integration / e2e.
+- **CI command**: `{{TEST_CI_CMD}}` (the gate for PRs).
+- **Full local**: `{{TEST_FULL_CMD}}` (slower; run before merging anything load-bearing).
+- **Tier discipline**: keep unit tests fast and isolated; use integration tests for cross-module contracts; reserve e2e for user-visible flows.
+
+## 7. Documentation Requirements
+
+Doc-on-ship rule: every PR that ships user-visible behavior updates the project's
+living-doc set in the same commit. Stale docs teach errors. The starter list:
+
+- `README.md` — setup, status, quickstart.
+- `CHANGELOG.md` — per-PR `[Unreleased]` entry.
+- `docs/architecture.md` — system design, updated when shape changes.
+
+Add project-specific files here (PRD, runbooks, user guides) and tag which
+behavior changes require which file to update.
+
+## 8. Living Document Rules
+
+When you discover a pattern or convention worth encoding — a non-obvious
+constraint, a subtle invariant, a workaround for a known bug — update this file
+in the same PR that exercises it. The file is project memory; it serves the
+next reader, including the next AI session. See `docs/methodology.md` §F
+(kit doc — link from your README) for the Living Documents principle.
+
+---
+
+Stack-specific patterns are NOT in this template. They live in `templates/snippets/`.
+A consumer using Next.js patterns appends snippet content into their filled-in `CLAUDE.md`.
