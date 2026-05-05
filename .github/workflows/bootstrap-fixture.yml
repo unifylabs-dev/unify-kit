@@ -1,0 +1,123 @@
+# .github/workflows/bootstrap-fixture.yml
+# Runs scripts/bootstrap-claude-config.sh against fixtures + per-hook
+# manual-test recipes. Validates the 9-step recipe in spec 09 §3.
+#
+# Triggers: PRs that touch hooks/, scripts/, or templates/. Plus weekly
+# on main (catches drift in upstream tools / runner images).
+#
+name: bootstrap-fixture
+
+on:
+  pull_request:
+    paths:
+      - 'hooks/**'
+      - 'scripts/**'
+      - 'templates/**'
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Step 1 - set up isolated home + good-fixture
+        run: |
+          set -euxo pipefail
+          FAKE_HOME="$RUNNER_TEMP/fake-home"
+          mkdir -p "$FAKE_HOME/.claude"
+          cp scripts/test-fixtures/settings.json.good-fixture "$FAKE_HOME/.claude/settings.json"
+          echo "FAKE_HOME=$FAKE_HOME" >> "$GITHUB_ENV"
+
+      - name: Step 3 - bootstrap clean install
+        run: |
+          set -euxo pipefail
+          HOME="$FAKE_HOME" scripts/bootstrap-claude-config.sh
+          # Backup of pre-install settings exists.
+          backups=$(find "$FAKE_HOME/.claude" -maxdepth 1 -name 'settings.json.bak.*' | wc -l | tr -d ' ')
+          if [ "$backups" -lt 1 ]; then
+            echo "ERROR: expected at least one backup; found $backups"
+            exit 1
+          fi
+          # All six hook files installed and executable.
+          for h in dangerous-actions-blocker pre-commit-secrets output-secrets-scanner file-guard claudemd-scanner mcp-config-integrity; do
+            test -x "$FAKE_HOME/.claude/hooks/$h.sh" || { echo "ERROR: missing or non-exec $h.sh"; exit 1; }
+          done
+          # dangerous-actions-blocker registered (spot-check via jq).
+          jq -r '.hooks.PreToolUse[].hooks[].command' "$FAKE_HOME/.claude/settings.json" \
+            | grep -q 'dangerous-actions-blocker' \
+            || { echo "ERROR: dangerous-actions-blocker not registered"; exit 1; }
+
+      - name: Step 4 - re-run idempotency
+        run: |
+          set -euxo pipefail
+          OUTPUT=$(HOME="$FAKE_HOME" scripts/bootstrap-claude-config.sh 2>&1)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qiE 'no changes|already up.to.date|nothing to do' \
+            || { echo "ERROR: idempotency marker not found in output"; exit 1; }
+
+      - name: Step 5 - dry-run on fresh fake home
+        run: |
+          set -euxo pipefail
+          FRESH_HOME="$RUNNER_TEMP/fresh-home"
+          mkdir -p "$FRESH_HOME/.claude"
+          HOME="$FRESH_HOME" scripts/bootstrap-claude-config.sh --dry-run
+          # No settings.json created.
+          if [ -f "$FRESH_HOME/.claude/settings.json" ]; then
+            echo "ERROR: --dry-run created settings.json"
+            exit 1
+          fi
+          # No hooks copied (dir absent or empty).
+          if [ -d "$FRESH_HOME/.claude/hooks" ] && [ -n "$(ls -A "$FRESH_HOME/.claude/hooks" 2>/dev/null)" ]; then
+            echo "ERROR: --dry-run created hook files"
+            exit 1
+          fi
+
+      - name: Step 6 - --force after manual edit
+        run: |
+          set -euxo pipefail
+          # Simulate a consumer manually editing a kit hook entry.
+          jq '.hooks.PreToolUse[0].hooks[0].command = "~/.claude/hooks/MANUALLY-EDITED.sh"' \
+              "$FAKE_HOME/.claude/settings.json" > "$FAKE_HOME/.claude/settings.json.manual"
+          mv "$FAKE_HOME/.claude/settings.json.manual" "$FAKE_HOME/.claude/settings.json"
+          # Force-overwrite to restore the kit version.
+          HOME="$FAKE_HOME" scripts/bootstrap-claude-config.sh --force
+          # MANUALLY-EDITED command is gone.
+          if jq -r '..|.command? // empty' "$FAKE_HOME/.claude/settings.json" | grep -q MANUALLY-EDITED; then
+            echo "ERROR: --force did not overwrite manual edit"
+            exit 1
+          fi
+          # At least two backups now (Step 3 + Step 6).
+          backups=$(find "$FAKE_HOME/.claude" -maxdepth 1 -name 'settings.json.bak.*' | wc -l | tr -d ' ')
+          if [ "$backups" -lt 2 ]; then
+            echo "ERROR: expected >=2 backups after Step 6; found $backups"
+            exit 1
+          fi
+
+      - name: Step 7 - per-hook manual-test recipes
+        run: scripts/ci/run-hook-recipes.sh "$FAKE_HOME"
+
+      - name: Step 8 - audit-scan good-fixture
+        run: scripts/audit-scan.sh scripts/test-fixtures/settings.json.good-fixture
+
+      - name: Step 9 - audit-scan bad-fixture
+        run: |
+          set -euxo pipefail
+          if scripts/audit-scan.sh scripts/test-fixtures/settings.json.bad-fixture > out.txt 2>&1; then
+            cat out.txt
+            echo "ERROR: audit-scan should have exited non-zero on bad-fixture"
+            exit 1
+          fi
+          cat out.txt
+          grep -q 'inline-credential' out.txt || { echo "ERROR: missing inline-credential finding"; exit 1; }
+          grep -q 'unrestricted-mcp' out.txt || { echo "ERROR: missing unrestricted-mcp finding"; exit 1; }
+          grep -q 'missing-hook-file' out.txt || { echo "ERROR: missing missing-hook-file finding"; exit 1; }

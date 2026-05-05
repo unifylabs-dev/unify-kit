@@ -112,9 +112,9 @@ case "$out" in *"warning"*"|0") echo "PASS" ;; *) echo "FAIL: $out" ;; esac
 # Expect: first run records baseline (exit 0); second run after edit blocks (exit 2).
 tmp=$(mktemp -d); pushd "$tmp" >/dev/null
 printf '{"mcpServers": {"x": {"command": "x"}}}\n' > .mcp.json
-HOME=$tmp echo '{}' | "$OLDPWD/hooks/mcp-config-integrity.sh"; first=$?
+echo '{}' | env HOME="$tmp" "$OLDPWD/hooks/mcp-config-integrity.sh"; first=$?
 printf '{"mcpServers": {"x": {"command": "y"}}}\n' > .mcp.json
-HOME=$tmp out=$(echo '{}' | "$OLDPWD/hooks/mcp-config-integrity.sh" 2>&1; printf '|%d' "$?")
+out=$(echo '{}' | env HOME="$tmp" "$OLDPWD/hooks/mcp-config-integrity.sh" 2>&1; printf '|%d' "$?")
 popd >/dev/null
 case "$first|$out" in 0\|*"integrity changed"*"|2") echo "PASS" ;; *) echo "FAIL: first=$first second=$out" ;; esac
 ```

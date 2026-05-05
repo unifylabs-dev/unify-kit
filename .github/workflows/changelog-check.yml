@@ -1,0 +1,81 @@
+# .github/workflows/changelog-check.yml
+# Enforces per-PR [Unreleased] discipline. PRs touching kit artifacts must
+# update CHANGELOG.md. Bypass: include [skip-changelog] in PR title.
+#
+name: changelog-check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  changelog-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check [skip-changelog] bypass
+        id: bypass
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          if [[ "$PR_TITLE" == *"[skip-changelog]"* ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::PR title contains [skip-changelog]; skipping changelog check"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check kit-artifact paths and CHANGELOG diff
+        if: steps.bypass.outputs.skip != 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          # Kit-artifact paths that trigger the changelog requirement (spec 09 §4).
+          TRIGGER_PATTERNS=(
+            '^templates/'
+            '^hooks/'
+            '^scripts/'
+            '^github-actions/'
+            '^specs/'
+            '^docs/methodology\.md$'
+            '^docs/philosophy\.md$'
+          )
+
+          TRIGGERED=0
+          for pat in "${TRIGGER_PATTERNS[@]}"; do
+            if echo "$CHANGED" | grep -qE "$pat"; then
+              TRIGGERED=1
+              break
+            fi
+          done
+
+          if [ "$TRIGGERED" -eq 0 ]; then
+            echo "::notice::No kit-artifact paths changed; changelog update not required"
+            exit 0
+          fi
+
+          # Assert CHANGELOG.md changed.
+          if ! echo "$CHANGED" | grep -qE '^CHANGELOG\.md$'; then
+            echo "::error::PR touches kit artifacts but CHANGELOG.md was not modified. Update CHANGELOG.md [Unreleased] section, or add [skip-changelog] to PR title."
+            exit 1
+          fi
+
+          # Heuristic: the changelog diff contains additions (the [Unreleased] section grew).
+          if ! git diff "$BASE_SHA" "$HEAD_SHA" -- CHANGELOG.md | grep -qE '^\+[^+]'; then
+            echo "::error::CHANGELOG.md was changed but contains no added lines. Add an entry to the [Unreleased] section."
+            exit 1
+          fi
+
+          echo "OK: CHANGELOG.md [Unreleased] updated"

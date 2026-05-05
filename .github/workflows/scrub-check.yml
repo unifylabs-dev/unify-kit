@@ -1,0 +1,99 @@
+# .github/workflows/scrub-check.yml
+# Forbidden-strings scan against shipped artifacts only; placeholder-vocabulary
+# scan on templates/. Specs, audit docs, ADRs, and test fixtures are exempt
+# (they describe what's forbidden — they must be able to name the patterns).
+#
+name: scrub-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  forbidden-strings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan shipped artifacts for forbidden strings
+        run: |
+          set -euo pipefail
+          # In-scope paths (shipped artifacts; must be clean):
+          SCOPE=(
+            templates
+            hooks
+            github-actions
+            README.md
+            CHANGELOG.md
+            CONTRIBUTING.md
+            docs/philosophy.md
+            docs/methodology.md
+          )
+          # llms.txt only exists post-P8; include if present.
+          if [ -f llms.txt ]; then SCOPE+=(llms.txt); fi
+
+          # Forbidden patterns (spec 09 §2). 10 patterns.
+          PATTERNS=(
+            'optics-management'
+            'optics_boutique'
+            'mvo_'
+            'Mint Vision'
+            'mintvisionsoptique'
+            'Mvo[$]Staff'
+            'aws-1-ca-central-1\.pooler\.supabase\.com'
+            'postgres\.[a-z]+:'
+            'sk-ant-'
+            'AKIA[0-9A-Z]{16}'
+          )
+
+          FAIL=0
+          for pat in "${PATTERNS[@]}"; do
+            # In-scope dirs/files (skip missing entries silently).
+            if grep -rE "$pat" "${SCOPE[@]}" 2>/dev/null; then
+              echo "ERROR: forbidden pattern '$pat' found in shipped artifacts"
+              FAIL=1
+            fi
+            # scripts/ excluding scripts/test-fixtures/ (fixtures intentionally contain bad patterns).
+            if find scripts -type f -not -path 'scripts/test-fixtures/*' -exec grep -E "$pat" {} + 2>/dev/null; then
+              echo "ERROR: forbidden pattern '$pat' found in scripts/ (non-fixture)"
+              FAIL=1
+            fi
+          done
+
+          if [ "$FAIL" -ne 0 ]; then exit 1; fi
+          echo "OK: no forbidden strings in shipped artifacts"
+
+  placeholder-vocab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify {{...}} placeholders are in supported vocabulary
+        run: |
+          set -euo pipefail
+          # Supported vocabulary (16 placeholders per specs/02-templates.md).
+          SUPPORTED=$(printf '%s\n' \
+            '{{BUILD_CMD}}' '{{DB}}' '{{FRAMEWORK}}' '{{KEY_LIBS}}' \
+            '{{LANG}}' '{{LANG_VERSION}}' '{{LINT_CMD}}' '{{ONE_LINE_DESCRIPTION}}' \
+            '{{PROJECT_NAME}}' '{{REPO_URL}}' '{{ROOT}}' '{{STACK}}' \
+            '{{TEAM_NAME}}' '{{TEST_CI_CMD}}' '{{TEST_FULL_CMD}}' '{{TYPECHECK_CMD}}' \
+            | sort)
+          USED=$(grep -ohrE '\{\{[A-Z_]+\}\}' templates/ | sort -u)
+
+          # Every USED placeholder must be in SUPPORTED.
+          EXTRA=$(comm -23 <(echo "$USED") <(echo "$SUPPORTED") || true)
+          if [ -n "$EXTRA" ]; then
+            echo "ERROR: undeclared placeholders used in templates/:"
+            echo "$EXTRA"
+            exit 1
+          fi
+          # Every SUPPORTED placeholder must appear in at least one template.
+          MISSING=$(comm -23 <(echo "$SUPPORTED") <(echo "$USED") || true)
+          if [ -n "$MISSING" ]; then
+            echo "ERROR: declared placeholders never used in templates/:"
+            echo "$MISSING"
+            exit 1
+          fi
+          echo "OK: placeholder vocabulary is consistent"

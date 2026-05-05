@@ -1,0 +1,102 @@
+# .github/workflows/lint.yml
+# Lints kit-shipped artifacts: shell scripts, GH Actions YAML, markdown,
+# internal links, JSON schema for the hook-registration snippet, and the
+# externalized review prompt's required headers.
+#
+# Self-validating: actionlint runs against this file too (the actionlint job
+# scans both .github/workflows/*.yml AND github-actions/*.yml).
+#
+# Action pinning policy: pin to stable major (@v4) or specific SHA. NEVER
+# @main or @latest. Bumps land via PR + CHANGELOG entry.
+#
+name: lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run shellcheck
+        run: |
+          shellcheck -e SC2086,SC2155 hooks/*.sh scripts/*.sh scripts/ci/*.sh
+
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1.7.12
+        with:
+          files: '.github/workflows/*.yml github-actions/*.yml'
+
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run markdownlint-cli2
+        uses: DavidAnson/markdownlint-cli2-action@v23
+        with:
+          globs: 'docs/**/*.md specs/*.md templates/**/*.md *.md'
+          config: '.markdownlint.json'
+        continue-on-error: true
+
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lychee link-check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress --exclude-mail --offline
+            docs/**/*.md specs/*.md templates/**/*.md
+            onboarding/*.md README.md CONTRIBUTING.md BACKLOG.md
+
+  json-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate hooks/settings-snippet.json shape
+        run: |
+          python3 - <<'PY'
+          import json
+          with open('hooks/settings-snippet.json') as f:
+              d = json.load(f)
+          assert 'hooks' in d, 'missing top-level hooks key'
+          for event in ('PreToolUse', 'PostToolUse', 'SessionStart'):
+              assert event in d['hooks'], f'missing event: {event}'
+              for entry in d['hooks'][event]:
+                  assert 'matcher' in entry, f'missing matcher in {event}'
+                  assert 'hooks' in entry, f'missing hooks in {event} matcher entry'
+                  for h in entry['hooks']:
+                      assert h.get('type') == 'command', f'expected type=command in {event}'
+                      assert 'command' in h, f'missing command in {event}'
+          print('OK: hooks/settings-snippet.json valid')
+          PY
+
+  prompt-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required headers in prompts/code-review.md
+        run: |
+          set -euo pipefail
+          path="github-actions/prompts/code-review.md"
+          count=$(grep -cE '^## (Role|Must-check items|Output format|Anti-hallucination|Stack-specific opt-in)$' "$path")
+          if [ "$count" != "5" ]; then
+            echo "ERROR: expected 5 required H2 headers in $path, found $count"
+            grep -E '^## ' "$path" || true
+            exit 1
+          fi
+          echo "OK: 5 required headers present"
