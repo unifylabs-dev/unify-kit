@@ -1,0 +1,51 @@
+<!-- llms.txt — describes unify-kit itself; sourced from templates/llms.txt.template's pattern-only shape. -->
+
+# unify-kit
+
+> A reusable, opinionated kickstarter for any new Claude Code project. The Ultimate Guide teaches; this kit ships.
+
+## What this is
+
+Unify-kit is a starter kit that *uses* Claude Code well. It composes existing plugins (`superpowers`, `compound-engineering`) with a curated set of templates, hooks, GitHub Actions, scripts, and onboarding docs that encode mature practice. Goal: time-to-productivity. Clone the repo, run a bootstrap script, and a new project (or new dev) lands on day one with a team-ready `CLAUDE.md`, six security hooks installed, a comment-triggered PR-review workflow wired up, and a short onboarding curriculum.
+
+## Stack
+
+- Bash + macOS/Linux only (Windows users use WSL)
+- GitHub Actions for the kit's own CI and the consumer-shipped review workflow
+- Markdown + JSON for kit-shipped artifacts
+- `jq` for JSON manipulation in the bootstrap script
+
+## Key directories
+
+- `templates/` — 7 templates + 4 Next.js snippets + README; `cheatsheet.md.template` is the source of truth for command vocabulary and reviewer-agent mapping
+- `hooks/` — 6 security hooks (lifted CC0) + `settings-snippet.json` + README
+- `scripts/` — `bootstrap-claude-config.sh` (idempotent installer) + `audit-scan.sh` + test fixtures
+- `github-actions/` — comment-triggered tiered PR-review workflow + externalized prompt + adoption README
+- `docs/` — `philosophy.md` (5 principles) + `methodology.md` (operational canon) + `decisions/` (ADRs)
+- `onboarding/` — day-1 / week-1 / day-30 curriculum
+- `specs/` — pre-implementation specs (historical record)
+
+## Key conventions
+
+- Placeholder syntax: `{{NAME}}` — single mandatory convention; the literal `<...>` is reserved for prose
+- Filename canon: lowercase-hyphenated; `.md.template` for editable, `.md` for lift-as-is
+- Sourcing modes: `verbatim` / `verbatim-with-light-edit` / `customization` / `pattern-only` — every reuse is tagged
+- Hierarchy of authority: `<consumer>/CLAUDE.md` > `docs/methodology.md` > plugin defaults > Claude Code defaults
+- Spec-first contribution flow: open issue → write numbered spec → review → implement
+- CHANGELOG discipline: per-PR `[Unreleased]` entries enforced by `.github/workflows/changelog-check.yml`
+- Living docs on every ship: the project's living-doc set is named in `<consumer>/CLAUDE.md`
+
+## How to ask for help
+
+- For consumer adoption: read `README.md` → run `scripts/bootstrap-claude-config.sh` → copy templates from `templates/`
+- For contribution: read `CONTRIBUTING.md` → open an issue → propose a spec under `specs/` → implement
+- For methodology / philosophy: read `docs/philosophy.md` (5 principles) and `docs/methodology.md` (operational canon)
+- For onboarding: read `onboarding/day-1.md` → `onboarding/week-1.md` → `onboarding/day-30.md`
+
+## License
+
+MIT (code) + CC0 1.0 (templates) + CC BY-SA 4.0 (narrative docs). See `LICENSE`.
+
+## Status
+
+v0.1.0 — released 2026-05-05. Development release; v1.0.0 lands when one consumer project has been bootstrapped end-to-end with the kit (per `specs/08-living-docs-and-decision-log.md` §7). v1.0.0 follow-up items are tracked in `BACKLOG.md`.

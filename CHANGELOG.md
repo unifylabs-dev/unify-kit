@@ -7,6 +7,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+<!--
+New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
+-->
+
+## [0.1.0] — 2026-05-05
+
+Initial development release of unify-kit. Eight-phase delivery: foundation files, security hooks, bootstrap script, consumer GitHub Action, templates, authored docs + onboarding, the kit's own CI, and this release polish.
+
+### Added
+
+**Summary of v0.1.0 deliverables:**
+
+- Foundation files: `LICENSE` (MIT + CC0 + CC BY-SA breakdown), `CHANGELOG.md`, `CONTRIBUTING.md` (spec-first contribution flow), `BACKLOG.md`. [P1]
+- Six security hooks (lifted from CC0 sources, with provenance headers and ADR 0001 covering license reclassification): `dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`. Plus `hooks/settings-snippet.json` and `hooks/README.md` (manual-test recipes per hook + `CLAUDE_HOOKS_DISABLE` / `CLAUDE_HOOKS_LOG` documentation). [P2]
+- Bootstrap script: `scripts/bootstrap-claude-config.sh` (idempotent, `--dry-run` + `--force`, mandatory backups, manifest writer at `~/.claude/.unify-kit-manifest.json`) + `scripts/README.md` (3 worked examples: clean install / additive install / idempotent re-run). [P3]
+- Audit-scan: `scripts/audit-scan.sh` (sourced from upstream + kit-additions block: `inline-credential`, `unrestricted-mcp`, `missing-hook-file` checks) + test fixtures (`scripts/test-fixtures/settings.json.{good,bad}-fixture`). [P2]
+- Consumer GitHub Action: `github-actions/claude-code-review.yml` (comment-triggered tiered review) + `github-actions/prompts/code-review.md` (5 required H2 headers) + `github-actions/README.md`. [P4]
+- Templates: `cheatsheet.md.template` (source of truth), `claude.md.template` (minimal stack-agnostic 8-section), `llms.txt.template`, `ai-usage-charter.md.template`, `mcp-policy.md.template`, `security-checklist.md`, `team-onboarding.md.template`, plus 4 Next.js snippets in `templates/snippets/` and `templates/README.md` index. [P5]
+- Authored docs: `docs/philosophy.md` (5 numbered principles), `docs/methodology.md` (sections A–G full + H/I as pointers, hierarchy-of-authority rule at top), `docs/decisions/README.md` (ADR index + lightweight format). [P6]
+- Onboarding curriculum: `onboarding/README.md`, `day-1.md` (4 hard gates), `week-1.md` (soft milestones), `day-30.md` (retro + autonomy markers — no hard gates). [P6]
+- Kit's own CI: 4 workflows (`.github/workflows/{lint,scrub-check,bootstrap-fixture,changelog-check}.yml`) + `.markdownlint.json` + `scripts/ci/run-hook-recipes.sh`. [P7]
+- Release polish: implementation-centric root `README.md` (with 4 status badges) + `llms.txt` (~440 words describing the kit itself). [P8]
+
+**Per-PR detail (audit trail):**
+
 - `github-actions/claude-code-review.yml` — comment-triggered (`/claude-review`) tiered PR-review workflow. Read-only permissions (contents:read + pull-requests/issues:write); pinned to `claude-opus-4-7`; configurable via `CLAUDE_MD_PATH` / `CLAUDE_REVIEW_MODEL` / `CLAUDE_REVIEW_PATHS_IGNORE` repo variables; `ANTHROPIC_API_KEY` secret required (OAuth via Anthropic GitHub App documented as alternative). [P4]
 - `github-actions/prompts/code-review.md` — externalized review prompt with the five mandated H2 sections (Role / Must-check items / Output format / Anti-hallucination / Stack-specific opt-in). Tiered output 🔴 MUST FIX / 🟡 SHOULD FIX / 🟢 CAN SKIP. Stack-specific opt-in section includes commented-out blocks for Next.js Server Action / audit logging / rate limiting / middleware patterns plus a generic placeholder. [P4]
 - `github-actions/README.md` — adoption guide with 5-step install flow, inputs table, secrets setup (API key + OAuth alternative), verification recipe, BACKLOG of deferred workflows, source attribution. [P4]
@@ -35,6 +66,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `.github/workflows/changelog-check.yml` — per-PR `[Unreleased]` discipline (spec 09 §4). PRs touching templates/, hooks/, scripts/, github-actions/, specs/, docs/methodology.md, or docs/philosophy.md must add to CHANGELOG.md `[Unreleased]`. Bypass via `[skip-changelog]` in PR title. Uses `fetch-depth: 0` for full base/head diff; reads PR title + base/head SHAs from `github.event.pull_request` via env vars. Permissions: `contents: read`. [P7]
 - `.markdownlint.json` — markdownlint config with sane defaults: `default: true` plus `MD013` (line length), `MD033` (inline HTML), and `MD041` (first line heading) disabled — the kit's specs and docs are long, sourcing-mode comments use HTML, and many files lead with HTML comment headers. [P7]
 - `scripts/ci/run-hook-recipes.sh` — CI helper that extracts each fenced bash block under `## Manual-test recipes` in `hooks/README.md` to numbered tempfiles and runs them with `HOME` overridden to a caller-supplied isolation dir. Detects skip markers (`# (manual: ...)` / `# requires live claude session`) and PASS/FAIL stdout markers; exits non-zero on any non-skipped recipe failure. Sourcing mode: `net-new`. [P7]
+- `README.md` (rewritten) — implementation-centric framing: hero + tagline + 4 status badges (one per workflow) + What it is + What's in the box + Quick start (4 steps) + Status (v0.1.0 development release) + Compatibility + License + Contributing + Acknowledgments. Replaces the previous "pre-development, specs hardened" framing. [P8]
+- `llms.txt` (new) — ~440 words describing unify-kit itself for any LLM tool reading the kit's repo. Sections: What this is / Stack / Key directories / Key conventions / How to ask for help / License / Status. ≤1K tokens (well under the cap). [P8]
 
 ### Changed
 - Reclassified `github-actions/claude-code-review.yml` sourcing mode from `verbatim` (per `specs/04-github-actions.md` body) to `customization` per ADR 0001 precedent — upstream `FlorianBruniaux/claude-code-ultimate-guide` is CC BY-SA 4.0, incompatible with the kit's MIT-for-code policy. Patterns documented; expression authored independently. Spec 04 body should be updated in a follow-up to reflect this reclassification. [P4]
@@ -46,7 +79,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `hooks/README.md` — recipe-006 (`mcp-config-integrity.sh` manual-test) used `HOME=$tmp echo '{}' | hook` and `HOME=$tmp out=$(echo '{}' | hook ...)` — the first form set HOME for `echo` only (hook saw parent's HOME); the second form set HOME as a shell-level assignment that leaked into the `$(...)` subshell, making the second invocation use a different HOME than the first and miss the recorded baseline. Replaced with `echo '{}' | env HOME="$tmp" hook` on both invocations so the hook deterministically sees the recipe's tmp dir as HOME. Recipe now PASSes under bash strict-mode + isolated-HOME runners (e.g., `bootstrap-fixture.yml` step 7). [P7]
 
 ### Security
+- Six security hooks block destructive actions, secrets in commits/output, edits to credential files, prompt injection in CLAUDE.md, and MCP config tampering. Audit-scan checks for inline credentials in `~/.claude/settings.json`, unrestricted MCP allowlists, and missing registered hook files. [P2 / P8 release-notes summary]
 
-<!--
-New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
--->
+---
+
+v0.1.0 is a development release. v1.0.0 follow-up items (CODE_OF_CONDUCT, SECURITY.md, issue/PR templates, auto-on-PR review variants, claude-md-validator, update-from-upstream) are tracked in [BACKLOG.md](BACKLOG.md). The v1.0.0 trigger is "specs implemented + one consumer project bootstrapped end-to-end" per [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §7. v0.1.0 satisfies the "specs implemented" half.
