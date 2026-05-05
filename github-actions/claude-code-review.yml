@@ -1,0 +1,87 @@
+# github-actions/claude-code-review.yml
+# Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+# Pattern reference: https://github.com/FlorianBruniaux/claude-code-ultimate-guide/blob/main/examples/github-actions/claude-code-review.yml
+#                    (CC BY-SA 4.0 — patterns documented; expression authored independently per ADR 0001)
+# Authored: 2026-05-04
+# License: MIT (per specs/00-vision-and-license.md §"License")
+#
+# Trigger: PR comment "/claude-review"
+# Required secret: ANTHROPIC_API_KEY (or claude_code_oauth_token via Anthropic GitHub App)
+# Optional repo variables (override env defaults):
+#   CLAUDE_MD_PATH (default: ./CLAUDE.md)
+#   CLAUDE_REVIEW_MODEL (default: claude-opus-4-7)
+#   CLAUDE_REVIEW_PATHS_IGNORE (default: node_modules/**,dist/**,*.lock)
+#
+# Action pinning policy: every external action is tag-pinned (no @main, no @master).
+# Model pin (claude-opus-4-7) is manual-only — bumps land via PR + CHANGELOG entry
+# per specs/04-github-actions.md decision #5. No auto-upgrade-bot in v0.1.
+#
+# See github-actions/README.md for adoption flow and verification recipe.
+
+name: Claude Code Review
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  CLAUDE_MD_PATH: ${{ vars.CLAUDE_MD_PATH || './CLAUDE.md' }}
+  CLAUDE_REVIEW_MODEL: ${{ vars.CLAUDE_REVIEW_MODEL || 'claude-opus-4-7' }}
+  CLAUDE_REVIEW_PATHS_IGNORE: ${{ vars.CLAUDE_REVIEW_PATHS_IGNORE || 'node_modules/**,dist/**,*.lock' }}
+
+jobs:
+  claude-review:
+    if: ${{ github.event.issue.pull_request != null && contains(github.event.comment.body, '/claude-review') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          fetch-depth: 0
+
+      - name: Load review prompt
+        id: load-prompt
+        # The kit ships the prompt at github-actions/prompts/code-review.md.
+        # After the consumer copies it to .github/workflows/prompts/code-review.md
+        # (per github-actions/README.md adoption flow), this step reads it and
+        # exposes the body as a step output for the next step's `prompt:` input.
+        run: |
+          {
+            echo 'PROMPT<<UNIFY_KIT_PROMPT_EOF'
+            cat .github/workflows/prompts/code-review.md
+            echo 'UNIFY_KIT_PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: ${{ steps.load-prompt.outputs.PROMPT }}
+          claude_args: '--model ${{ env.CLAUDE_REVIEW_MODEL }} --allowed-tools Read,Glob,Grep,Bash(gh pr diff:*),Bash(gh pr view:*) --max-turns 12'
+        env:
+          CLAUDE_MD_PATH: ${{ env.CLAUDE_MD_PATH }}
+          CLAUDE_REVIEW_PATHS_IGNORE: ${{ env.CLAUDE_REVIEW_PATHS_IGNORE }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Post failure comment
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.payload.issue.number;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `🔴 Claude review failed — see [run logs](${runUrl}) for details.`
+            });
