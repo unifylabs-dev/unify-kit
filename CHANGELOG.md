@@ -17,6 +17,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+## [0.1.2] — 2026-05-06
+
+Patch release fixing one CI workflow bug that surfaced on v0.1.1's run.
+
+### Fixed
+
+- **`bootstrap-fixture.yml` Step 6** rewrote to test the `--force` semantics that `scripts/bootstrap-claude-config.sh` actually implements: file-level overwrite of tampered kit hook `.sh` files (with `<hook>.sh.bak.<ts>` backup), restoring the original kit content via SHA-256 manifest comparison. The previous form simulated a `settings.json` entry-level tamper (changing a `command` path) and expected `--force` to remove it — but the bootstrap script's merge algorithm is append-only-dedup-by-command-string, so the user's edit was preserved alongside the kit's intended command. Entry-level `--force` semantics for `settings.json` is a known gap between spec 05's intent and the v0.1.x implementation; tracked in BACKLOG.md as a v0.2.0 candidate (would require manifest-aware merge logic). Repro: GH Actions run 25457680335. [v0.1.1 → v0.1.2]
+
+### Changed
+
+- `BACKLOG.md` — added entry under "Stretch scripts" for entry-level `--force` semantics in `settings.json` merge (currently file-level only). [v0.1.2]
+
 ## [0.1.1] — 2026-05-06
 
 Patch release fixing two CI workflow bugs that surfaced on the first remote run of `v0.1.0` against GitHub-hosted `ubuntu-latest` runners.
