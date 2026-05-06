@@ -24,6 +24,7 @@ node_modules/
 # Claude Code workspace state (not part of the kit)
 .claude/sessions/
 .claude/projects/
+.claude/SESSION-HANDOFF*.md
 
 # Phasing run state (created by /phase orchestrator; not committed)
 .claude/phasing/
