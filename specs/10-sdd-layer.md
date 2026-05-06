@@ -115,19 +115,21 @@ lazy-bootstrap rule (Tier 1 / Tier 2 designation with a 3-criterion rubric),
 and the BDD-Lite naming convention (Journey describe block + Given/When/Then
 test names + scope rule).
 
-Cross-references added:
-- §C (Issue-driven dev) gains a one-line note that `/work-issue` Phase 0
-  enforces Spec Sync against the durable specs.
-- §F (Living documents on every ship) gains a note that *specs* are the
-  highest-priority living doc — drift in a spec teaches the wrong thing on
-  the next read.
-- §H (Multi-agent review) gains a note that PR review challenges drift-fix
-  claims when the spec doesn't actually document the behavior.
+Cross-references added (post-renumber labels: existing §B–I are now §C–J):
 
-**B1.b — §C expanded with the `/work-issue` 8-phase contract.** §C
-(Issue-driven dev) grows from one paragraph to a sub-sectioned breakdown of
-all eight phases (Phase 0 — Spec Sync — through Phase 7 — PR creation),
-inclusive. The skill at `~/.claude/skills/work-issue` remains the executable
+- §D (Issue-driven dev, was §C pre-renumber) gains a one-line note that
+  `/work-issue` Phase 0 enforces Spec Sync against the durable specs.
+- §G (Living documents on every ship, was §F pre-renumber) gains a note
+  that *specs* are the highest-priority living doc — drift in a spec
+  teaches the wrong thing on the next read.
+- §I (Multi-agent review, was §H pre-renumber) gains a note that PR review
+  challenges drift-fix claims when the spec doesn't actually document the
+  behavior.
+
+**B1.b — §D expanded with the `/work-issue` 8-phase contract.** §D
+(Issue-driven dev, post-renumber) grows from one paragraph to a sub-
+sectioned breakdown of all eight phases (Phase 0 — Spec Sync — through
+Phase 7 — PR creation), inclusive. The skill at `~/.claude/skills/work-issue` remains the executable
 contract; the canon documents the *contract the consumer can rely on*:
 which gates are mandatory, what each phase produces, and which artifacts
 (specs, branch worktree, plan file, ACs) flow between phases.
@@ -276,10 +278,10 @@ validation is documented separately under §"Post-merge validation."
   vocabulary, seven hard rules, bug-fix decision tree, lazy-bootstrap rule,
   BDD-Lite naming. The previously §B–I sections renumber consistently to
   §C–J. No section header is left orphaned.
-- **B1.b — `/work-issue` 8-phase contract is canonized in §C.** Methodology
-  §C contains a sub-section (or named row in a table) for each of Phases 0
-  through 7 inclusive (eight phases total). The cheatsheet template's
-  `/work-issue` row mentions Phase 0 explicitly.
+- **B1.b — `/work-issue` 8-phase contract is canonized in §D.** Methodology
+  §D (Issue-driven dev, post-renumber) contains a sub-section (or named row
+  in a table) for each of Phases 0 through 7 inclusive (eight phases total).
+  The cheatsheet template's `/work-issue` row mentions Phase 0 explicitly.
 - **C1 — BDD-Lite snippet exists.** `templates/snippets/bdd-lite-test-naming.md`
   contains a fenced-code Playwright example with a `Journey: <slug>` describe
   block plus the rules block. Snippet header cites methodology §B as
@@ -352,7 +354,7 @@ rather than splitting across several. Reasons:
   Atomic landing avoids the half-state.
 - The "Existing 8-phase wording updates" AC also requires atomicity — the
   cheatsheet, claude.md template, and spec 02 changes ship together with
-  the methodology §C expansion, or readers see a transient mismatch.
+  the methodology §D expansion, or readers see a transient mismatch.
 - The CHANGELOG entry is one logical entry per the methodology, not five.
 
 The implementing PR's commit shape is at the implementer's discretion:
@@ -386,6 +388,17 @@ headings, vocabulary terms, decision tree shape) is locked.
   CI-gated or trivially eye-checkable items.
 - Stated the explicit `### Added` vs `### Changed` placement decision in
   the CHANGELOG-entry AC so the implementing-PR author doesn't relitigate.
+
+**v3 revision (2026-05-06, in PR #10 second review pass):**
+
+- Fixed pre-renumber section labels in B1.a cross-references and B1.b
+  prose. After the renumber spec (existing §B–I → §C–J), the canonical
+  labels are: Issue-driven dev = §D (was §C), Living documents = §G
+  (was §F), Multi-agent review = §I (was §H). The `/work-issue` 8-phase
+  contract canonizes in §D, not §C. AC B1.b updated to match. Caught by
+  reviewer; an implementer following the v2 spec literally would have
+  put the 8-phase contract under §C (TDD post-renumber), the wrong
+  section.
 
 **Forward references.** The spec references forthcoming specs 11 (GitHub
 repo scaffolding), 12 (test discipline), and 13 (consumer CLAUDE.md
