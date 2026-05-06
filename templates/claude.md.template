@@ -45,10 +45,13 @@ to `docs/architecture.md` if it exists.
 ## 4. Issue-Driven Development
 
 Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
-gated workflow (analysis → branch → planning → TDD → verification → review prep
-→ review → PR) ships in the `superpowers` + `compound-engineering` plugins. See
-`templates/cheatsheet.md.template` for the daily command list — this file does
-not restate it.
+gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec sync
+→ analysis → branch → planning → TDD → verification → review prep → PR creation.
+Ships in the `superpowers` + `compound-engineering` plugins. Phase 0 reads
+`<consumer>/docs/specs/` before any code work; see `docs/methodology.md` §B
+(Specification-Driven Development) and §D (Issue-driven dev) for the contract.
+See `templates/cheatsheet.md.template` for the daily command list — this file
+does not restate it.
 
 ## 5. TDD Enforcement
 
