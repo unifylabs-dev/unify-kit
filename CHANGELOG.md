@@ -9,8 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Add `specs/10-sdd-layer.md` proposing an SDD layer (module + journey + specs-README templates, methodology §B SDD section, §D expansion with the `/work-issue` 8-phase contract, BDD-Lite snippet, two new placeholders). Spec only; implementation lands in a follow-up PR.
+- Add `templates/specs/module.md.template` + `templates/specs/journey.md.template` + `templates/specs/README.md.template` — durable spec templates for consumer use (implements `specs/10-sdd-layer.md` Batch A).
+- Add `docs/methodology.md` §B "Specification-Driven Development" — three-layer mental model (SDD + BDD-Lite + TDD), vocabulary, seven hard rules, drift-fix decision tree, lazy-bootstrap rule, BDD-Lite naming convention. Existing §B–I renumber to §C–J. §D (Issue-driven dev) expanded with the `/work-issue` 8-phase contract (Phase 0 Spec Sync through Phase 7 PR creation).
+- Add `templates/snippets/bdd-lite-test-naming.md` — BDD-Lite test naming convention with Playwright example and adaptation notes for other runners.
 
 ### Changed
+
+- Expand placeholder vocabulary from 16 to 18: `{{DATA_MODEL_PATH}}` and `{{TEST_E2E_DIR}}` added (`specs/02-templates.md`, `templates/README.md`, `.github/workflows/scrub-check.yml`).
+- Update `/work-issue` 8-phase wording in `templates/cheatsheet.md.template`, `templates/claude.md.template`, and `specs/02-templates.md`: the kit's prior redundant `review` step collapses into `PR creation` to fit Phase 0 (Spec Sync) at the front. Canonical phase list is now `spec sync → analysis → branch → planning → TDD → verification → review prep → PR creation`.
+
 ### Deprecated
 ### Removed
 ### Fixed
