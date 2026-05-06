@@ -42,12 +42,11 @@ jobs:
         run: |
           set -euxo pipefail
           HOME="$FAKE_HOME" scripts/bootstrap-claude-config.sh
-          # Backup of pre-install settings exists.
-          backups=$(find "$FAKE_HOME/.claude" -maxdepth 1 -name 'settings.json.bak.*' | wc -l | tr -d ' ')
-          if [ "$backups" -lt 1 ]; then
-            echo "ERROR: expected at least one backup; found $backups"
-            exit 1
-          fi
+          # Note: no backup is produced here because Step 1 pre-seeded the fake home
+          # with the good-fixture, which already contains all six kit hooks correctly
+          # registered. The bootstrap script correctly identifies "no merge needed"
+          # and writes nothing. Backup-on-overwrite is asserted in Step 6 (--force
+          # path) where it actually fires.
           # All six hook files installed and executable.
           for h in dangerous-actions-blocker pre-commit-secrets output-secrets-scanner file-guard claudemd-scanner mcp-config-integrity; do
             test -x "$FAKE_HOME/.claude/hooks/$h.sh" || { echo "ERROR: missing or non-exec $h.sh"; exit 1; }

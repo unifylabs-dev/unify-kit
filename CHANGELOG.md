@@ -17,6 +17,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+## [0.1.1] — 2026-05-06
+
+Patch release fixing two CI workflow bugs that surfaced on the first remote run of `v0.1.0` against GitHub-hosted `ubuntu-latest` runners.
+
+### Fixed
+
+- **`bootstrap-fixture.yml` Step 3**: dropped a backup-count assertion (`backups -lt 1 → ERROR`) that fired against the actually-correct behavior of the bootstrap script on a clean install. Step 1 pre-seeds the fake home with the good-fixture (which already contains all six kit hooks correctly registered), so when Step 3 runs `bootstrap-claude-config.sh` the script correctly identifies "no merge needed / settings.json: up-to-date / Backups: none" and writes nothing. The backup assertion belongs in Step 6 (the `--force` path, where a backup actually fires) and is already present there. Repro: GH Actions run 25457513513 on `ubuntu-latest`. [v0.1.0 → v0.1.1]
+- **`lint.yml` link-check**: dropped `--exclude-mail` from the lychee args. Lychee v0.23.0 (the latest stable as of 2026-05-06) renamed/removed this flag — current API is `--include-mail` (default OFF, opt-in). The kit's intent is to skip mail links, which is the new default; removing the flag preserves the intent. Repro: GH Actions run 25457513522 on `ubuntu-latest`. [v0.1.0 → v0.1.1]
+
 ## [0.1.0] — 2026-05-05
 
 Initial development release of unify-kit. Eight-phase delivery: foundation files, security hooks, bootstrap script, consumer GitHub Action, templates, authored docs + onboarding, the kit's own CI, and this release polish.

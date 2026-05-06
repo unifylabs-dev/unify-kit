@@ -56,7 +56,7 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
-            --no-progress --exclude-mail --offline
+            --no-progress --offline
             docs/**/*.md specs/*.md templates/**/*.md
             onboarding/*.md README.md CONTRIBUTING.md BACKLOG.md
 
