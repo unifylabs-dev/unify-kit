@@ -17,6 +17,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+## [0.1.3] — 2026-05-06
+
+Patch release fixing one shellcheck warning introduced by v0.1.2's `bootstrap-fixture` Step 6 rewrite.
+
+### Fixed
+
+- **`bootstrap-fixture.yml` Step 6** — replaced `ls "$target".bak.*` with `find "$(dirname "$target")" -maxdepth 1 -name "$(basename "$target").bak.*"` to silence shellcheck SC2012 (`Use find instead of ls to better handle non-alphanumeric filenames`). The `actionlint` job in `lint.yml` runs shellcheck against `run:` blocks; SC2012 is a default-warning that gets promoted to fail under our `-e SC2086,SC2155`-only suppression policy. Repro: GH Actions run 25457890463. [v0.1.2 → v0.1.3]
+
 ## [0.1.2] — 2026-05-06
 
 Patch release fixing one CI workflow bug that surfaced on v0.1.1's run.

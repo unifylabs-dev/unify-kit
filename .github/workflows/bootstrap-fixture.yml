@@ -103,13 +103,9 @@ jobs:
           # Original SHA restored.
           restored_sha=$(shasum -a 256 "$target" 2>/dev/null | cut -d' ' -f1 || sha256sum "$target" | cut -d' ' -f1)
           test "$restored_sha" = "$original_sha" || { echo "ERROR: --force did not restore original hook content (sha=$restored_sha, expected=$original_sha)"; exit 1; }
-          # Backup of tampered version exists.
-          if ! ls "$target".bak.* 1>/dev/null 2>&1; then
-            echo "ERROR: --force did not back up tampered hook"
-            exit 1
-          fi
-          # Backup contains the tampered content.
-          backup=$(ls "$target".bak.* | head -1)
+          # Backup of tampered version exists and contains the tampered content.
+          backup=$(find "$(dirname "$target")" -maxdepth 1 -name "$(basename "$target").bak.*" | head -1)
+          test -n "$backup" || { echo "ERROR: --force did not back up tampered hook"; exit 1; }
           grep -q 'TAMPERED BY TEST' "$backup" || { echo "ERROR: backup does not contain tampered content"; exit 1; }
 
       - name: Step 7 - per-hook manual-test recipes
