@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+
+- **`specs/10-sdd-layer.md`** — proposes a Specification-Driven Development layer for the kit: two new consumer-facing templates (`templates/specs/module.md.template` + `templates/specs/journey.md.template`) plus a specs-README template, a methodology rewrite that adds §B "Specification-Driven Development" (three-layer mental model, vocabulary, seven hard rules, drift-fix decision tree, lazy-bootstrap rule, BDD-Lite naming) and expands §C with the `/work-issue` 9-phase contract (Phase 0 Spec Sync through Phase 7 PR), a new `templates/snippets/bdd-lite-test-naming.md` snippet, and two new placeholders (`{{DATA_MODEL_PATH}}`, `{{TEST_E2E_DIR}}`) entering the supported vocabulary. Spec only; implementation lands in a follow-up PR per `CONTRIBUTING.md`'s spec-first flow.
+
 ### Changed
 ### Deprecated
 ### Removed
