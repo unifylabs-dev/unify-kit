@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Add `specs/10-sdd-layer.md` proposing an SDD layer (module + journey + specs-README templates, methodology §B SDD section, §C expansion with the `/work-issue` 8-phase contract, BDD-Lite snippet, two new placeholders). Spec only; implementation lands in a follow-up PR.
+- Add `specs/10-sdd-layer.md` proposing an SDD layer (module + journey + specs-README templates, methodology §B SDD section, §D expansion with the `/work-issue` 8-phase contract, BDD-Lite snippet, two new placeholders). Spec only; implementation lands in a follow-up PR.
 
 ### Changed
 ### Deprecated
