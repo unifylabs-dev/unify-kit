@@ -39,7 +39,17 @@ contract is explicit and the templates exist.
 
 ## What lands in this spec
 
-Six artifacts, grouped into three batches.
+Five artifacts plus one vocabulary expansion, grouped into three batches.
+
+**Phase-count decision (load-bearing).** Adding Phase 0 — Spec Sync — to
+`/work-issue` resolves to **8 phases total, numbered 0 through 7**, *not* 9
+phases (0–8). The kit's current 8-phase wording (`analysis → branch → plan →
+TDD → verify → review prep → review → PR`) collapses the redundant `review`
+step into `PR creation` to fit Phase 0 in front. This matches the source
+project's actual numbering and matches the contract the `/work-issue` skill
+documents in `~/.claude/skills/work-issue`. The renumbering propagates to
+the kit's three existing "8-phase" mentions (cheatsheet, claude.md template,
+spec 02) — see acceptance criteria.
 
 ### Batch A — Templates (consumer-facing)
 
@@ -72,7 +82,8 @@ Uses `{{TEST_E2E_DIR}}` placeholder where the source named an e2e/suites/
 path directly.
 
 The template explicitly states the 1:1 rule between numbered Steps and
-`test()` cases under a `Journey: <slug>` describe block (see A4 below).
+`test()` cases under a `Journey: <slug>` describe block (see B1.a below for
+the canonical naming rule).
 
 #### A3. `templates/specs/README.md.template`
 
@@ -87,46 +98,62 @@ in A1 and A2).
 
 ### Batch B — Methodology canon rewrite
 
-#### A4. `docs/methodology.md` — new §B "Specification-Driven Development"
+#### B1. `docs/methodology.md` — SDD section + `/work-issue` 8-phase contract
 
-Inserted before the existing TDD section; the existing §B–I renumber to §C–J.
+One artifact, two sub-edits to the same file. Sourcing mode: `pattern-only`.
+Prose authored; structure inspired by the source project's methodology
+document, no expression lifted.
 
-The new §B carries the durable-spec layer's mental model (three layers: SDD
-+ BDD-Lite + TDD), the vocabulary (spec / module spec / journey spec / drift
-fix / behavior change / lazy bootstrap), the seven specification-discipline
-hard rules (condensed, generalized, no PHIPA examples), the bug-fix decision
-tree (drift fix vs behavior change with two stack-agnostic worked examples),
-the lazy-bootstrap rule (Tier 1 / Tier 2 designation with a 3-criterion
-rubric), and the BDD-Lite naming convention (Journey describe block +
-Given/When/Then test names + scope rule).
+**B1.a — New §B "Specification-Driven Development"** inserted before the
+existing TDD section; the existing §B–I renumber to §C–J. The new §B carries
+the durable-spec layer's mental model (three layers: SDD + BDD-Lite + TDD),
+the vocabulary (spec / module spec / journey spec / drift fix / behavior
+change / lazy bootstrap), the seven specification-discipline hard rules
+(condensed, generalized, no PHIPA examples), the bug-fix decision tree
+(drift fix vs behavior change with two stack-agnostic worked examples), the
+lazy-bootstrap rule (Tier 1 / Tier 2 designation with a 3-criterion rubric),
+and the BDD-Lite naming convention (Journey describe block + Given/When/Then
+test names + scope rule).
 
 Cross-references added:
-- §C (Issue-driven dev, formerly §C) gains a one-line note that `/work-issue`
-  Phase 0 enforces Spec Sync against the durable specs.
-- §F (Living documents on every ship, formerly §F) gains a note that *specs*
-  are the highest-priority living doc — drift in a spec teaches the wrong
-  thing on the next read.
-- §H (Multi-agent review, formerly §H) gains a note that PR review challenges
-  drift-fix claims when the spec doesn't actually document the behavior.
+- §C (Issue-driven dev) gains a one-line note that `/work-issue` Phase 0
+  enforces Spec Sync against the durable specs.
+- §F (Living documents on every ship) gains a note that *specs* are the
+  highest-priority living doc — drift in a spec teaches the wrong thing on
+  the next read.
+- §H (Multi-agent review) gains a note that PR review challenges drift-fix
+  claims when the spec doesn't actually document the behavior.
 
-Sourcing mode: `pattern-only`. Prose authored; structure inspired by the
-optometry-project methodology document, no expression lifted.
+**B1.b — §C expanded with the `/work-issue` 8-phase contract.** §C
+(Issue-driven dev) grows from one paragraph to a sub-sectioned breakdown of
+all eight phases (Phase 0 — Spec Sync — through Phase 7 — PR creation),
+inclusive. The skill at `~/.claude/skills/work-issue` remains the executable
+contract; the canon documents the *contract the consumer can rely on*:
+which gates are mandatory, what each phase produces, and which artifacts
+(specs, branch worktree, plan file, ACs) flow between phases.
 
-#### A5. `docs/methodology.md` — `/work-issue` 8-phase contract documented
+Phase numbering (canonical, matches source project + skill):
 
-§C (Issue-driven dev) is expanded from one paragraph to a sub-sectioned
-breakdown of all nine phases (Phase 0 — Spec Sync — through Phase 7 — PR).
-The skill at `~/.claude/skills/work-issue` remains the executable contract;
-the canon documents the *contract the consumer can rely on*: which gates are
-mandatory, what each phase produces, and which artifacts (specs, branch
-worktree, plan file, ACs) flow between phases.
+| # | Phase | Purpose |
+|---|---|---|
+| 0 | Spec Sync | Read spec(s) named in issue's "Spec sections affected"; identify deltas; gate to Phase 1 |
+| 1 | Issue Analysis | Fetch issue title/body/labels; extract behavioral + visual ACs |
+| 2 | Branch + Worktree | `gh issue develop` with naming convention; isolate workspace |
+| 3 | Planning | Explore codebase; formulate plan; spec deltas from Phase 0 are part of the plan |
+| 4 | Implementation (Strict TDD) | RED → GREEN → REFACTOR per AC; spec deltas commit BEFORE code commits |
+| 5 | Verification | Full test suite; typecheck; build; scope guard |
+| 6 | Review prep | Dev server up; manual review checklist; AC cross-reference |
+| 7 | PR creation | PR body includes "## Spec Changes" section; assertion: spec impact ↔ docs/specs/* diff |
 
-The cheatsheet's `/work-issue` row (`templates/cheatsheet.md.template`) is
-updated to mention Phase 0 explicitly.
+The kit's existing "8-phase" wording in three artifacts collapses the prior
+redundant `review` step into `PR creation` (the PR is where review actually
+happens; review prep is the pre-PR self-review and dev-server step). The
+implementing PR updates these three artifacts to use the canonical Phase 0–7
+numbering above. See acceptance criteria §"Existing 8-phase wording updates."
 
 ### Batch C — Snippet + vocabulary additions
 
-#### A6. `templates/snippets/bdd-lite-test-naming.md`
+#### C1. `templates/snippets/bdd-lite-test-naming.md`
 
 Sourcing mode: `customization`. Stack-leaning toward Playwright since that
 is the canonical e2e tool referenced in the methodology, but the convention
@@ -194,9 +221,7 @@ upcoming spec, or because they remain bespoke to the source project:
 
 ## Decisions
 
-All open SDD-level decisions resolved as defaults at planning time
-(`/Users/tomerkurman/.claude/plans/can-you-review-optics-management-abundant-tulip.md`,
-§"Decisions taken", resolved 2026-05-06):
+All open SDD-level decisions resolved at planning time (2026-05-06):
 
 | # | Decision | Resolution |
 |---|---|---|
@@ -229,7 +254,9 @@ All open SDD-level decisions resolved as defaults at planning time
 
 ## Acceptance criteria
 
-This spec's PR is acceptable when all of the following are demonstrably true:
+This spec's PR is acceptable when all of the following are demonstrably true.
+Each AC is CI-gated or trivially eye-checkable in review; manual post-merge
+validation is documented separately under §"Post-merge validation."
 
 - **A1 — Module spec template exists.** `templates/specs/module.md.template`
   renders as valid markdown, declares `customization` sourcing mode in its
@@ -243,19 +270,30 @@ This spec's PR is acceptable when all of the following are demonstrably true:
 - **A3 — Specs README template exists.** `templates/specs/README.md.template`
   has two named tables (Module specs / Journey specs) and a methodology
   pointer.
-- **A4 — Methodology §B SDD section is in `docs/methodology.md`.** The
+- **B1.a — Methodology §B SDD section is in `docs/methodology.md`.** The
   document's table of contents lists §B as "Specification-Driven
   Development" with sub-sections covering: three-layer mental model,
   vocabulary, seven hard rules, bug-fix decision tree, lazy-bootstrap rule,
   BDD-Lite naming. The previously §B–I sections renumber consistently to
   §C–J. No section header is left orphaned.
-- **A5 — `/work-issue` 8-phase contract is canonized.** Methodology §C
-  (formerly §C, now expanded) contains a sub-section per phase 0 through 7.
-  The cheatsheet template's `/work-issue` row mentions Phase 0.
-- **A6 — BDD-Lite snippet exists.** `templates/snippets/bdd-lite-test-naming.md`
+- **B1.b — `/work-issue` 8-phase contract is canonized in §C.** Methodology
+  §C contains a sub-section (or named row in a table) for each of Phases 0
+  through 7 inclusive (eight phases total). The cheatsheet template's
+  `/work-issue` row mentions Phase 0 explicitly.
+- **C1 — BDD-Lite snippet exists.** `templates/snippets/bdd-lite-test-naming.md`
   contains a fenced-code Playwright example with a `Journey: <slug>` describe
   block plus the rules block. Snippet header cites methodology §B as
   canonical source.
+- **Existing 8-phase wording updates.** All three current "8-phase" mentions
+  in the kit are revised to use the canonical Phase 0–7 numbering from B1.b
+  (the redundant `review` step collapses into `PR creation`):
+  - `templates/cheatsheet.md.template` — the `/work-issue` row's phase list.
+  - `templates/claude.md.template` — §4 "Issue-Driven Development" prose.
+  - `specs/02-templates.md` — §"Templates shipped" → "claude.md.template"
+    bullet 4 prose.
+  Phrasing is consistent across all three (e.g., "spec sync → analysis →
+  branch → planning → TDD → verification → review prep → PR creation");
+  no remaining mention of a separate "review" step.
 - **Vocabulary additions.** `specs/02-templates.md` §"Common conventions"
   placeholder list contains `{{DATA_MODEL_PATH}}` and `{{TEST_E2E_DIR}}`.
   `templates/README.md` placeholder table contains both with their meanings.
@@ -270,39 +308,58 @@ This spec's PR is acceptable when all of the following are demonstrably true:
   github-actions/, scripts/, README.md, CHANGELOG.md, CONTRIBUTING.md,
   llms.txt, docs/philosophy.md, docs/methodology.md). Discussion of these
   patterns is allowed in this spec file (specs/ is exempt).
-- **Lint-clean.** `lint.yml` passes: actionlint clean (no workflow changes
-  here, but vocab update is in scrub-check.yml), markdownlint clean on the
-  new templates and methodology file, lychee internal-link check clean for
-  any new cross-references.
-- **CHANGELOG entry.** `## [Unreleased]` in `CHANGELOG.md` carries one
-  bullet under `### Added` (templates + methodology section + snippet) and
-  one under `### Changed` (vocabulary expansion); per spec 08 §6
-  CHANGELOG-discipline rules and per `changelog-check.yml`.
-- **End-to-end smoke test (manual).** Take a real issue from the
-  consumer's project backlog and produce a stub spec using the new
+- **Lint-clean.** `lint.yml` passes: actionlint clean (vocab update is in
+  scrub-check.yml), markdownlint clean on the new templates and methodology
+  file, lychee internal-link check clean for any new cross-references.
+- **CHANGELOG entry.** `## [Unreleased]` in `CHANGELOG.md` carries entries
+  per spec 08 §6 CHANGELOG-discipline rules and per `changelog-check.yml`.
+  Placement decision: the implementing PR puts net-new templates under
+  `### Added` (truly new files) and the methodology §B insertion under
+  `### Added` (net-new section in an existing file is conceptually an
+  addition). The vocabulary expansion goes under `### Changed` because it
+  modifies the existing 16-placeholder vocabulary contract; the new
+  placeholders themselves are new but the vocabulary as a whole is
+  expanding. The "8-phase wording" updates also go under `### Changed`.
+  This decision is recorded here so the implementing-PR author does not
+  re-litigate it.
+
+## Post-merge validation
+
+Not gated by CI. Carried out by the maintainer after the implementing PR
+merges, before tagging any v0.x.x release that contains the SDD layer:
+
+- **End-to-end smoke test.** Take a real issue from the consumer's project
+  backlog and produce a stub spec using the new
   `templates/specs/module.md.template`. Confirm: file copies cleanly into a
   consumer's `docs/specs/modules/`, frontmatter parses (manual eye-check),
-  `markdownlint` passes, `{{DATA_MODEL_PATH}}` substitutes to the consumer's
-  actual schema path. This is post-merge validation; not gated by CI.
+  `markdownlint` passes against the rendered file, `{{DATA_MODEL_PATH}}`
+  substitutes to the consumer's actual schema path. Failure here means the
+  template's stack-agnostic posture leaked something domain-specific or
+  the `{{DATA_MODEL_PATH}}` placeholder is poorly named — both of which
+  warrant a follow-up PR (not a release blocker, but tracked).
 
 ## Implementation notes (non-binding guidance for the implementing PR)
 
 The implementing PR (separate branch, `templates/specs-and-canon` or similar)
-should land all six artifacts in **one PR** rather than splitting across
-several. Reasons:
+should land all five artifacts plus vocabulary expansion in **one PR**
+rather than splitting across several. Reasons:
 
-- The methodology rewrite (A4) and the templates (A1–A3) reference each
+- The methodology rewrite (B1) and the templates (A1–A3) reference each
   other — landing one without the other leaves dangling pointers.
 - `scrub-check.yml`'s placeholder-vocab job is atomic across `templates/`:
   it would fail mid-merge if `{{DATA_MODEL_PATH}}` were declared in
   `SUPPORTED` but the template using it hadn't landed yet (or vice versa).
   Atomic landing avoids the half-state.
-- The CHANGELOG entry is one logical entry per the methodology, not six.
+- The "Existing 8-phase wording updates" AC also requires atomicity — the
+  cheatsheet, claude.md template, and spec 02 changes ship together with
+  the methodology §C expansion, or readers see a transient mismatch.
+- The CHANGELOG entry is one logical entry per the methodology, not five.
 
 The implementing PR's commit shape is at the implementer's discretion:
-either one commit that lands everything together, or commit-per-batch (A
-templates / A4-A5 canon / A6 snippet + vocab) with the final commit being
-the CHANGELOG update. CI runs against the final tree, not per-commit.
+either one commit that lands everything together, or commit-per-batch
+(Batch A templates / Batch B canon / Batch C snippet + vocab + 8-phase
+wording updates) with the final commit being the CHANGELOG update. CI
+runs against the final tree, not per-commit.
 
 The implementing PR is **not** the place to start iterating on which exact
 words go in §B. That belongs in this spec PR's review. By the time the
@@ -311,8 +368,27 @@ headings, vocabulary terms, decision tree shape) is locked.
 
 ## Revisions
 
-n/a — first draft.
+**v2 revision (2026-05-06, in PR #10 review):**
 
-This spec is the first new spec added to `unify-kit` post-v0.1.3 and the
-first to absorb practice from a real consumer project. Future revisions
-captured here.
+- Fixed phase-count contradiction. Spec now consistently says "8 phases
+  (Phase 0 through Phase 7)" — previously alternated between "8" and "9".
+  Resolved by collapsing the kit's prior redundant `review` step into `PR
+  creation` (matching the source project's structure and the
+  `/work-issue` skill's actual contract). Added explicit AC requiring the
+  three existing "8-phase" mentions in the kit (cheatsheet, claude.md
+  template, spec 02) to be updated to the canonical Phase 0–7 numbering.
+- Removed local-filesystem path leak in §"Decisions" preamble.
+- Relabeled artifacts A1–A6 → A1–A3 (Batch A) + B1 (Batch B; collapses
+  former A4 + A5 into one methodology-rewrite artifact with two sub-edits)
+  + C1 (Batch C). Reduces the off-by-one read.
+- Moved the "End-to-end smoke test" bullet out of acceptance criteria into
+  a new §"Post-merge validation" section. AC list now contains only
+  CI-gated or trivially eye-checkable items.
+- Stated the explicit `### Added` vs `### Changed` placement decision in
+  the CHANGELOG-entry AC so the implementing-PR author doesn't relitigate.
+
+**Forward references.** The spec references forthcoming specs 11 (GitHub
+repo scaffolding), 12 (test discipline), and 13 (consumer CLAUDE.md
+enrichment + retro template). These are sequenced after spec 10 with no
+commitment date; if any stalls, the cross-references are revisited as part
+of the stalled spec's resolution.
