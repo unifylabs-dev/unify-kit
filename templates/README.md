@@ -24,17 +24,21 @@ your project's values, and you have a working baseline.
 | `mcp-policy.md.template` | `pattern-only` | 5-section MCP policy: allowlist + 5-step vetting + add/remove process + scoping. |
 | `security-checklist.md` | `customization` | OWASP Top-10 spine + a labeled Next.js stack-example block. Lift-as-is (plain `.md`). |
 | `team-onboarding.md.template` | `customization` | 5-section onboarding stitcher: welcomes new devs, points at the kit's onboarding curriculum, lists area owners. |
+| `specs/module.md.template` | `customization` | Durable module-spec template (Purpose / Behavior / Data Model / Permissions / Edge Cases / Compliance / Integration / Open Questions / Changelog). Aim 200–500 lines. See `docs/methodology.md` §B. |
+| `specs/journey.md.template` | `customization` | Durable journey-spec template (Purpose / Verifying e2e / Steps / Modules touched / Edge Cases / Open Questions / Changelog). Aim 100–300 lines. Tier 1 / Tier 2. |
+| `specs/README.md.template` | `customization` | Index for `<consumer>/docs/specs/`. Two tables (Module specs + Journey specs) + adoption rubric for Tier-1 picks. |
 | `snippets/server-action-anatomy-nextjs.md` | `customization` | Next.js Server Action 6-step anatomy: auth-guard → validate → audit-start → business → audit-success → return. |
 | `snippets/audit-logging-nextjs.md` | `customization` | `logAudit()` fire-and-forget helper pattern for security-relevant events. |
 | `snippets/rate-limiting-nextjs.md` | `customization` | `checkRateLimit` + `timingSafeDelay` for public endpoints; defends against brute force AND timing leaks. |
 | `snippets/middleware-nextjs.md` | `customization` | Dual-session + idle-timeout middleware for Next.js 14+. Identifies actors; does not authorize. |
+| `snippets/bdd-lite-test-naming.md` | `customization` | BDD-Lite test naming convention: `Journey: <slug>` describe block + Given/When/Then test names + `@daily` tagging. Stack-portable example uses Playwright. |
 
 ## Placeholder vocabulary
 
 Templates use a single mandatory placeholder syntax: double-curly-braces
 around an uppercase identifier (the convention is greppable, doesn't collide
 with shell, HTML, or Python f-strings, and is immediately recognizable). Every
-placeholder used in any template is one of the 16 in this table; nothing else.
+placeholder used in any template is one of the 18 in this table; nothing else.
 The kit's own CI (spec 09's `scrub-check.yml`) fails when an undeclared
 placeholder appears.
 
@@ -56,6 +60,8 @@ placeholder appears.
 | `{{TEST_FULL_CMD}}` | Full local test suite (e2e + integration; slower). |
 | `{{LINT_CMD}}` | Lint command (e.g., `npm run lint`). |
 | `{{TYPECHECK_CMD}}` | Type-check command (e.g., `npm run typecheck`). |
+| `{{DATA_MODEL_PATH}}` | Path to the project's data-model source of truth (e.g., `prisma/schema.prisma`, `db/schema.rb`, `migrations/`). Used in the module-spec template's Data Model section. |
+| `{{TEST_E2E_DIR}}` | Directory where end-to-end tests live (e.g., `e2e/suites/`, `tests/e2e/`, `cypress/integration/`). Used in the journey-spec template's `verifying_e2e_test:` frontmatter. |
 
 ## Usage
 
