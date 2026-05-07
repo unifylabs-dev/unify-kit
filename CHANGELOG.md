@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `templates/specs/module.md.template` + `templates/specs/journey.md.template` + `templates/specs/README.md.template` — durable spec templates for consumer use (implements `specs/10-sdd-layer.md` Batch A).
 - Add `docs/methodology.md` §B "Specification-Driven Development" — three-layer mental model (SDD + BDD-Lite + TDD), vocabulary, seven hard rules, drift-fix decision tree, lazy-bootstrap rule, BDD-Lite naming convention. Existing §B–I renumber to §C–J. §D (Issue-driven dev) expanded with the `/work-issue` 8-phase contract (Phase 0 Spec Sync through Phase 7 PR creation).
 - Add `templates/snippets/bdd-lite-test-naming.md` — BDD-Lite test naming convention with Playwright example and adaptation notes for other runners.
+- Add `specs/11-github-templates.md` proposing GitHub repo scaffolding (PR template + feature-request and bug-report issue templates; manual `cp` install via `templates/README.md`; BACKLOG cleanup of v1.0.0 release-prep bullets that ship earlier). Spec only; implementation lands in a follow-up PR.
 
 ### Changed
 
