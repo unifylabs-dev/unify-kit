@@ -73,14 +73,18 @@ jobs:
       - name: Verify {{...}} placeholders are in supported vocabulary
         run: |
           set -euo pipefail
-          # Supported vocabulary (16 placeholders per specs/02-templates.md).
+          # Supported vocabulary (18 placeholders per specs/02-templates.md).
           SUPPORTED=$(printf '%s\n' \
-            '{{BUILD_CMD}}' '{{DB}}' '{{FRAMEWORK}}' '{{KEY_LIBS}}' \
-            '{{LANG}}' '{{LANG_VERSION}}' '{{LINT_CMD}}' '{{ONE_LINE_DESCRIPTION}}' \
-            '{{PROJECT_NAME}}' '{{REPO_URL}}' '{{ROOT}}' '{{STACK}}' \
-            '{{TEAM_NAME}}' '{{TEST_CI_CMD}}' '{{TEST_FULL_CMD}}' '{{TYPECHECK_CMD}}' \
+            '{{BUILD_CMD}}' '{{DATA_MODEL_PATH}}' '{{DB}}' '{{FRAMEWORK}}' \
+            '{{KEY_LIBS}}' '{{LANG}}' '{{LANG_VERSION}}' '{{LINT_CMD}}' \
+            '{{ONE_LINE_DESCRIPTION}}' '{{PROJECT_NAME}}' '{{REPO_URL}}' '{{ROOT}}' \
+            '{{STACK}}' '{{TEAM_NAME}}' '{{TEST_CI_CMD}}' '{{TEST_E2E_DIR}}' \
+            '{{TEST_FULL_CMD}}' '{{TYPECHECK_CMD}}' \
             | sort)
-          USED=$(grep -ohrE '\{\{[A-Z_]+\}\}' templates/ | sort -u)
+          # Regex permits uppercase letters, digits, and underscores
+          # (e.g. {{TEST_E2E_DIR}} contains a digit). Identifiers must still
+          # start uppercase per spec 02 §"Common conventions".
+          USED=$(grep -ohrE '\{\{[A-Z][A-Z0-9_]*\}\}' templates/ | sort -u)
 
           # Every USED placeholder must be in SUPPORTED.
           EXTRA=$(comm -23 <(echo "$USED") <(echo "$SUPPORTED") || true)

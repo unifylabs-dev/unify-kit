@@ -22,9 +22,10 @@ sourcing mode for each part, and how a consumer parameterizes it for their proje
   `{{PROJECT_NAME}}`, `{{ONE_LINE_DESCRIPTION}}`, `{{STACK}}`, `{{REPO_URL}}`,
   `{{TEAM_NAME}}`, `{{LANG}}`, `{{LANG_VERSION}}`, `{{FRAMEWORK}}`, `{{DB}}`,
   `{{KEY_LIBS}}`, `{{ROOT}}`, `{{BUILD_CMD}}`, `{{TEST_CI_CMD}}`, `{{TEST_FULL_CMD}}`,
-  `{{LINT_CMD}}`, `{{TYPECHECK_CMD}}`. The vocabulary is the contract;
-  `templates/README.md` lists every placeholder + its meaning, and the kit's own CI
-  fails when a template uses an undeclared placeholder (spec 09).
+  `{{LINT_CMD}}`, `{{TYPECHECK_CMD}}`, `{{DATA_MODEL_PATH}}`, `{{TEST_E2E_DIR}}`.
+  The vocabulary is the contract; `templates/README.md` lists every placeholder
+  + its meaning, and the kit's own CI fails when a template uses an undeclared
+  placeholder (spec 09).
 
 ---
 
@@ -44,8 +45,9 @@ the Ultimate Guide's CLAUDE.md example.
 2. Architecture — placeholder skeleton; consumer fills in.
 3. Conventions — placeholder skeleton with strong defaults (branch naming, commit
    convention, file naming, component patterns).
-4. Issue-Driven Development — `/work-issue <N>` 8-phase flow if superpowers +
-   compound-engineering plugins are present.
+4. Issue-Driven Development — `/work-issue <N>` 8-phase flow (Phase 0 — Spec
+   Sync — through Phase 7 — PR creation, per `docs/methodology.md` §D) if
+   superpowers + compound-engineering plugins are present.
 5. TDD Enforcement — Red-Green-Refactor with stop-after-3-failures rule.
 6. Test Strategy — placeholder for the consumer's test pyramid.
 7. Documentation Requirements — doc-on-ship rule (consumer fills in which files).

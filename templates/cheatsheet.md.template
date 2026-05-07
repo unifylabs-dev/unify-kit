@@ -20,7 +20,7 @@ the project's `<consumer>/CLAUDE.md`, or a kit skill).
 
 | Command | When to invoke | Notes |
 |---|---|---|
-| `/work-issue <N>` | Any GitHub issue with acceptance criteria. | Runs the 8-phase gated flow: analysis → branch → plan → TDD → verify → review prep → review → PR. |
+| `/work-issue <N>` | Any GitHub issue with acceptance criteria. | Runs the 8-phase gated flow (Phase 0–7): spec sync → analysis → branch → planning → TDD → verification → review prep → PR creation. Phase 0 (Spec Sync) reads `<consumer>/docs/specs/` before any code work — see `docs/methodology.md` §B + §D. |
 | `/brainstorm` | Ambiguous requests, new features, "we should probably…". | One question at a time, multiple choice, narrow scope. Hands off to `writing-plans`. |
 | `/phase` | Cross-cutting work (>8 files / >2 subsystems / >12 task bullets / natural break points). | Master plan + per-phase specs + handoffs + verification gates. |
 | `/lfg` | Well-scoped autonomous work where you've already aligned on approach. | Continuous execution; you can interrupt with course corrections. |

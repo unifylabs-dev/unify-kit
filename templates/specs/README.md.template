@@ -1,0 +1,64 @@
+<!--
+templates/specs/README.md.template
+Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+Index file for `<consumer>/docs/specs/`. Two tables (Module specs +
+Journey specs) plus a methodology pointer. Add a row whenever you create
+a new spec.
+
+Authored: 2026-05-06
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Specifications
+
+This directory holds the durable behavioral contracts for {{PROJECT_NAME}}.
+Specs describe **behavior**, not implementation. They are the law that
+GitHub issues amend; they ship in the same PR as the code that updates them.
+
+For the full discipline — module vs journey, drift fix vs behavior change,
+the seven specification-discipline hard rules — see
+`<consumer>/docs/methodology.md` §B (Specification-Driven Development).
+
+## Module specs
+
+One file per system slice. Document a single module's behavior, data model,
+permissions, edge cases, compliance notes, integration points. Aim 200–500
+lines per spec.
+
+| # | Module | Tier | Last reviewed | Status |
+|---|---|---|---|---|
+| 1 | [`<module-name>`](modules/<module-name>.md) | 1 \| 2 | YYYY-MM-DD | active \| draft \| deprecated |
+
+## Journey specs
+
+One file per cross-module user flow. Document the user-observable sequence
+in Given/When/Then steps; link to the per-module rules in module specs.
+Aim 100–300 lines per spec. Each Tier-1 journey has at least one `@daily`
+e2e test counterpart.
+
+| # | Journey | Tier | Verifying e2e test | Last reviewed | Status |
+|---|---|---|---|---|---|
+| 1 | [`<journey-slug>`](journeys/<journey-slug>.md) | 1 \| 2 | [`<file>.spec.ts`]({{TEST_E2E_DIR}}<file>.spec.ts) | YYYY-MM-DD | active \| draft \| deprecated |
+
+## Adding a spec
+
+1. Copy [`templates/specs/module.md.template`](../../templates/specs/module.md.template)
+   or [`templates/specs/journey.md.template`](../../templates/specs/journey.md.template)
+   into `modules/` or `journeys/`. (Adjust the path to wherever the kit's
+   templates live in your project.)
+2. Follow the duplicate-this-file checklist in the template's HTML comment header.
+3. Add a row to the appropriate table above.
+4. Land the spec in the same PR as the code change it documents — never a
+   separate PR.
+
+## Tier-1 selection rubric
+
+Pick a Tier-1 module or journey when at least two are true:
+
+- **Highest leverage** — most-changed, central to multiple user flows.
+- **Security-sensitive or compliance-critical** — auth, audit, data residency,
+  consent capture.
+- **Freshest in memory** — recently shipped or actively under development.
+
+Tier-2 specs are bootstrapped on first-touch by `/work-issue` Phase 0
+(Spec Sync). No big-bang migration; specs accumulate on use.
