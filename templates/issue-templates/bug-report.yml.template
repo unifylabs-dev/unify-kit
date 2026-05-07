@@ -1,0 +1,91 @@
+# templates/issue-templates/bug-report.yml.template
+# Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+# Stack-agnostic GitHub issue-template (form-schema YAML); structurally
+# inspired by a real consumer project's bug_report.yml, no expression
+# lifted.
+#
+# When you adopt this template, save it as
+# `<consumer>/.github/ISSUE_TEMPLATE/bug_report.yml` (strip the
+# `.template` suffix; underscored filename per GitHub's convention).
+#
+# Authored: 2026-05-07
+# License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill out the sections below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What happened, and what did you expect?
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Numbered steps to trigger the bug.
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria / Fix Verification
+      description: >
+        Testable conditions that confirm the bug is fixed.
+        Use checkbox format. This section is required — the /work-issue
+        skill depends on it.
+      placeholder: |
+        - [ ] X no longer happens when Y
+        - [ ] Error message shows Z instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: spec-impact
+    attributes:
+      label: Spec sections affected
+      description: |
+        Which spec(s) does this fix touch? Use `docs/specs/modules/<name>.md`
+        or `docs/specs/journeys/<slug>.md` paths.
+
+        For pure drift fixes (code drifted from documented behavior — spec
+        is already correct), write: "None — fixing drift from spec".
+
+        For behavior changes (intentional change to documented behavior),
+        list the spec(s) and section(s) that need to be updated in this PR.
+
+        See `docs/methodology.md` §B "Bug-fix flow: drift fix vs behavior
+        change" for the decision tree.
+      placeholder: |
+        None — fixing drift from spec
+
+        OR
+
+        - docs/specs/modules/<module-name>.md (Edge Cases §<section>)
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Optional — browser, OS, or any relevant context.
+      placeholder: Chrome 120, macOS, staff portal
+    validations:
+      required: false
