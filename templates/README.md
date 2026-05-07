@@ -102,9 +102,13 @@ cp ../unify-kit/templates/issue-templates/feature-request.yml.template \
 cp ../unify-kit/templates/issue-templates/bug-report.yml.template \
    .github/ISSUE_TEMPLATE/bug_report.yml
 
-# Strip the leading `# templates/...` provenance comment from the YAML
-# files (optional; cosmetic). The HTML/markdown comment in the PR template
-# is fine to leave in place.
+# Strip the leading provenance comments from all three installed files.
+# These comments document the kit's sourcing mode + license + author
+# date for the kit's own audit trail; they have no purpose in a
+# consumer's repo and would otherwise show up in the PR-template raw
+# source on every new PR. For the PR template, delete the leading
+# <!-- ... --> HTML comment block. For the issue templates, delete the
+# leading `# templates/issue-templates/...` block of `#` lines.
 
 # Search-and-replace placeholders in the PR template.
 # Only {{TEST_FULL_CMD}} and {{BUILD_CMD}} appear there; both are in
