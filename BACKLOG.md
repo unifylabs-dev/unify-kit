@@ -46,9 +46,17 @@ The following artifacts are required at v1.0.0 release per [`specs/08-living-doc
 
 - **`CODE_OF_CONDUCT.md`** — Contributor Covenant or equivalent.
 - **`SECURITY.md`** — vulnerability disclosure process and response SLA.
-- **`.github/ISSUE_TEMPLATE/`** — bug report, feature request, ADR proposal templates.
-- **`.github/PULL_REQUEST_TEMPLATE.md`** — references the changelog-discipline rule and the spec-first flow.
 - **Branch protection on `main`** — required reviews, required status checks, no force-push.
+
+> Previously listed here: `.github/ISSUE_TEMPLATE/` (bug + feature) and
+> `.github/PULL_REQUEST_TEMPLATE.md`. Both shipped earlier than originally
+> planned, with content that earns their keep — the issue templates' "Spec
+> sections affected" required field gates `/work-issue` Phase 0, and the
+> PR template's `## Spec Changes` two-checkbox section forces the explicit
+> "spec updated vs drift fix" decision. See `specs/11-github-templates.md`.
+> An ADR-proposal issue template was considered and rejected in spec 11
+> §"What does NOT land in this spec" — revisit if/when contributor volume
+> warrants it.
 
 ## Aggregator submission
 

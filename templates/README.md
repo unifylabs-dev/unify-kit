@@ -27,6 +27,9 @@ your project's values, and you have a working baseline.
 | `specs/module.md.template` | `customization` | Durable module-spec template (Purpose / Behavior / Data Model / Permissions / Edge Cases / Compliance / Integration / Open Questions / Changelog). Aim 200–500 lines. See `docs/methodology.md` §B. |
 | `specs/journey.md.template` | `customization` | Durable journey-spec template (Purpose / Verifying e2e / Steps / Modules touched / Edge Cases / Open Questions / Changelog). Aim 100–300 lines. Tier 1 / Tier 2. |
 | `specs/README.md.template` | `customization` | Index for `<consumer>/docs/specs/`. Two tables (Module specs + Journey specs) + adoption rubric for Tier-1 picks. |
+| `pull-request-template.md.template` | `customization` | PR template with the load-bearing `## Spec Changes` two-checkbox section that gates "spec updated vs drift fix" decision. Renames to `<consumer>/.github/pull_request_template.md`. |
+| `issue-templates/feature-request.yml.template` | `customization` | GitHub form-schema YAML for feature requests. Required fields enforce ACs + "Spec sections affected" (gates `/work-issue` Phase 0). Renames to `<consumer>/.github/ISSUE_TEMPLATE/feature_request.yml`. |
+| `issue-templates/bug-report.yml.template` | `customization` | GitHub form-schema YAML for bug reports. Documents the drift-fix vs behavior-change decision in the "Spec sections affected" prose. Renames to `<consumer>/.github/ISSUE_TEMPLATE/bug_report.yml`. |
 | `snippets/server-action-anatomy-nextjs.md` | `customization` | Next.js Server Action 6-step anatomy: auth-guard → validate → audit-start → business → audit-success → return. |
 | `snippets/audit-logging-nextjs.md` | `customization` | `logAudit()` fire-and-forget helper pattern for security-relevant events. |
 | `snippets/rate-limiting-nextjs.md` | `customization` | `checkRateLimit` + `timingSafeDelay` for public endpoints; defends against brute force AND timing leaks. |
@@ -66,12 +69,51 @@ placeholder appears.
 ## Usage
 
 1. **Copy the template you need** from this directory into your repo. Filenames
-   ending in `.md.template` are editable; plain `.md` are lift-as-is.
+   ending in `.md.template` or `.yml.template` are editable; plain `.md` are
+   lift-as-is.
 2. **Search-and-replace the `{{...}}` tokens** with your project's values.
-   `grep -ohrE '\{\{[A-Z_]+\}\}' your-copy/` lists what's left to fill in.
+   `grep -ohrE '\{\{[A-Z][A-Z0-9_]*\}\}' your-copy/` lists what's left to fill in.
 3. **For `templates/snippets/*.md`**, append the relevant snippet content into
    your filled-in `CLAUDE.md` if you're on Next.js (or skip if you're not).
    Adapt helper names to your codebase.
+
+## GitHub repo scaffolding
+
+The PR template + issue templates encode the SDD discipline (per
+[`docs/methodology.md`](../docs/methodology.md) §B): the issue-template
+"Spec sections affected" required field gates `/work-issue` Phase 0; the
+PR-template `## Spec Changes` two-checkbox section forces the explicit
+"spec updated vs drift fix" decision the reviewer challenges.
+
+Manual install (bootstrap-installer extension defers to v1.0.0). From the
+consumer repo's root, with `unify-kit` cloned alongside as `../unify-kit`:
+
+```bash
+# Create the GitHub directories.
+mkdir -p .github/ISSUE_TEMPLATE
+
+# PR template — has placeholders, requires search-and-replace after copy.
+cp ../unify-kit/templates/pull-request-template.md.template \
+   .github/pull_request_template.md
+
+# Issue templates — lift-as-rename, no placeholders inside.
+cp ../unify-kit/templates/issue-templates/feature-request.yml.template \
+   .github/ISSUE_TEMPLATE/feature_request.yml
+cp ../unify-kit/templates/issue-templates/bug-report.yml.template \
+   .github/ISSUE_TEMPLATE/bug_report.yml
+
+# Strip the leading `# templates/...` provenance comment from the YAML
+# files (optional; cosmetic). The HTML/markdown comment in the PR template
+# is fine to leave in place.
+
+# Search-and-replace placeholders in the PR template.
+# Only {{TEST_FULL_CMD}} and {{BUILD_CMD}} appear there; both are in
+# the kit's standard placeholder vocabulary.
+```
+
+After install, GitHub renders the issue templates as a guided form (with
+required-field validation) when a user clicks "New issue", and pre-populates
+the PR body when a user clicks "New pull request."
 
 ## Sourcing modes
 
