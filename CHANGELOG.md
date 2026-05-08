@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `docs/methodology.md` §C "Test scheduling: match cost to feedback urgency" sub-section — four-tier pyramid (CI fast / E2E daily / local pre-PR / nightly), `@daily` tagging convention, three anti-pattern call-outs.
 - Add `templates/snippets/ci-pr-fast.yml.template` — GitHub Actions workflow bundling Tier-1 PR-fast + Tier-2 daily-E2E with the secrets-gate pattern.
 - Add `templates/snippets/ci-nightly.yml.template` — Tier-4 nightly workflow (full unit + full e2e on cron + workflow_dispatch).
+- Add `specs/13-claude-md-enrichment.md` proposing the final v0.2.x absorption arc (claude.md.template enrichment with Branch Naming + Spec Discipline + PR Merge Process + Living Document Triggers; methodology-retro template; cheatsheet Conventions section + post-/ship Notes update; team-onboarding 4-week ramp). No new placeholders. Spec only; implementation lands in a follow-up PR.
 
 ### Changed
 
