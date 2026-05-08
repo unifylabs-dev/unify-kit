@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `templates/snippets/ci-pr-fast.yml.template` — GitHub Actions workflow bundling Tier-1 PR-fast + Tier-2 daily-E2E with the secrets-gate pattern.
 - Add `templates/snippets/ci-nightly.yml.template` — Tier-4 nightly workflow (full unit + full e2e on cron + workflow_dispatch).
 - Add `specs/13-claude-md-enrichment.md` proposing the final v0.2.x absorption arc (claude.md.template enrichment with Branch Naming + Spec Discipline + PR Merge Process + Living Document Triggers; methodology-retro template; cheatsheet Conventions section + post-/ship Notes update; team-onboarding 4-week ramp). No new placeholders. Spec only; implementation lands in a follow-up PR.
+- Add `templates/methodology-retro.md.template` — methodology-retrospective skeleton (frontmatter + 5 body sections: What worked / What we tuned / Known gaps / New rules adopted / Action items). Implements `specs/13-claude-md-enrichment.md` Batch B.
+- Add `templates/cheatsheet.md.template` `## Conventions` section — branch-name format, `gh issue develop` invocation, spec-discipline pointer, living-docs pointer.
+- Add `templates/team-onboarding.md.template` §3 `### 4-week ramp` sub-section — Week 1 environment+docs / Week 2 paired `/work-issue` P3 / Week 3 solo P2 / Week 4 real backlog. Soft milestones, not gates.
 
 ### Changed
 
@@ -31,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `BACKLOG.md` "v1.0.0 release prep" — removed `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md` bullets; both ship earlier with content that earns their keep (see `specs/11-github-templates.md`). Replaced with a back-reference noting the supersession.
 - Expand `.github/workflows/lint.yml` shellcheck scope from `hooks/*.sh scripts/*.sh scripts/ci/*.sh` to additionally include `templates/snippets/*.sh`. Per spec 12 §"Lint scope expansion" AC — the kit dogfoods quality gates on its own bash snippets.
 - Add three template-table rows to `templates/README.md` for the new test-discipline templates (`ci-test-split-bash.sh`, `ci-pr-fast.yml.template`, `ci-nightly.yml.template`).
+- Enrich `templates/claude.md.template` with four `###` sub-sections inside existing top-level sections (per `specs/13-claude-md-enrichment.md` Batch A, keeping the 8-section minimal shape from spec 02): §3 gains `### Branch Naming` (canonical `<type>/<issue-number>-<kebab-description>` + `gh issue develop` invocation; replaces the pre-existing one-line bullet). §4 gains `### Specification Discipline` (condensed pointer to methodology §B + the seven hard rules + pointer to `templates/specs/`). §7 gains `### PR Merge Process` (6-step non-negotiable checklist parameterized by `{{TEST_FULL_CMD}}` + `{{BUILD_CMD}}`). §8 replaces the prose paragraph with a trigger-action table (5 rows) and corrects the stale `methodology.md §F` reference to `§G` (post-spec-10 renumber).
+- Update `templates/README.md` template-table to add `methodology-retro.md.template` row + extend `team-onboarding.md.template` row's description to mention the new 4-week ramp.
 
 ### Deprecated
 ### Removed

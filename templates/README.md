@@ -23,7 +23,8 @@ your project's values, and you have a working baseline.
 | `ai-usage-charter.md.template` | `customization` | 6-section AI usage charter with the hard rule that AI-generated code passes the same review as human code. |
 | `mcp-policy.md.template` | `pattern-only` | 5-section MCP policy: allowlist + 5-step vetting + add/remove process + scoping. |
 | `security-checklist.md` | `customization` | OWASP Top-10 spine + a labeled Next.js stack-example block. Lift-as-is (plain `.md`). |
-| `team-onboarding.md.template` | `customization` | 5-section onboarding stitcher: welcomes new devs, points at the kit's onboarding curriculum, lists area owners. |
+| `team-onboarding.md.template` | `customization` | 5-section onboarding stitcher: welcomes new devs, points at the kit's onboarding curriculum, includes a 4-week ramp pattern (Week 1 environment+docs / Week 2 paired /work-issue P3 / Week 3 solo P2 / Week 4 real backlog), lists area owners. |
+| `methodology-retro.md.template` | `customization` | Methodology retrospective skeleton (frontmatter `date` / `participants` / `methodology_version` + 5 body sections: What worked / What we tuned / Known gaps / New rules adopted / Action items). One file per retro; cadence every 4–6 features after methodology adoption. See `docs/methodology.md` §G. |
 | `specs/module.md.template` | `customization` | Durable module-spec template (Purpose / Behavior / Data Model / Permissions / Edge Cases / Compliance / Integration / Open Questions / Changelog). Aim 200–500 lines. See `docs/methodology.md` §B. |
 | `specs/journey.md.template` | `customization` | Durable journey-spec template (Purpose / Verifying e2e / Steps / Modules touched / Edge Cases / Open Questions / Changelog). Aim 100–300 lines. Tier 1 / Tier 2. |
 | `specs/README.md.template` | `customization` | Index for `<consumer>/docs/specs/`. Two tables (Module specs + Journey specs) + adoption rubric for Tier-1 picks. |
