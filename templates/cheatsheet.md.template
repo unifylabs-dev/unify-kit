@@ -24,7 +24,7 @@ the project's `<consumer>/CLAUDE.md`, or a kit skill).
 | `/brainstorm` | Ambiguous requests, new features, "we should probably…". | One question at a time, multiple choice, narrow scope. Hands off to `writing-plans`. |
 | `/phase` | Cross-cutting work (>8 files / >2 subsystems / >12 task bullets / natural break points). | Master plan + per-phase specs + handoffs + verification gates. |
 | `/lfg` | Well-scoped autonomous work where you've already aligned on approach. | Continuous execution; you can interrupt with course corrections. |
-| `/ship` | Final commit + push + PR in one step. | Wraps up an end-of-task flow. |
+| `/ship` | Final commit + push + PR in one step. | Wraps up an end-of-task flow. After ship, update the project's living-doc set per `<consumer>/CLAUDE.md` §"Documentation Requirements" — see `docs/methodology.md` §G. |
 | `/review` | Want a second opinion on the current diff before pushing. | Pairs well with one or more reviewer agents (see Appendix A). |
 | `/commit` | Stage and create a single commit. | For when you don't want push or PR yet. |
 | `/commit-push-pr` | Same as `/ship` but explicit about each step. | Useful when you want commit-vs-PR separation in your head. |
@@ -47,6 +47,15 @@ the project's `<consumer>/CLAUDE.md`, or a kit skill).
 | `{{TEST_FULL_CMD}}` | Full local test suite (slower / e2e / integration). | Before merging anything load-bearing. |
 | `{{LINT_CMD}}` | Lint. | Before pushing. |
 | `{{TYPECHECK_CMD}}` | Type check. | Before pushing if your stack has one. |
+
+## Conventions
+
+| Convention | Rule |
+|---|---|
+| Branch name | `<type>/<issue-number>-<kebab-description>` (type ∈ `feature/` `fix/` `chore/` `refactor/`) |
+| Branch creation | `gh issue develop <N> --name <branch> --checkout --base main` (canonical issue-to-branch hop; auto-closes issue when PR merges) |
+| Spec discipline | Specs ship in the same PR as code. See `docs/methodology.md` §B. |
+| Living docs | Update on every ship. See `docs/methodology.md` §G + `<consumer>/CLAUDE.md` §"Documentation Requirements". |
 
 ## Context thresholds
 
