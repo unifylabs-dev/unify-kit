@@ -35,6 +35,9 @@ your project's values, and you have a working baseline.
 | `snippets/rate-limiting-nextjs.md` | `customization` | `checkRateLimit` + `timingSafeDelay` for public endpoints; defends against brute force AND timing leaks. |
 | `snippets/middleware-nextjs.md` | `customization` | Dual-session + idle-timeout middleware for Next.js 14+. Identifies actors; does not authorize. |
 | `snippets/bdd-lite-test-naming.md` | `customization` | BDD-Lite test naming convention: `Journey: <slug>` describe block + Given/When/Then test names + `@daily` tagging. Stack-portable example uses Playwright. |
+| `snippets/ci-test-split-bash.sh` | `customization` | Smart CI test-split: always-run core infrastructure + diff-driven action tests + full-suite fallback. Bash variables with `${VAR:-default}` for stack adaptation. See `docs/methodology.md` §C "Test scheduling". |
+| `snippets/ci-pr-fast.yml.template` | `customization` | GitHub Actions workflow template bundling Tier-1 PR-fast (every push/PR) + Tier-2 daily-E2E (cron-only, with secrets-gate pattern). Renames to `<consumer>/.github/workflows/ci.yml`. |
+| `snippets/ci-nightly.yml.template` | `customization` | GitHub Actions workflow template for Tier-4 nightly (full unit + full e2e on cron + workflow_dispatch). Renames to `<consumer>/.github/workflows/nightly.yml`. |
 
 ## Placeholder vocabulary
 

@@ -1,0 +1,148 @@
+# templates/snippets/ci-pr-fast.yml.template
+# Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+# Stack-leaning toward Node + Playwright. Bundles Tier-1 (CI fast,
+# every push/PR) and Tier-2 (daily-E2E, schedule only) in one
+# workflow file per spec 12 Decision #2. The Tier-2 daily-E2E job
+# uses a secrets-gate pattern so the workflow can land before secrets
+# are configured.
+#
+# When you adopt this template, save it as
+# `<consumer>/.github/workflows/ci.yml` (strip the `.template` suffix).
+# Search-and-replace the `{{...}}` tokens. Adapt the commented-out
+# stack-specific setup steps (Node version, install command, etc.).
+#
+# Canonical source for the cost/feedback rationale: docs/methodology.md
+# §C "Test scheduling: match cost to feedback urgency."
+#
+# Authored: 2026-05-07
+# License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+name: CI
+
+on:
+  # CHANGE ME: branch name(s) if your default isn't `main`.
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # CHANGE ME: cron time. Default 8 AM UTC = 4 AM ET / 9 AM CET.
+    - cron: "0 8 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Tier 1: CI fast (every push/PR) ───────────────────────────────
+  test:
+    name: Type check & unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required by ci-test-split-bash.sh for merge-base.
+
+      # CHANGE ME: stack-specific setup. Examples below — uncomment ONE.
+      #
+      # # Node:
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "22"
+      #     cache: "npm"
+      # - name: Install dependencies
+      #   run: npm ci
+      #
+      # # Python:
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: "3.12"
+      #     cache: "pip"
+      # - name: Install dependencies
+      #   run: pip install -r requirements.txt
+      #
+      # # Ruby:
+      # - uses: ruby/setup-ruby@v1
+      #   with:
+      #     bundler-cache: true
+      #
+      # # Go:
+      # - uses: actions/setup-go@v5
+      #   with:
+      #     go-version: "1.22"
+
+      - name: Type check
+        run: "{{TYPECHECK_CMD}}"
+
+      - name: Unit tests (CI split)
+        run: "{{TEST_CI_CMD}}"
+
+  # ── Tier 2: E2E daily (cron only — NOT on PRs) ────────────────────
+  # Runs only on the scheduled trigger; saves ~15-20 min per PR.
+  # Secrets-gate pattern lets this workflow land before E2E secrets
+  # are configured — the job logs a skip and exits cleanly when the
+  # required secret is missing.
+  e2e-daily:
+    name: E2E daily tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    needs: test
+
+    steps:
+      # CHANGE ME: rename E2E_DATABASE_URL to whichever secret
+      # presence indicates "E2E env is configured."
+      - name: Check E2E secrets
+        id: secrets
+        env:
+          REQUIRED: "${{ secrets.E2E_DATABASE_URL }}"
+        run: |
+          if [ -n "$REQUIRED" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::E2E secrets not configured — skipping. Add E2E_DATABASE_URL (and any other required secrets) as repo secrets to enable."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.configured == 'true'
+
+      # CHANGE ME: same stack-specific setup as the `test` job. Plus
+      # any E2E-specific setup (browser install, DB seed, build).
+      #
+      # # Example for Node + Playwright:
+      # - uses: actions/setup-node@v4
+      #   if: steps.secrets.outputs.configured == 'true'
+      #   with:
+      #     node-version: "22"
+      #     cache: "npm"
+      # - name: Install dependencies
+      #   if: steps.secrets.outputs.configured == 'true'
+      #   run: npm ci
+      # - name: Install Playwright Chromium
+      #   if: steps.secrets.outputs.configured == 'true'
+      #   run: npx playwright install --with-deps chromium
+
+      - name: Build app
+        if: steps.secrets.outputs.configured == 'true'
+        run: "{{BUILD_CMD}}"
+
+      # CHANGE ME: replace with your `@daily`-tagged e2e command.
+      # See docs/methodology.md §C for the @daily tagging convention.
+      - name: Run @daily e2e tests
+        if: steps.secrets.outputs.configured == 'true'
+        run: |
+          # TODO: substitute your e2e runner. Examples:
+          #   npx playwright test --grep @daily
+          #   pytest -m daily tests/e2e
+          echo "REPLACE THIS LINE with your @daily e2e command"
+          exit 1
+
+      - name: Upload e2e report on failure
+        uses: actions/upload-artifact@v4
+        if: failure() && steps.secrets.outputs.configured == 'true'
+        with:
+          name: daily-e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

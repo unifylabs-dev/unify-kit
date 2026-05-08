@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `templates/issue-templates/feature-request.yml.template` + `templates/issue-templates/bug-report.yml.template` — GitHub form-schema YAML issue templates with required "Spec sections affected" fields that gate `/work-issue` Phase 0.
 - Add `## GitHub repo scaffolding` section to `templates/README.md` with worked-example `cp` commands for manual install of the PR + issue templates (bootstrap-installer extension still defers to v1.0.0).
 - Add `specs/12-test-discipline.md` proposing the test-scheduling layer (smart CI test-split bash snippet, methodology §C "Test scheduling" sub-section with the four-tier pyramid, two CI workflow templates `ci-pr-fast.yml.template` + `ci-nightly.yml.template`). No new placeholders. Spec only; implementation lands in a follow-up PR.
+- Add `templates/snippets/ci-test-split-bash.sh` — smart CI test-split (always-run core + diff-driven action tests + full-suite fallback). Bash variables with `${VAR:-default}` for stack adaptation. Implements `specs/12-test-discipline.md` Batch A.
+- Add `docs/methodology.md` §C "Test scheduling: match cost to feedback urgency" sub-section — four-tier pyramid (CI fast / E2E daily / local pre-PR / nightly), `@daily` tagging convention, three anti-pattern call-outs.
+- Add `templates/snippets/ci-pr-fast.yml.template` — GitHub Actions workflow bundling Tier-1 PR-fast + Tier-2 daily-E2E with the secrets-gate pattern.
+- Add `templates/snippets/ci-nightly.yml.template` — Tier-4 nightly workflow (full unit + full e2e on cron + workflow_dispatch).
 
 ### Changed
 
@@ -24,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Update `/work-issue` 8-phase wording in `templates/cheatsheet.md.template`, `templates/claude.md.template`, and `specs/02-templates.md`: the kit's prior redundant `review` step collapses into `PR creation` to fit Phase 0 (Spec Sync) at the front. Canonical phase list is now `spec sync → analysis → branch → planning → TDD → verification → review prep → PR creation`.
 - `templates/README.md` Usage step 2 grep example updated from `[A-Z_]+` to `[A-Z][A-Z0-9_]*` to match the broadened scrub-check regex (placeholders may contain digits, e.g. `{{TEST_E2E_DIR}}`).
 - `BACKLOG.md` "v1.0.0 release prep" — removed `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md` bullets; both ship earlier with content that earns their keep (see `specs/11-github-templates.md`). Replaced with a back-reference noting the supersession.
+- Expand `.github/workflows/lint.yml` shellcheck scope from `hooks/*.sh scripts/*.sh scripts/ci/*.sh` to additionally include `templates/snippets/*.sh`. Per spec 12 §"Lint scope expansion" AC — the kit dogfoods quality gates on its own bash snippets.
+- Add three template-table rows to `templates/README.md` for the new test-discipline templates (`ci-test-split-bash.sh`, `ci-pr-fast.yml.template`, `ci-nightly.yml.template`).
 
 ### Deprecated
 ### Removed
