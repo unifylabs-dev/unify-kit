@@ -140,6 +140,27 @@ This applies to bug fixes too: write the test that reproduces the bug, watch it 
 
 **Source skill**: `superpowers:test-driven-development`.
 
+### Test scheduling: match cost to feedback urgency
+
+Not every test needs to run on every push. Fast feedback on the change in hand, slower feedback on integration concerns, slowest feedback on cross-cutting regressions. The four-tier pyramid below is the working compromise: keep PR CI under ~3 minutes, gate locally on the full unit suite before opening a PR, run e2e on a daily schedule (not on PRs), and run everything cross-cutting nightly.
+
+| Tier | When | What runs | Typical time |
+|---|---|---|---|
+| **CI (fast)** | Every push/PR | Core infrastructure tests + tests for changed code paths. The gate for PR review. | 2–3 min |
+| **E2E daily** | Daily cron, NOT on PRs | `@daily`-tagged e2e tests covering critical read-only paths (auth, nav, list pages, route guards). | 5–8 min |
+| **Local (pre-PR)** | Before opening a PR | Full unit suite. The author's gate before requesting review. | 5–8 min |
+| **Nightly** | Daily cron, late hours | Full e2e suite + full unit suite. Catches cross-cutting regressions. | 60–75 min |
+
+**Tagging convention.** `@daily` = read-only tests on critical paths (no DB writes, no destructive actions). Untagged = nightly-only. The `@daily` tag is applied at the test level (and at minimum at the `Journey: <slug>` describe-block level — see §B "BDD-Lite naming convention"). At least one test per Tier-1 journey is tagged `@daily`.
+
+**Anti-patterns to avoid:**
+
+- **Running the full suite on every PR when CI takes >5 min.** Slow PR feedback degrades author behavior — authors stop running tests locally because "CI will catch it," but CI catches it 15 minutes later, and the iteration loop balloons.
+- **Running only the unit suite in CI.** No integration coverage means regressions in cross-module flows ship to production.
+- **Skipping nightly entirely.** Cross-cutting regressions accumulate silently. The nightly tier is cheap insurance — it costs the equivalent of one CI run per night and catches what the per-PR tiers miss.
+
+**Working implementation.** `templates/snippets/ci-test-split-bash.sh` ships a smart CI test-split for the Tier-1 (CI fast) tier: always-run core infrastructure tests + diff-driven action tests + full-suite fallback on push to default branch or on shallow checkout. Stack-leans toward Node + Vitest; the *shape* (always-run subset + diff-driven additions + fallback) ports cleanly to other runners. CI workflow shapes for Tier 1, Tier 2, and Tier 4 ship in `templates/snippets/ci-pr-fast.yml.template` and `templates/snippets/ci-nightly.yml.template`.
+
 ## D. Issue-driven development
 
 For any GitHub issue with acceptance criteria, invoke `/work-issue <N>`. Issues without acceptance criteria in checkbox format aren't ready to start — fix the issue first; ACs in prose let work drift.
