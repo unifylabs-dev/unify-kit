@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `templates/pull-request-template.md.template` — PR template with the load-bearing `## Spec Changes` two-checkbox section (gates "spec updated vs drift fix" decision) and a Verification Checklist parameterized by `{{TEST_FULL_CMD}}` + `{{BUILD_CMD}}`. Implements `specs/11-github-templates.md` Batch A.
 - Add `templates/issue-templates/feature-request.yml.template` + `templates/issue-templates/bug-report.yml.template` — GitHub form-schema YAML issue templates with required "Spec sections affected" fields that gate `/work-issue` Phase 0.
 - Add `## GitHub repo scaffolding` section to `templates/README.md` with worked-example `cp` commands for manual install of the PR + issue templates (bootstrap-installer extension still defers to v1.0.0).
+- Add `specs/12-test-discipline.md` proposing the test-scheduling layer (smart CI test-split bash snippet, methodology §C "Test scheduling" sub-section with the four-tier pyramid, two CI workflow templates `ci-pr-fast.yml.template` + `ci-nightly.yml.template`). No new placeholders. Spec only; implementation lands in a follow-up PR.
 
 ### Changed
 
