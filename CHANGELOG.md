@@ -13,11 +13,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `docs/methodology.md` §B "Specification-Driven Development" — three-layer mental model (SDD + BDD-Lite + TDD), vocabulary, seven hard rules, drift-fix decision tree, lazy-bootstrap rule, BDD-Lite naming convention. Existing §B–I renumber to §C–J. §D (Issue-driven dev) expanded with the `/work-issue` 8-phase contract (Phase 0 Spec Sync through Phase 7 PR creation).
 - Add `templates/snippets/bdd-lite-test-naming.md` — BDD-Lite test naming convention with Playwright example and adaptation notes for other runners.
 - Add `specs/11-github-templates.md` proposing GitHub repo scaffolding (PR template + feature-request and bug-report issue templates; manual `cp` install via `templates/README.md`; BACKLOG cleanup of v1.0.0 release-prep bullets that ship earlier). Spec only; implementation lands in a follow-up PR.
+- Add `templates/pull-request-template.md.template` — PR template with the load-bearing `## Spec Changes` two-checkbox section (gates "spec updated vs drift fix" decision) and a Verification Checklist parameterized by `{{TEST_FULL_CMD}}` + `{{BUILD_CMD}}`. Implements `specs/11-github-templates.md` Batch A.
+- Add `templates/issue-templates/feature-request.yml.template` + `templates/issue-templates/bug-report.yml.template` — GitHub form-schema YAML issue templates with required "Spec sections affected" fields that gate `/work-issue` Phase 0.
+- Add `## GitHub repo scaffolding` section to `templates/README.md` with worked-example `cp` commands for manual install of the PR + issue templates (bootstrap-installer extension still defers to v1.0.0).
 
 ### Changed
 
 - Expand placeholder vocabulary from 16 to 18: `{{DATA_MODEL_PATH}}` and `{{TEST_E2E_DIR}}` added (`specs/02-templates.md`, `templates/README.md`, `.github/workflows/scrub-check.yml`).
 - Update `/work-issue` 8-phase wording in `templates/cheatsheet.md.template`, `templates/claude.md.template`, and `specs/02-templates.md`: the kit's prior redundant `review` step collapses into `PR creation` to fit Phase 0 (Spec Sync) at the front. Canonical phase list is now `spec sync → analysis → branch → planning → TDD → verification → review prep → PR creation`.
+- `templates/README.md` Usage step 2 grep example updated from `[A-Z_]+` to `[A-Z][A-Z0-9_]*` to match the broadened scrub-check regex (placeholders may contain digits, e.g. `{{TEST_E2E_DIR}}`).
+- `BACKLOG.md` "v1.0.0 release prep" — removed `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md` bullets; both ship earlier with content that earns their keep (see `specs/11-github-templates.md`). Replaced with a back-reference noting the supersession.
 
 ### Deprecated
 ### Removed

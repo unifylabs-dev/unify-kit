@@ -1,0 +1,83 @@
+# templates/issue-templates/feature-request.yml.template
+# Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+# Stack-agnostic GitHub issue-template (form-schema YAML); structurally
+# inspired by a real consumer project's feature_request.yml, no
+# expression lifted.
+#
+# When you adopt this template, save it as
+# `<consumer>/.github/ISSUE_TEMPLATE/feature_request.yml` (strip the
+# `.template` suffix; underscored filename per GitHub's convention).
+#
+# Authored: 2026-05-07
+# License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+name: Feature Request
+description: Request a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please fill out the sections below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What feature do you want and why?
+      placeholder: Describe the feature and the problem it solves...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: >
+        Testable conditions that must be true when this feature is complete.
+        Use checkbox format. This section is required — the /work-issue
+        skill depends on it.
+      placeholder: |
+        - [ ] User can do X
+        - [ ] System validates Y
+        - [ ] Error shown when Z
+    validations:
+      required: true
+
+  - type: textarea
+    id: spec-impact
+    attributes:
+      label: Spec sections affected
+      description: |
+        Which spec(s) does this change touch? Use `docs/specs/modules/<name>.md`
+        or `docs/specs/journeys/<slug>.md` paths. For new modules, write
+        "NEW: <module-name>". For pure drift fixes (no behavior change),
+        write "None — fixing drift from spec".
+        See `docs/methodology.md` §B for the full SDD discipline.
+      placeholder: |
+        - docs/specs/modules/<module-name>.md (Behavior §<section>)
+        - docs/specs/journeys/<journey-slug>.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: design-notes
+    attributes:
+      label: Design Notes
+      description: Optional — UI mockups, architecture ideas, or constraints.
+      placeholder: Any design considerations...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: false
