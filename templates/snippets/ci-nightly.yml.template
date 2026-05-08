@@ -77,8 +77,8 @@ jobs:
 
       # CHANGE ME: replace with your full-e2e command.
       # No markdown placeholder for "full e2e" — the kit's vocabulary
-      # has {{TEST_CI_CMD}} (PR gate) and {{TEST_FULL_CMD}} (full unit
-      # local) but no e2e-specific entry. Substitute directly. Examples:
+      # has TEST_CI_CMD (PR gate) and TEST_FULL_CMD (full unit local)
+      # but no e2e-specific entry. Substitute directly. Examples:
       #   npx playwright test            (all e2e suites)
       #   pytest tests/e2e               (full e2e directory)
       #   bundle exec rspec spec/e2e
