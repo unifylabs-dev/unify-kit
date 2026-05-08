@@ -35,7 +35,7 @@ Your project's testing strategy lives in `<consumer>/CLAUDE.md` (typically under
 
 ## 5. Documentation rhythm
 
-The doc-on-ship rule: every `/ship` updates the project's living-doc set in the same commit as the code. The specific list (CHANGELOG, project_status, architecture, README, etc.) lives in `<consumer>/CLAUDE.md` "Documentation Requirements" — projects own their list. The principle is uniform: the cost of a stale doc is higher than the cost of an updated one, because stale docs *teach* errors. `docs/methodology.md` §F describes the rule in the kit's voice; `<consumer>/CLAUDE.md` tells you what to update for *this* project specifically. Read both.
+The doc-on-ship rule: every `/ship` updates the project's living-doc set in the same commit as the code. The specific list (CHANGELOG, project_status, architecture, README, etc.) lives in `<consumer>/CLAUDE.md` "Documentation Requirements" — projects own their list. The principle is uniform: the cost of a stale doc is higher than the cost of an updated one, because stale docs *teach* errors. `docs/methodology.md` §G describes the rule in the kit's voice; `<consumer>/CLAUDE.md` tells you what to update for *this* project specifically. Read both.
 
 ## 6. Pair an end-to-end feature
 

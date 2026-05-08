@@ -42,7 +42,7 @@ Tools encoding this: `superpowers:brainstorming`, `superpowers:writing-plans` + 
 
 `<consumer>/CLAUDE.md`, the team's onboarding doc, this kit itself — all evolve. The cost of a stale doc is higher than the cost of an updated one, because stale docs *teach* errors. A new dev reads the doc, learns the wrong thing, and proceeds with confidence in the wrong direction. Hard rule: docs update *with* the code, in the same commit. The implementation is the source of truth, but the doc is what people learn from — keep them in sync or one of them is lying.
 
-Tools encoding this: `docs/methodology.md` §F (the doc-on-ship rule), `<consumer>/CLAUDE.md`'s Documentation Requirements section (the project-specific list of living docs), the kit's own `changelog-check.yml` workflow (CI-enforces per-PR `[Unreleased]` updates).
+Tools encoding this: `docs/methodology.md` §G (the doc-on-ship rule), `<consumer>/CLAUDE.md`'s Documentation Requirements section (the project-specific list of living docs), the kit's own `changelog-check.yml` workflow (CI-enforces per-PR `[Unreleased]` updates).
 
 ### 4. Plain text, plain markdown, no magic
 
