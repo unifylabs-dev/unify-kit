@@ -1,0 +1,32 @@
+# init-project-test-config.yml
+#
+# Preset used by .github/workflows/bootstrap-fixture.yml init-project-fixture job.
+# Loaded by `scripts/init-project.sh --config <path>`.
+#
+# Schema:
+#   - Flat YAML scalar map. One placeholder per line. No nesting, no lists.
+#   - KEY: VALUE format. KEY must match /^[A-Z_][A-Z0-9_]*$/.
+#   - Comments allowed via leading '#'. Blank lines allowed.
+#   - Values may be optionally quoted with single or double quotes.
+#
+# Required keys: PROJECT_NAME, ONE_LINE_DESCRIPTION, REPO_URL.
+# All other keys are optional (defaults apply if omitted).
+
+PROJECT_NAME: TestProject
+ONE_LINE_DESCRIPTION: A synthetic test project for the unify-kit init-project.sh CI fixture.
+REPO_URL: https://github.com/unifylabs-dev/test-project
+STACK: TypeScript + Postgres + Next.js
+TEAM_NAME: Unify Labs Test Team
+LANG: TypeScript
+LANG_VERSION: "5.4"
+FRAMEWORK: Next.js 14
+DB: Postgres 16
+KEY_LIBS: tRPC, Prisma, Zod
+ROOT: .
+BUILD_CMD: npm run build
+TEST_CI_CMD: npm test
+TEST_FULL_CMD: npm run test:full
+LINT_CMD: npm run lint
+TYPECHECK_CMD: npm run typecheck
+DATA_MODEL_PATH: prisma/schema.prisma
+TEST_E2E_DIR: tests/e2e/

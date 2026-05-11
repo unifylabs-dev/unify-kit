@@ -1,0 +1,149 @@
+<!--
+templates/claude.md.template
+Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+Distilled minimal stack-agnostic core. Structurally inspired by but not lifted
+from the Ultimate Guide CLAUDE.md example. Project-specific identifiers belong
+in the consumer's filled-in copy, not here.
+Authored: 2026-05-04
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# TestProject
+
+> A synthetic test project for the unify-kit init-project.sh CI fixture.
+
+This file is project memory for Claude Code. Keep it accurate; stale entries
+teach errors. Update in the same commit as the code change that invalidates a
+section. Stack-specific patterns live in `templates/snippets/` and are appended
+here à la carte by consumers on Next.js (or skipped on other stacks).
+
+## 1. Project Overview
+
+- **Name**: TestProject
+- **Description**: A synthetic test project for the unify-kit init-project.sh CI fixture.
+- **Repository**: https://github.com/unifylabs-dev/test-project
+- **Stack**: TypeScript + Postgres + Next.js
+
+## 2. Architecture
+
+Replace this skeleton with the project-specific architecture summary; cross-link
+to `docs/architecture.md` if it exists.
+
+- **Entry points**: <describe the user-visible entry points — web, CLI, jobs>
+- **Data layer**: <describe persistence — database engine, schema-management approach, key tables>
+- **External services**: <list third-party integrations and their roles>
+
+## 3. Conventions
+
+- **Commit convention**: Conventional Commits encouraged (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- **File naming**: follow the canonical style for TypeScript (lowercase-dash for shell, kebab-case for routes, PascalCase for components — adapt per stack).
+- **Component patterns**: keep concerns local; lift state up only when two siblings need it.
+- **Imports**: project-specific path-aliases; avoid deep relative paths (`../../../`).
+- **Error handling**: never swallow errors silently — log, surface, or propagate.
+
+### Branch Naming
+
+`<type>/<issue-number>-<kebab-description>` where type is one of `feature/`,
+`fix/`, `chore/`, `refactor/`. Created via:
+
+```bash
+gh issue develop <N> --name <branch> --checkout --base main
+```
+
+The `gh issue develop` command is the canonical issue-to-branch hop — it
+wires the new branch back to the GitHub issue automatically, so the issue
+closes when the resulting PR merges. Example: `feature/83-staff-management`.
+
+## 4. Issue-Driven Development
+
+Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
+gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec sync
+→ analysis → branch → planning → TDD → verification → review prep → PR creation.
+Ships in the `superpowers` + `compound-engineering` plugins. Phase 0 reads
+`<consumer>/docs/specs/` before any code work; see `docs/methodology.md` §B
+(Specification-Driven Development) and §D (Issue-driven dev) for the contract.
+See `templates/cheatsheet.md.template` for the daily command list — this file
+does not restate it.
+
+### Specification Discipline
+
+`/work-issue` Phase 0 reads `<consumer>/docs/specs/` before any code work
+begins. Hard rules (full discipline in `docs/methodology.md` §B):
+
+- Every issue with non-trivial behavior change lists "Spec sections affected"
+  in its body. Pure drift fixes write `None — fixing drift from spec`.
+- Specs ship in the same PR as the code that implements them. Never separate PRs.
+- The spec describes behavior, not implementation. Don't quote schemas or copy
+  function signatures into specs — link via `code_anchors:` and describe in prose.
+- Module specs 200–500 lines; journey specs 100–300 lines. Longer = documenting
+  implementation; start over.
+- Bug-fix-only PRs (drift fix, no behavior change) tick the "no spec changes
+  needed" box in the PR template.
+
+See `templates/specs/{module,journey,README}.md.template` for the spec
+scaffolding.
+
+## 5. TDD Enforcement
+
+Red-Green-Refactor. Don't modify existing passing tests to accommodate new code;
+if existing tests break, fix the implementation, not the tests. If GREEN fails
+3 times for the same acceptance criterion, stop and ask for help. The
+`superpowers:test-driven-development` skill enforces this.
+
+## 6. Test Strategy
+
+- **Pyramid**: unit / integration / e2e.
+- **CI command**: `npm test` (the gate for PRs).
+- **Full local**: `npm run test:full` (slower; run before merging anything load-bearing).
+- **Tier discipline**: keep unit tests fast and isolated; use integration tests for cross-module contracts; reserve e2e for user-visible flows.
+
+## 7. Documentation Requirements
+
+Doc-on-ship rule: every PR that ships user-visible behavior updates the project's
+living-doc set in the same commit. Stale docs teach errors. The starter list:
+
+- `README.md` — setup, status, quickstart.
+- `CHANGELOG.md` — per-PR `[Unreleased]` entry.
+- `docs/architecture.md` — system design, updated when shape changes.
+
+Add project-specific files here (PRD, runbooks, user guides) and tag which
+behavior changes require which file to update.
+
+### PR Merge Process
+
+Before merging any PR, complete this checklist:
+
+1. Run the full test suite (`npm run test:full`) — all tests pass (0 failures).
+2. Run the production build (`npm run build`) — no errors.
+3. Feature verification: trace each test-plan item end-to-end; confirm
+   authorization, session, and data-isolation checks are in place; confirm
+   test coverage exists for happy path + error paths.
+4. Merge: `gh pr merge <number> --merge` (or your team's policy).
+5. Pull updated default branch locally; confirm a clean working tree.
+6. Update the project's living-doc set per the §"Documentation Requirements"
+   list above. Same commit if the PR didn't already cover them.
+
+This checklist is non-negotiable — never merge without running tests and build
+first. The PR template's Verification Checklist mirrors items 1–3.
+
+## 8. Living Document Rules
+
+CLAUDE.md is a self-improving reference. Update it when:
+
+| Trigger | Action |
+|---------|--------|
+| New pattern established | Add to the relevant section. |
+| Bug caused by missing knowledge | Add a gotcha to prevent recurrence. |
+| New env var or public route added | Update the relevant section (if your project carries Environment Variables or Middleware sections). |
+| Feature shipped | Update the Version Status table (if your project carries one). |
+| Outdated info found | Remove or correct — stale docs are worse than none. |
+
+Any session that ships a feature or fixes a bug SHOULD update this file in the
+same commit if the change introduces a pattern, convention, or gotcha not
+already documented. See `docs/methodology.md` §G (kit doc — link from your
+README) for the universal Living Documents principle.
+
+---
+
+Stack-specific patterns are NOT in this template. They live in `templates/snippets/`.
+A consumer using Next.js patterns appends snippet content into their filled-in `CLAUDE.md`.

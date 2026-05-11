@@ -1,16 +1,21 @@
 # unify-kit scripts
 
-This directory ships two consumer-facing Bash scripts:
+This directory ships three consumer-facing Bash scripts:
 
 - **`bootstrap-claude-config.sh`** — installs the kit's six security hooks into
   `~/.claude/hooks/` and registers them in `~/.claude/settings.json`. Idempotent;
   re-running on a clean state reports "no changes needed".
+- **`init-project.sh`** — installs the kit's 11 one-shot project templates
+  (CLAUDE.md / cheatsheet / charters / GitHub templates / specs index, etc.)
+  into a consumer project directory with `{{...}}` placeholder substitution.
+  Optionally installs Next.js stack snippets and CI workflow templates.
+  Idempotent; writes `<target>/.unify-kit-project-manifest.json` for safe re-runs.
 - **`audit-scan.sh`** — checks an existing `~/.claude/settings.json` (or any
   fixture) for inline credentials, unrestricted MCP servers, and missing hook
   files. Exit non-zero on any `[critical]` finding.
 
-Both target Bash 4+ on macOS / Linux. Per-hook documentation lives in
-[`hooks/README.md`](../hooks/README.md). Reproducible test inputs for both
+All three target Bash 4+ on macOS / Linux. Per-hook documentation lives in
+[`hooks/README.md`](../hooks/README.md). Reproducible test inputs for all
 scripts live in [`test-fixtures/`](test-fixtures/).
 
 ---
@@ -213,6 +218,196 @@ file against its recorded SHA — matches mean kit-installed (safe to overwrite
 when the kit ships a new version); mismatches mean consumer-edited (preserve
 unless `--force`). This is the basis of the upgrade-flow contract documented in
 `specs/08-living-docs-and-decision-log.md` §4.
+
+---
+
+## `init-project.sh`
+
+### Usage
+
+```
+scripts/init-project.sh <target-dir> [flags]
+```
+
+### Flags
+
+| Flag | Effect |
+|---|---|
+| `--config <yaml>` | Load 18-placeholder values from a flat-scalar YAML file (skips interactive prompts). |
+| `--dry-run` | Preview every change. Does not write, copy, or back up anything. |
+| `--force` | Overwrite consumer-edited targets. Backups still created. |
+| `--skip <list>` | Comma-separated list of source filenames or basenames to exclude from the one-shot install. Repeatable. |
+| `--snippets=<stack>` | Install stack snippets to `<target>/docs/snippets/`. Supported: `nextjs`, `none`. Required when `--with-ci-templates` is passed. |
+| `--with-ci-templates` | Install Tier-1 PR-fast + Tier-4 nightly workflow templates into `<target>/.github/workflows/` plus the CI test-split bash script to `<target>/scripts/`. |
+| `--help`, `-h` | Print usage and exit 0. |
+
+The positional `<target-dir>` is required and must exist.
+
+### What it installs
+
+**One-shot install** (always, unless excluded via `--skip`):
+
+| Source (kit) | Target (consumer) | Substitution |
+|---|---|---|
+| `templates/cheatsheet.md.template` | `<target>/CHEATSHEET.md` | yes |
+| `templates/claude.md.template` | `<target>/CLAUDE.md` | yes |
+| `templates/llms.txt.template` | `<target>/llms.txt` | yes |
+| `templates/ai-usage-charter.md.template` | `<target>/docs/ai-usage-charter.md` | yes |
+| `templates/mcp-policy.md.template` | `<target>/docs/mcp-policy.md` | yes |
+| `templates/security-checklist.md` | `<target>/docs/security-checklist.md` | yes |
+| `templates/team-onboarding.md.template` | `<target>/onboarding/team-onboarding.md` | yes |
+| `templates/pull-request-template.md.template` | `<target>/.github/pull_request_template.md` | yes |
+| `templates/issue-templates/feature-request.yml.template` | `<target>/.github/ISSUE_TEMPLATE/feature_request.yml` | no |
+| `templates/issue-templates/bug-report.yml.template` | `<target>/.github/ISSUE_TEMPLATE/bug_report.yml` | no |
+| `templates/specs/README.md.template` | `<target>/docs/specs/README.md` | yes |
+
+**Snippet install (`--snippets=nextjs`)** — 5 files lifted as-is into
+`<target>/docs/snippets/`:
+
+- `server-action-anatomy-nextjs.md`
+- `audit-logging-nextjs.md`
+- `rate-limiting-nextjs.md`
+- `middleware-nextjs.md`
+- `bdd-lite-test-naming.md` (stack-agnostic — bundled with any `--snippets=<stack>`)
+
+**CI templates (`--with-ci-templates`)**:
+
+- `templates/snippets/ci-pr-fast.yml.template` → `<target>/.github/workflows/ci.yml` (substituted)
+- `templates/snippets/ci-nightly.yml.template` → `<target>/.github/workflows/nightly.yml` (substituted)
+- `templates/snippets/ci-test-split-bash.sh` → `<target>/scripts/ci-test-split.sh` (lift-as-is, `chmod 0755`)
+
+**Per-instance templates** — printed as follow-up `cp` recipes, NOT installed
+(one file per retro / module / journey, named by the consumer):
+
+- `templates/methodology-retro.md.template`
+- `templates/specs/module.md.template`
+- `templates/specs/journey.md.template`
+
+The 18 placeholders are the canonical vocabulary documented in
+[`templates/README.md`](../templates/README.md#placeholder-vocabulary).
+Required: `PROJECT_NAME`, `ONE_LINE_DESCRIPTION`, `REPO_URL`. The rest have
+sensible defaults (e.g., `LANG=TypeScript`, `BUILD_CMD=npm run build`).
+
+### Idempotency
+
+A second run on a clean install reports every artifact as `up-to-date`, writes
+no backups, does not rewrite the manifest, and prints `no changes needed`.
+This is the basis of the upgrade-flow contract documented in
+`specs/08-living-docs-and-decision-log.md` §4.
+
+### Worked examples
+
+The CI workflow `bootstrap-fixture.yml` `init-project-fixture` job reproduces
+these examples end-to-end against the fixtures in
+[`test-fixtures/init-project/`](test-fixtures/init-project/). If you change the
+behavior, update the examples here in lockstep with the script.
+
+#### Example A — Greenfield project, full Next.js stack
+
+```bash
+mkdir my-new-project
+scripts/init-project.sh ./my-new-project \
+  --config ./my-config.yml \
+  --snippets=nextjs \
+  --with-ci-templates
+```
+
+Result: 11 one-shot templates + 5 snippets + 3 CI templates installed (19
+artifacts total). All placeholders substituted from `my-config.yml`.
+`<target>/.unify-kit-project-manifest.json` written.
+
+#### Example B — Existing project, one-shot only
+
+The consumer has an existing repo. They want CLAUDE.md / charters / GitHub
+templates but not Next.js snippets and not the CI workflow templates (their
+project has its own CI).
+
+```bash
+cd ./existing-project
+scripts/init-project.sh . --config ./my-config.yml
+```
+
+Result: 11 one-shot templates installed. Pre-existing `CLAUDE.md` (or any
+other target) is backed up with a `.bak.<UTC-ts>` suffix before being
+overwritten — unless `--force` is passed and the file has been edited away
+from the kit version. Run output reports each file as `installed`,
+`up-to-date`, or `overwrote`.
+
+#### Example C — Re-run idempotency
+
+The consumer has already run the script once successfully. They re-run the
+same command (e.g., as part of an upgrade flow after pulling the latest kit).
+
+```bash
+scripts/init-project.sh ./my-new-project \
+  --config ./my-config.yml \
+  --snippets=nextjs \
+  --with-ci-templates
+```
+
+Run output (excerpt):
+
+```
+up-to-date CHEATSHEET.md
+up-to-date CLAUDE.md
+... (all 19 artifacts)
+Summary: Installed: 0 / Up-to-date: 19 / Preserved: 0 / Skipped: 0 / Backups: none
+no changes needed
+```
+
+No file is modified, no backup is created, no manifest rewrite occurs.
+
+### Failure modes
+
+- **Bash < 4** — script aborts with install guidance. Associative arrays are
+  used throughout. macOS users: install via `brew install bash` and invoke
+  with `/opt/homebrew/bin/bash scripts/init-project.sh ...`.
+- **`jq` not on PATH** — script aborts with install guidance (`brew install
+  jq` / `apt install jq`).
+- **Required placeholder is empty** — script aborts before any write.
+- **Unsubstituted `{{...}}` token remains after substitution** — script aborts
+  before write. Indicates either a kit-template bug (introduced a token
+  outside the 18-vocab) or a corrupt input.
+- **Consumer-edited target without `--force`** — the script prints a
+  `WARNING:` and preserves the file. Run with `--force` to overwrite (a
+  backup of the consumer's edit is created first).
+
+### `<target>/.unify-kit-project-manifest.json`
+
+Sample after a clean install:
+
+```json
+{
+  "kit_version": "0.3.0-dev",
+  "installed_at": "2026-05-11T19:30:00Z",
+  "source": "https://github.com/unifylabs-dev/unify-kit",
+  "artifacts": {
+    "templates/cheatsheet.md.template": {
+      "target": "CHEATSHEET.md",
+      "sha256": "<hex>",
+      "installed_at": "2026-05-11T19:30:00Z"
+    },
+    "templates/claude.md.template": {
+      "target": "CLAUDE.md",
+      "sha256": "<hex>",
+      "installed_at": "2026-05-11T19:30:00Z"
+    }
+  }
+}
+```
+
+Each artifact records the source-relative path (used as the manifest key),
+the target-relative install path, the SHA-256 of the as-written content
+(post-substitution where applicable), and the install timestamp. Per-artifact
+`installed_at` is preserved across re-runs; only newly-installed or
+SHA-changed artifacts get a new timestamp. Top-level `installed_at` records
+the first-ever install time for the target directory.
+
+Structural lineage: `bootstrap-claude-config.sh` (above). The two scripts
+share the same preflight / atomic-write / SHA-256 manifest / backup-naming
+patterns. The key difference is substitution method: this script uses
+`sed`-based `{{NAME}}` search-replace; `bootstrap-claude-config.sh` uses `jq`
+for JSON merges.
 
 ---
 

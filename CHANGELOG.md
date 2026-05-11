@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+
+- Add `scripts/init-project.sh` — consumer-side bootstrap installer for project templates. Installs 11 one-shot templates with `{{...}}` placeholder substitution (9 substituted + 2 lift-as-is issue YAMLs), optional Next.js stack snippets (`--snippets=nextjs`, 5 files), and optional CI workflow templates (`--with-ci-templates`, 3 files). Writes `<target>/.unify-kit-project-manifest.json` recording per-artifact SHA-256 + install timestamps for safe re-runs. Mirrors `bootstrap-claude-config.sh`'s preflight / backup / atomic-write / SHA-256 manifest patterns; uses `sed`-based search-replace instead of `jq` merge. Idempotent (`no changes needed` on clean re-runs). Closes spec 11's "bootstrap-installer extension for `.github/` templates defers to v1.0.0" deferral by installing the PR + issue templates into `<target>/.github/`. Requires Bash 4+ with helpful error on Bash 3.x.
+- Add `scripts/test-fixtures/init-project/` — `empty/`, `partial/CLAUDE.md` (legacy-format pre-existing), `full/` and `full-with-ci/` (known-good outputs), `init-project-test-config.yml` (18-placeholder preset for CI), plus a fixtures README documenting layout + regeneration commands.
+- Extend `.github/workflows/bootstrap-fixture.yml` with a parallel `init-project-fixture` job — 6 CI steps covering clean install, backup-on-overwrite, idempotency, dry-run, `--force` restore-from-tamper, and the `--with-ci-templates --snippets=nextjs` full-flag path.
+
 ### Changed
 ### Deprecated
 ### Removed

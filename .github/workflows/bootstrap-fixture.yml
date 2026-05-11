@@ -126,3 +126,116 @@ jobs:
           grep -q 'inline-credential' out.txt || { echo "ERROR: missing inline-credential finding"; exit 1; }
           grep -q 'unrestricted-mcp' out.txt || { echo "ERROR: missing unrestricted-mcp finding"; exit 1; }
           grep -q 'missing-hook-file' out.txt || { echo "ERROR: missing missing-hook-file finding"; exit 1; }
+
+  init-project-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: "Step 1 - init-project: clean install into empty target"
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-empty"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml
+          # 11 one-shot targets present.
+          for f in CHEATSHEET.md CLAUDE.md llms.txt \
+                   docs/ai-usage-charter.md docs/mcp-policy.md docs/security-checklist.md docs/specs/README.md \
+                   onboarding/team-onboarding.md \
+                   .github/pull_request_template.md \
+                   .github/ISSUE_TEMPLATE/feature_request.yml .github/ISSUE_TEMPLATE/bug_report.yml; do
+            test -f "$TGT/$f" || { echo "ERROR: missing $f"; exit 1; }
+          done
+          # Manifest exists + valid JSON.
+          test -f "$TGT/.unify-kit-project-manifest.json"
+          jq -e . "$TGT/.unify-kit-project-manifest.json" > /dev/null
+          # No unsubstituted placeholders anywhere.
+          if grep -rohE '\{\{[A-Z][A-Z0-9_]*\}\}' "$TGT"; then
+            echo "ERROR: unsubstituted placeholders remain"; exit 1
+          fi
+
+      - name: "Step 2 - init-project: backup-on-overwrite for legacy CLAUDE.md"
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-partial"
+          mkdir -p "$TGT"
+          cp scripts/test-fixtures/init-project/partial/CLAUDE.md "$TGT/CLAUDE.md"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --force
+          # Legacy CLAUDE.md backed up.
+          backup=$(find "$TGT" -maxdepth 1 -name 'CLAUDE.md.bak.*' | head -1)
+          test -n "$backup" || { echo "ERROR: legacy CLAUDE.md not backed up"; exit 1; }
+          grep -q '2-space indent' "$backup" || { echo "ERROR: backup does not contain legacy content"; exit 1; }
+          # Kit version installed.
+          grep -q 'TestProject' "$TGT/CLAUDE.md" || { echo "ERROR: kit version not written"; exit 1; }
+
+      - name: "Step 3 - init-project: re-run idempotency"
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-empty"
+          OUTPUT=$(scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml 2>&1)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -qiE 'no changes needed|up.to.date' \
+            || { echo "ERROR: idempotency marker missing"; exit 1; }
+          # No new backups in target.
+          new_baks=$(find "$TGT" -name '*.bak.*' 2>/dev/null || true)
+          test -z "$new_baks" || { echo "ERROR: idempotent run created backups: $new_baks"; exit 1; }
+
+      - name: "Step 4 - init-project: --dry-run writes nothing"
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-dry"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --dry-run
+          created=$(find "$TGT" -type f 2>/dev/null || true)
+          test -z "$created" || { echo "ERROR: --dry-run created files: $created"; exit 1; }
+
+      - name: "Step 5 - init-project: --force restores tampered target"
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-partial"
+          orig_sha=$(shasum -a 256 "$TGT/CLAUDE.md" | cut -d' ' -f1)
+          echo '# tampered' > "$TGT/CLAUDE.md"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --force
+          restored_sha=$(shasum -a 256 "$TGT/CLAUDE.md" | cut -d' ' -f1)
+          test "$restored_sha" = "$orig_sha" || { echo "ERROR: --force did not restore original (sha=$restored_sha, want=$orig_sha)"; exit 1; }
+          # Tampered version backed up — find the backup containing the tampered marker
+          # (one of N backups in this dir; we don't rely on mtime ordering).
+          tampered_bak=""
+          for bak in "$TGT"/CLAUDE.md.bak.*; do
+            [ -f "$bak" ] || continue
+            if grep -q '^# tampered$' "$bak"; then
+              tampered_bak="$bak"
+              break
+            fi
+          done
+          test -n "$tampered_bak" \
+            || { echo "ERROR: no backup contains tampered content"; find "$TGT" -name 'CLAUDE.md.bak.*'; exit 1; }
+
+      - name: "Step 6 - init-project: --with-ci-templates --snippets=nextjs"
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-ci"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --with-ci-templates --snippets=nextjs
+          test -f "$TGT/.github/workflows/ci.yml" || { echo "ERROR: ci.yml missing"; exit 1; }
+          test -f "$TGT/.github/workflows/nightly.yml" || { echo "ERROR: nightly.yml missing"; exit 1; }
+          test -x "$TGT/scripts/ci-test-split.sh" || { echo "ERROR: ci-test-split.sh missing or not executable"; exit 1; }
+          count=$(find "$TGT/docs/snippets" -name '*.md' | wc -l)
+          test "$count" -eq 5 || { echo "ERROR: expected 5 snippets, got $count"; exit 1; }
+          jq -e . "$TGT/.unify-kit-project-manifest.json" > /dev/null
+          if grep -rohE '\{\{[A-Z][A-Z0-9_]*\}\}' "$TGT"; then
+            echo "ERROR: unsubstituted placeholders remain"; exit 1
+          fi

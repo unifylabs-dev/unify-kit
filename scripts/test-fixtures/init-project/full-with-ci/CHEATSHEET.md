@@ -1,0 +1,88 @@
+<!--
+templates/cheatsheet.md.template
+Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+Single source of truth for: command vocabulary (8 daily commands), daily skills (4),
+reviewer-agent mapping (Appendix A). docs/methodology.md §I references Appendix A;
+the onboarding curriculum (onboarding/week-1.md) references this whole file.
+Body fits one US-letter page when rendered at 12pt; Appendix A is the only
+spillable section.
+Authored: 2026-05-04
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# TestProject — Cheatsheet
+
+The pocket reference for working in this project. Skip the long docs on day one;
+read this. Everything here is one click into a longer canon (`docs/methodology.md`,
+the project's `<consumer>/CLAUDE.md`, or a kit skill).
+
+## Daily slash-commands
+
+| Command | When to invoke | Notes |
+|---|---|---|
+| `/work-issue <N>` | Any GitHub issue with acceptance criteria. | Runs the 8-phase gated flow (Phase 0–7): spec sync → analysis → branch → planning → TDD → verification → review prep → PR creation. Phase 0 (Spec Sync) reads `<consumer>/docs/specs/` before any code work — see `docs/methodology.md` §B + §D. |
+| `/brainstorm` | Ambiguous requests, new features, "we should probably…". | One question at a time, multiple choice, narrow scope. Hands off to `writing-plans`. |
+| `/phase` | Cross-cutting work (>8 files / >2 subsystems / >12 task bullets / natural break points). | Master plan + per-phase specs + handoffs + verification gates. |
+| `/lfg` | Well-scoped autonomous work where you've already aligned on approach. | Continuous execution; you can interrupt with course corrections. |
+| `/ship` | Final commit + push + PR in one step. | Wraps up an end-of-task flow. After ship, update the project's living-doc set per `<consumer>/CLAUDE.md` §"Documentation Requirements" — see `docs/methodology.md` §G. |
+| `/review` | Want a second opinion on the current diff before pushing. | Pairs well with one or more reviewer agents (see Appendix A). |
+| `/commit` | Stage and create a single commit. | For when you don't want push or PR yet. |
+| `/commit-push-pr` | Same as `/ship` but explicit about each step. | Useful when you want commit-vs-PR separation in your head. |
+
+## Daily skills
+
+| Skill | Use when |
+|---|---|
+| `brainstorming` | Before any non-trivial new feature or design decision. Don't skip; AI amplifies whatever discipline you have. |
+| `writing-plans` / `executing-plans` | After brainstorming. Plan first, execute under hard gates. |
+| `test-driven-development` | Any new behavior. Red → Green → Refactor; stop after 3 GREEN failures and ask. |
+| `verification-before-completion` | Before claiming "done." Run the suite, run typecheck, re-read the diff, cross-reference each AC. |
+
+## Build / test / lint / typecheck
+
+| Command | What | When |
+|---|---|---|
+| `npm run build` | Build the project. | Before pushing if your branch touches build-affecting code. |
+| `npm test` | Tests that run in CI. | Before opening a PR. |
+| `npm run test:full` | Full local test suite (slower / e2e / integration). | Before merging anything load-bearing. |
+| `npm run lint` | Lint. | Before pushing. |
+| `npm run typecheck` | Type check. | Before pushing if your stack has one. |
+
+## Conventions
+
+| Convention | Rule |
+|---|---|
+| Branch name | `<type>/<issue-number>-<kebab-description>` (type ∈ `feature/` `fix/` `chore/` `refactor/`) |
+| Branch creation | `gh issue develop <N> --name <branch> --checkout --base main` (canonical issue-to-branch hop; auto-closes issue when PR merges) |
+| Spec discipline | Specs ship in the same PR as code. See `docs/methodology.md` §B. |
+| Living docs | Update on every ship. See `docs/methodology.md` §G + `<consumer>/CLAUDE.md` §"Documentation Requirements". |
+
+## Context thresholds
+
+| % | Action | Why |
+|---|---|---|
+| 0–50% | Work freely. | Cache warm; no concern. |
+| 50–70% | Pay attention; finish current focused work before adding scope. | The next big jump degrades quality. |
+| 70–90% | `/compact` to summarize. | Brings context back into a usable window without losing the thread. |
+| 90%+ | `/clear` (mandatory). | Past 90%, the agent starts hallucinating from truncated context. |
+
+Rationale: anchored on the prompt-cache 5-minute TTL + observed agent behavior under context pressure (see `docs/methodology.md` §H).
+
+## Plan mode + phasing trigger
+
+- **Plan mode**: enter via `EnterPlanMode` for any non-trivial change. Mandatory before phase execution.
+- **Phasing**: invoke `/phase` for cross-cutting work (the >8 / >2 / >12 / natural-break-points heuristics above). Skip for single-file changes, refactors with no new logic, typos, or "just do it."
+
+---
+
+## Appendix A — Which reviewer when
+
+| Reviewer | Use when | Invoke via |
+|---|---|---|
+| `compound-engineering:ce-kieran-typescript-reviewer` | TypeScript / TS-strictness review of recently changed code. | `Agent` tool with `subagent_type` set to the reviewer's name. |
+| `compound-engineering:ce-security-reviewer` (alias `security-sentinel`) | Auth, permission, credential-handling, or anything PHI/PII-adjacent. | `Agent` tool, or via the compound-engineering review menu. |
+| `compound-engineering:ce-architecture-strategist` | Architectural / design-pattern review when adding services or evaluating refactors. | `Agent` tool. |
+| `pr-review-toolkit:silent-failure-hunter` | Error-handling review (catch blocks, fallback logic, swallowed errors). | `Agent` tool. |
+| `compound-engineering:ce-data-migration-expert` | DB migration safety, ID mappings, schema changes. | `Agent` tool. |
+
+These names match the current compound-engineering / pr-review-toolkit suites. The mapping is updated when the suites change — that's a cheatsheet edit (this file), not a methodology rewrite. `docs/methodology.md` §I cites this appendix; do not duplicate the list elsewhere.

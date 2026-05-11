@@ -1,0 +1,42 @@
+<!--
+templates/llms.txt.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Pattern reference: https://llmstxt.org/ — the llms.txt standard is a pattern
+inherited; content here is original. Keep this file under ~1K tokens — it's the
+elevator pitch any LLM tool reads first.
+Authored: 2026-05-04
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# TestProject
+
+> A synthetic test project for the unify-kit init-project.sh CI fixture.
+
+## What this is
+
+A short paragraph (1–2 sentences) describing the product or codebase. State the
+audience and the problem it solves; skip the marketing.
+
+## Stack
+
+- TypeScript 5.4
+- Next.js 14
+- Postgres 16
+- tRPC, Prisma, Zod
+
+## Key files
+
+- `CLAUDE.md` (./CLAUDE.md): project memory + conventions.
+- `README.md`: setup and quickstart.
+- `docs/architecture.md`: system design.
+- `docs/PRD.md`: product requirements.
+
+## Key conventions
+
+- <Replace with up to 8 short bullets covering branch naming, commit style, test discipline, doc-on-ship rule, and any project-specific invariants worth surfacing to an LLM tool on first read.>
+
+## How to ask for help
+
+- Use `/work-issue <N>` for issue-tracked work.
+- Use `/brainstorm` for ambiguous features.
+- Use `/phase` for cross-cutting changes.
