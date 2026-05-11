@@ -7,6 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+<!--
+New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
+-->
+
+## [0.2.0] — 2026-05-11
+
+Minor release closing the v0.2.x absorption-from-source-project arc. Four spec/implementation PR pairs (10–13) ported practice from a real consumer project into the kit while keeping the kit stack-agnostic: a Specification-Driven Development layer (durable module + journey specs as the contract that GitHub issues amend), GitHub repo scaffolding (PR + issue templates that gate `/work-issue` Phase 0), a test-discipline layer (smart CI test-split + four-tier pyramid canon + workflow templates with secrets-gate pattern), and consumer CLAUDE.md enrichment (Branch Naming + Spec Discipline + PR Merge Process + Living Document Triggers + a methodology-retro template + a 4-week onboarding ramp). v1.0.0 release-prep also advanced: `CODE_OF_CONDUCT.md` + `SECURITY.md` landed. Vocabulary grew from 16 placeholders to 18; methodology canon grew from §A–I to §A–J.
+
+### Added
 
 - Add `specs/10-sdd-layer.md` proposing an SDD layer (module + journey + specs-README templates, methodology §B SDD section, §D expansion with the `/work-issue` 8-phase contract, BDD-Lite snippet, two new placeholders). Spec only; implementation lands in a follow-up PR.
 - Add `templates/specs/module.md.template` + `templates/specs/journey.md.template` + `templates/specs/README.md.template` — durable spec templates for consumer use (implements `specs/10-sdd-layer.md` Batch A).
@@ -25,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Add `templates/methodology-retro.md.template` — methodology-retrospective skeleton (frontmatter + 5 body sections: What worked / What we tuned / Known gaps / New rules adopted / Action items). Implements `specs/13-claude-md-enrichment.md` Batch B.
 - Add `templates/cheatsheet.md.template` `## Conventions` section — branch-name format, `gh issue develop` invocation, spec-discipline pointer, living-docs pointer.
 - Add `templates/team-onboarding.md.template` §3 `### 4-week ramp` sub-section — Week 1 environment+docs / Week 2 paired `/work-issue` P3 / Week 3 solo P2 / Week 4 real backlog. Soft milestones, not gates.
+- Add `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1) and `SECURITY.md` (vulnerability disclosure process + response SLA). Closes 2 of 3 v1.0.0 release-prep items from `BACKLOG.md`. [PR #19]
 
 ### Changed
 
@@ -38,15 +54,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Update `templates/README.md` template-table to add `methodology-retro.md.template` row + extend `team-onboarding.md.template` row's description to mention the new 4-week ramp.
 - Sweep stale `docs/methodology.md §X` references that didn't propagate during spec 10's renumber (existing §B–I → §C–J): `docs/philosophy.md` and `onboarding/week-1.md` both pointed to "§F" for the doc-on-ship rule (now §G); `templates/cheatsheet.md.template` pointed to "§H" for Multi-agent review (now §I) and "§G" for context-discipline thresholds (now §H). All five references corrected. Caught during the verification-before-completion pass per `docs/methodology.md` §F.
 - `BACKLOG.md` "v1.0.0 release prep" — removed `CODE_OF_CONDUCT.md` and `SECURITY.md` bullets (both shipped via PR #19 on 2026-05-11) and consolidated the back-reference note. Only "Branch protection on `main`" remains; the entry now annotates that it's an operational task (GitHub repo settings via `gh api` or UI), not a code PR.
-
-### Deprecated
-### Removed
-### Fixed
-### Security
-
-<!--
-New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
--->
 
 ## [0.1.3] — 2026-05-06
 
