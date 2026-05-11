@@ -44,19 +44,12 @@ v0.1 hooks and scripts are Bash-only; Windows users use WSL per [`specs/03-hooks
 
 The following artifacts are required at v1.0.0 release per [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §5 but are not v0.1 gates. They land in a follow-up phase or a v0.1.x patch run.
 
-- **`CODE_OF_CONDUCT.md`** — Contributor Covenant or equivalent.
-- **`SECURITY.md`** — vulnerability disclosure process and response SLA.
-- **Branch protection on `main`** — required reviews, required status checks, no force-push.
+- **Branch protection on `main`** — required reviews, required status checks, no force-push. Operational task (GitHub repo settings via `gh api` or UI), not a code PR. Tracked here so the v1.0.0 release-prep checklist stays complete until the protection rules are enabled.
 
-> Previously listed here: `.github/ISSUE_TEMPLATE/` (bug + feature) and
-> `.github/PULL_REQUEST_TEMPLATE.md`. Both shipped earlier than originally
-> planned, with content that earns their keep — the issue templates' "Spec
-> sections affected" required field gates `/work-issue` Phase 0, and the
-> PR template's `## Spec Changes` two-checkbox section forces the explicit
-> "spec updated vs drift fix" decision. See `specs/11-github-templates.md`.
-> An ADR-proposal issue template was considered and rejected in spec 11
-> §"What does NOT land in this spec" — revisit if/when contributor volume
-> warrants it.
+> Previously listed here:
+>
+> - `.github/ISSUE_TEMPLATE/` (bug + feature) and `.github/PULL_REQUEST_TEMPLATE.md` — shipped via `specs/11-github-templates.md` with content that earns their keep (issue templates' "Spec sections affected" required field gates `/work-issue` Phase 0; PR template's `## Spec Changes` two-checkbox section forces the explicit "spec updated vs drift fix" decision). An ADR-proposal issue template was considered and rejected in spec 11 §"What does NOT land in this spec" — revisit if/when contributor volume warrants it.
+> - `CODE_OF_CONDUCT.md` (Contributor Covenant) and `SECURITY.md` (vulnerability disclosure process) — shipped via PR #19 on 2026-05-11.
 
 ## Aggregator submission
 
