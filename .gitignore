@@ -29,6 +29,11 @@ node_modules/
 # Phasing run state (created by /phase orchestrator; not committed)
 .claude/phasing/
 
+# Kit's own project manifest from init-project.sh self-bootstrap.
+# The kit IS the kit-version source of truth — tracking the manifest would
+# create a circular reference.
+.unify-kit-project-manifest.json
+
 # Stray
 .qodo/
 
