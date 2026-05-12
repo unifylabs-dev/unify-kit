@@ -1,0 +1,14 @@
+{
+  "name": "unify-kit",
+  "owner": {
+    "name": "Tomer Kurman",
+    "url": "https://github.com/unifylabs-dev"
+  },
+  "plugins": [
+    {
+      "name": "unifylabs-workflow",
+      "source": "./plugins/unifylabs-workflow",
+      "description": "Unifylabs team Claude Code workflow: skills (work-issue, ship, phasing, review-prototype, analyze-comms, promote-to-marketplace, compliance-research), 9 phase commands, 7 security/workflow hooks, opt-in statusline."
+    }
+  ]
+}

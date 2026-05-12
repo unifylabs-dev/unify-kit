@@ -1,0 +1,45 @@
+{
+  "skill_name": "phasing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "You are a fresh phase-executor session. The founder ran `claude /phase-execute 2026-05-01-test-run 2` in a new terminal. You have just opened.\n\nYour phase-2 spec (the issue body) reads as follows:\n\n---\n# Phase 2 — Add JWT auth to API\n\n## Goal\nThe REST API authenticates requests via JWT bearer tokens. Unauthenticated requests to protected routes return 401.\n\n## Cross-phase landscape\n- Phase 1 — Scaffold API + routes: complete\n- Phase 2 — JWT auth ← YOU ARE HERE\n- Phase 3 — Token refresh: pending\n\n## Inputs\n- master plan (#42)\n- predecessor handoff (#43 closed)\n- src/server.ts, src/routes/*.ts\n\n## Decisions baked in\n- Library: `jsonwebtoken` (chosen in master plan)\n- Token TTL: 1 hour (from research phase)\n\n## Work\n1. Write tests for JWT verification middleware (TDD red).\n2. Implement middleware in src/middleware/auth.ts.\n3. Wire middleware into all protected routes in src/server.ts.\n4. Run tests (TDD green).\n\n## Deliverables\n- src/middleware/auth.ts (new file)\n- src/server.ts (updated to use middleware)\n- tests/middleware/auth.test.ts (new test file)\n\n## Verification\n- command: `pnpm test tests/middleware/auth.test.ts` — exit 0\n- check: src/middleware/auth.ts exists with default export of `requireAuth` function\n- review: protected routes return 401 when token missing or invalid\n\n## Out of scope\n- Token refresh (phase 3)\n- Login/signup endpoints (phase 4)\n---\n\nWalk through what you do, in order. Show the FIRST tool call you would make, the plan you would draft (in markdown), the Self-verification footer for that plan, and a sketch of the handoff you'd write at the end.",
+      "expected_output": "The session enters plan mode FIRST (before any Edit/Write). It produces a plan covering work steps 1-4 with TDD pattern, lists files to touch, and includes a substantive Self-verification footer. After (simulated) approval, it executes, runs the verification command for real, and writes a handoff with all required sections, no DEFERRED, under 200 lines.",
+      "expectations": [
+        "The session's described first action is `EnterPlanMode` (NOT Edit, Write, Read, Bash, or any other tool). This is non-negotiable per §6.3.",
+        "The drafted plan includes explicit TDD steps (write test → run → see fail → implement → run → see pass).",
+        "The drafted plan ends with a `## Self-verification` section per §6.3a, with passes count, pass-N summary, and 'Final state: clean' (or clean after N fixes).",
+        "The handoff sketch contains all required sections from §10.2: 'What I did', 'Decisions I made', 'Deliverables', 'Verification (results)', 'Open questions', 'What the next phase needs to know'.",
+        "The handoff sketch contains ZERO instances of the literal string 'DEFERRED'.",
+        "The handoff sketch is under 200 lines (a sketch is fine, but the structure should fit).",
+        "All three verification step types from the spec (command, check, review) appear in the handoff with explicit PASS/FAIL results — none deferred to the orchestrator."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are a fresh phase-executor session. Your phase spec is for a writing/research phase:\n\n---\n# Phase 3 — Document the auth flow\n\n## Goal\nProduce a written architecture doc describing the authentication flow added in phase 2.\n\n## Inputs\n- master plan (#42)\n- predecessor handoffs (#43 #44)\n- src/middleware/auth.ts\n\n## Work\n1. Outline the doc structure.\n2. Draft each section with code examples.\n3. Cross-reference the JWT library docs.\n\n## Deliverables\n- docs/auth-architecture.md (new file)\n\n## Verification\n- check: docs/auth-architecture.md exists at the specified path with non-empty content.\n- review: doc covers (a) request flow, (b) middleware behavior on missing/invalid tokens, (c) token expiry handling.\n\n## Open\nThe spec doesn't say whether to include sequence diagrams. The audience is unspecified (developers? security reviewers? both?).\n---\n\nThe phase spec has ambiguity (audience + sequence diagrams). What do you do? Walk through your steps, show your first 1-2 tool calls, and explain how you handle the ambiguity before drafting the doc.",
+      "expected_output": "The session notices the ambiguity, runs §6.2 brainstorm/ask flow (asks the founder via AskUserQuestion or describes how it would, given subagent tool limits) before drafting. Then enters plan mode (mandatory per §6.3 even for writing phases). Plan includes outline + decisions about audience and diagrams. Self-verification footer present.",
+      "expectations": [
+        "The session identifies the ambiguity (audience unspecified, diagram inclusion unclear) and surfaces it BEFORE drafting any content.",
+        "The session asks the founder via AskUserQuestion (or describes the AskUserQuestion call it would make if the tool is available) with concrete option choices for audience and diagram inclusion — not free text.",
+        "After resolving ambiguity (or simulating resolution), the session enters plan mode (`EnterPlanMode`) — same mandatory rule applies to writing/research phases per §6.3.",
+        "The drafted plan includes an outline of the doc's sections, mapped to each verification 'review' criterion (a/b/c).",
+        "The plan ends with a Self-verification footer per §6.3a."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "You are a fresh phase-executor session. Your phase spec is:\n\n---\n# Phase 5 — Add prometheus metrics\n\n## Goal\nThe API exports prometheus-format metrics on /metrics, including request counts and latency histograms.\n\n## Work\n1. Add prom-client dependency.\n2. Implement /metrics endpoint.\n3. Add request counter middleware.\n4. Add latency histogram.\n5. Verify metrics show up.\n\n## Deliverables\n- src/metrics.ts (new file)\n- /metrics endpoint serving prom-format text\n\n## Verification\n- command: `curl -s localhost:3000/metrics | grep http_requests_total` — exit 0\n- check: src/metrics.ts exists\n- review: latency histogram has correct bucket boundaries\n---\n\nYou execute the plan. After implementation, you run the verification command. The test server fails to start due to a missing import. The `curl` command fails (server not running). You CANNOT fix this in the time available because the import problem is in code that's owned by another phase and out of scope for this phase.\n\nWhat do you do? Walk through your decision tree and show the handoff content you would write.",
+      "expected_output": "The session writes a `failed` handoff with the failing verification step explicitly recorded. It does NOT auto-fix (out of scope). It does NOT loop. It does NOT defer to orchestrator. It marks the phase failed; orchestrator will surface and offer recovery.",
+      "expectations": [
+        "The handoff is marked as `failed` (or contains the equivalent — e.g., a 'Status: failed' line, or the failing step recorded under Verification with FAIL).",
+        "The handoff records the SPECIFIC failing verification step (the curl command) with its actual error (server not starting).",
+        "The handoff does NOT contain the literal string 'DEFERRED'.",
+        "The session does NOT describe looping or retrying the verification (no retry loops).",
+        "The session does NOT describe auto-fixing the out-of-scope import problem.",
+        "The session does NOT describe deferring to the orchestrator (no 'orchestrator will handle this' phrasing). The phase fails — full stop, per §6.6 hard rule.",
+        "The handoff explicitly notes the import problem as an 'Open question' for the founder/downstream — it surfaces the issue without trying to solve it."
+      ]
+    }
+  ]
+}
