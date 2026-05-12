@@ -1,6 +1,6 @@
 # init-project-test-config.yml
 #
-# Preset used by .github/workflows/bootstrap-fixture.yml init-project-fixture job.
+# Preset used by .github/workflows/plugin-install-fixture.yml init-project-fixture job.
 # Loaded by `scripts/init-project.sh --config <path>`.
 #
 # Schema:
@@ -30,3 +30,5 @@ LINT_CMD: npm run lint
 TYPECHECK_CMD: npm run typecheck
 DATA_MODEL_PATH: prisma/schema.prisma
 TEST_E2E_DIR: tests/e2e/
+REPO_OWNER: "@unifylabs-dev/eng"
+COMPLIANCE_PROFILE: ""
