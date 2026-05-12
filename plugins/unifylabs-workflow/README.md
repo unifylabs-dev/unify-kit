@@ -31,7 +31,7 @@ The 9 phase commands that pair with the `phasing` skill:
 | `pre-commit-secrets.sh` | PreToolUse `Bash(git commit:*)` | Blocks commits containing API keys, tokens, secrets |
 | `output-secrets-scanner.sh` | PostToolUse `*` | Scans tool output for leaked secrets |
 | `file-guard.sh` | PreToolUse `Edit\|Write` | Blocks edits to credential files (`.env`, `*.pem`, etc.) |
-| `dangerous-actions-blocker.sh` | PreToolUse `Bash` | Blocks `rm -rf`, `git reset --hard`, etc. without confirmation |
+| `dangerous-actions-blocker.sh` | PreToolUse `Bash` | Blocks unambiguously destructive Bash patterns: rooted `rm -rf /`, SQL `DROP DATABASE/TABLE/SCHEMA`, `chmod 777 /`, `dd` to block devices, `find / ... -delete`, `mkfs.* /dev/*` |
 | `claudemd-scanner.sh` | SessionStart | Audits CLAUDE.md for prompt-injection patterns |
 | `mcp-config-integrity.sh` | SessionStart | Detects CVE-2025-54135/54136 patterns in MCP configs |
 | `marketplace-drift-check.sh` | SessionStart | Warns if `~/.claude/skills/*` has un-promoted skills (advisory; never blocks) |

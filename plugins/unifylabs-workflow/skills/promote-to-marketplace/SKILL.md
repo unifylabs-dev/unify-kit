@@ -28,7 +28,9 @@ Promotes a personal skill or hook from `~/.claude/` into the `unifylabs-workflow
 
 ## What to do
 
-1. **Move** the source from `~/.claude/...` into `~/Projects/unify-kit/plugins/unifylabs-workflow/{skills,hooks}/<name>/`.
+1. **Move** the source into the plugin:
+   - Skill: `mv ~/.claude/skills/<name> ~/Projects/unify-kit/plugins/unifylabs-workflow/skills/<name>` (whole directory)
+   - Hook: `mv ~/.claude/hooks/<name>.sh ~/Projects/unify-kit/plugins/unifylabs-workflow/hooks/<name>.sh` (single file)
 2. **Symlink back**: `ln -s` from the original `~/.claude/...` location to the marketplace path so the user's workflow continues seamlessly.
 3. **For hooks**: prompt the user to add the hook to `~/Projects/unify-kit/plugins/unifylabs-workflow/hooks/hooks.json` (which matcher? PreToolUse/PostToolUse/SessionStart?), then update the file.
 4. **Bump version**: edit `~/Projects/unify-kit/plugins/unifylabs-workflow/.claude-plugin/plugin.json` — minor bump for new skill/hook. Use `jq` to mutate JSON safely.
@@ -50,7 +52,11 @@ If the user changes their mind:
 ```bash
 cd ~/Projects/unify-kit
 git reset --hard HEAD              # if not yet committed
-# Then move the skill back:
+# Then move the skill or hook back:
+# Skill:
 rm ~/.claude/skills/<name>          # the symlink
 mv plugins/unifylabs-workflow/skills/<name> ~/.claude/skills/<name>
+# Hook:
+rm ~/.claude/hooks/<name>.sh        # the symlink
+mv plugins/unifylabs-workflow/hooks/<name>.sh ~/.claude/hooks/<name>.sh
 ```
