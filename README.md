@@ -171,14 +171,14 @@ tiered review comment.
 
 ## Status
 
-`v0.2.0` — released 2026-05-11. v1.0.0 is in the pipeline; ship pending the
-release-prep arc (UPGRADING.md + branch protection + tag). One consumer
-project ([`unify-kit-example-nextjs`](https://github.com/unifylabs-dev/unify-kit-example-nextjs))
+`v1.0.0` — released 2026-05-11. One consumer project
+([`unify-kit-example-nextjs`](https://github.com/unifylabs-dev/unify-kit-example-nextjs))
 has been bootstrapped end-to-end via `init-project.sh`, which satisfies the
 v1.0.0 single-gate trigger per
 [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md)
 §7. All 14 specs (00–13) are implemented as of v0.2.x — see
-[`specs/README.md`](specs/README.md) and per-spec frontmatter.
+[`specs/README.md`](specs/README.md) and per-spec frontmatter. Manual upgrade
+guidance for future kit versions lives in [`UPGRADING.md`](UPGRADING.md).
 
 Items deferred to v1.x — `update-from-upstream.sh`, filled-in `examples/`,
 one-liner curl install, npm / Homebrew / cargo distribution, `unify-kit doctor`
