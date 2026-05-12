@@ -4,6 +4,32 @@
 > changelog says **what changed**; this file says **what to DO when something
 > changed**.
 
+## v1.0.0 → v2.0.0 (breaking)
+
+v2.0.0 cuts over from the consumer-side `bootstrap-claude-config.sh` model
+to the Claude Code marketplace + plugin model. Full migration steps live
+in [`CHANGELOG.md`](CHANGELOG.md) under the `[2.0.0]` "Migration from
+v1.0.0" subsection — read that first. TL;DR:
+
+1. From a Claude session:
+   `/plugin marketplace add github.com/unifylabs-dev/unify-kit` then
+   `/plugin install unifylabs-workflow`. Replaces what
+   `bootstrap-claude-config.sh` used to do on `~/.claude/`.
+2. (Kit authors only — Tomer) Run `bash scripts/dev-symlink-skills.sh`
+   once from this repo's clone. Backs up `~/.claude/skills/*` +
+   commands/hooks/statusline, then symlinks user-level paths into the
+   plugin tree. `--dry-run` and `--rollback` available.
+3. (Per existing v1.0.0 project) Re-run
+   `bash scripts/init-project.sh <dir> --compliance=<profile> --snippets=<stack>`.
+   The script's manifest + SHA-256 detection handles safe re-runs.
+
+The rest of this document covers the historical v0.x → v1.x upgrade
+paths. The `bootstrap-claude-config.sh` references below are v1-era;
+v2.0.0 deletes that script. Use them only if you're upgrading between
+v0.x / v1.x patch versions on a machine that hasn't moved to v2 yet.
+
+---
+
 The kit ships three classes of artifact, each with its own upgrade mechanism.
 Read [§Overview](#overview) for the taxonomy, then jump to the section that
 matches the artifact class you're updating.
