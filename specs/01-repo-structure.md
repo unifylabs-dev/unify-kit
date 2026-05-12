@@ -1,6 +1,6 @@
 # Spec 01 — Repo Structure & Filename Canon
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (foundational)
 > Related: 02 (templates land in `templates/`), 03 (hooks in `hooks/`), 04 (workflows in `github-actions/`), 05 (scripts in `scripts/`), 06 (curriculum in `onboarding/`), 09 (kit's own CI in `.github/workflows/`)
 

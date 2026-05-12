@@ -1,6 +1,6 @@
 # Spec 05 — Scripts
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (sourcing modes, glossary), 01 (filename canon), 03 (hook bundle), Claude Code hook schema (verified at implementation time)
 > Related: 02 (templates), 09 (kit's own CI runs the bootstrap script against fixtures)
 

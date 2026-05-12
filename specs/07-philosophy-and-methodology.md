@@ -1,6 +1,6 @@
 # Spec 07 — Philosophy & Methodology
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (glossary), 01 (filename canon)
 > Related: 02 (`templates/cheatsheet.md.template` is the source of truth for command vocabulary and reviewer-agent mapping), 06 (curriculum teaches this canon), 08 (decision log records changes to this canon)
 

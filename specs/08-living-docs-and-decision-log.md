@@ -1,6 +1,6 @@
 # Spec 08 — Living Docs, Decision Log, Upgrade Flow, Public-Readiness
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (versioning + scrubbing decision), 01 (filename canon), 09 (kit's own CI enforces CHANGELOG discipline)
 > Related: every other spec (this one defines how the kit evolves)
 

@@ -1,6 +1,6 @@
 # Spec 03 — Hooks
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (sourcing modes, glossary), 01 (filename canon), 05 (bootstrap script + settings-merge algorithm), Claude Code hook schema (verified at implementation time — see [docs](https://docs.claude.com/en/docs/claude-code/hooks))
 > Related: 02 (security-checklist references hook bundle), 09 (kit's own CI shellchecks `hooks/*.sh`)
 

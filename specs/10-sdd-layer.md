@@ -1,6 +1,6 @@
 # Spec 10 — Specification-Driven Development (SDD) Layer
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (vision + sourcing modes + glossary), 01 (filename canon), 02 (placeholder vocabulary), 07 (philosophy + methodology canon), 08 (CHANGELOG discipline + ADR format), 09 (kit's own CI)
 > Related: 06 (onboarding curriculum), forthcoming spec 11 (GitHub repo scaffolding consumes spec paths from this spec), 13 (consumer CLAUDE.md enrichment references this layer)
 

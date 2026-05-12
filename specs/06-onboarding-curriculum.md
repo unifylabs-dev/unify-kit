@@ -1,6 +1,6 @@
 # Spec 06 — Onboarding Curriculum
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (glossary), 01 (filename canon), 02 (consumed by `templates/team-onboarding.md.template`, `templates/cheatsheet.md.template`, `templates/ai-usage-charter.md.template`), 05 (`scripts/bootstrap-claude-config.sh`, `scripts/audit-scan.sh`)
 > Related: 07 (philosophy is the *why*)
 

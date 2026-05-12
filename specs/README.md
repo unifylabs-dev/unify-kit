@@ -3,9 +3,11 @@
 Pre-implementation specs for `unify-kit`. Each spec describes one component of the
 final repo. **The build phase begins after specs are approved.**
 
-> **Status:** Hardened (revision 2, 2026-05-03). 9 specs + this index.
-> All foundational and component-level decisions are resolved as defaults; this
-> set is `/phase`-ready.
+> **Status:** All 14 specs (00–13) implemented as of v0.2.x (2026-05-11). See
+> per-spec frontmatter for the version each landed in. Originally hardened
+> (revision 2, 2026-05-03) as 9 specs + this index; the v0.2.x absorption arc
+> added specs 10–13 (SDD layer, GitHub templates, test discipline, CLAUDE.md
+> enrichment).
 
 ---
 
@@ -20,9 +22,13 @@ final repo. **The build phase begins after specs are approved.**
 | 04 | [`04-github-actions.md`](04-github-actions.md) | Comment-triggered PR-review workflow shipped to consumers |
 | 05 | [`05-scripts.md`](05-scripts.md) | Bootstrap script + settings-merge algorithm + audit-scan + test fixtures |
 | 06 | [`06-onboarding-curriculum.md`](06-onboarding-curriculum.md) | Day-1 / week-1 / day-30 with verifiable gates |
-| 07 | [`07-philosophy-and-methodology.md`](07-philosophy-and-methodology.md) | Core philosophy (5 principles) + methodology canon (A–G + pointers) |
+| 07 | [`07-philosophy-and-methodology.md`](07-philosophy-and-methodology.md) | Core philosophy (5 principles) + methodology canon (§A–J) |
 | 08 | [`08-living-docs-and-decision-log.md`](08-living-docs-and-decision-log.md) | CHANGELOG, ADRs, upgrade-flow contract, public-readiness checklist |
 | 09 | [`09-kit-ci.md`](09-kit-ci.md) | The kit's own CI: lint, scrub, bootstrap-fixture, changelog-check |
+| 10 | [`10-sdd-layer.md`](10-sdd-layer.md) | Specification-Driven Development layer (module + journey + specs-README templates, methodology §B, BDD-Lite snippet, 2 new placeholders) |
+| 11 | [`11-github-templates.md`](11-github-templates.md) | GitHub repo scaffolding (PR template + feature-request + bug-report issue templates) |
+| 12 | [`12-test-discipline.md`](12-test-discipline.md) | Smart CI test-split + four-tier pyramid + workflow templates (`ci-pr-fast.yml.template`, `ci-nightly.yml.template`) |
+| 13 | [`13-claude-md-enrichment.md`](13-claude-md-enrichment.md) | Consumer `CLAUDE.md` enrichment (Branch Naming + Spec Discipline + PR Merge Process + Living Doc Triggers), methodology-retro template, 4-week onboarding ramp |
 
 ---
 

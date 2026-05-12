@@ -1,6 +1,6 @@
 # Spec 00 — Vision, Naming, License, Glossary
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: (none — foundational)
 > Related: 01 (structure), 07 (philosophy), 08 (living docs)
 

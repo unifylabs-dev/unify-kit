@@ -1,6 +1,6 @@
 # Spec 02 — Templates
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (vision + glossary + sourcing modes), 01 (filename canon)
 > Related: 03 (hooks reference templates), 06 (curriculum consumes onboarding + cheatsheet templates), 09 (kit's own CI scrubs template placeholders)
 

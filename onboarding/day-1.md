@@ -9,6 +9,20 @@ Authored: 2026-05-04
 
 By end of day 1 you should have a working environment, the right docs read, and one trivial commit/PR shipped. The point isn't shipping the world-changing fix — it's exercising every gate the kit installs, end-to-end, on something low-stakes.
 
+## 0. Initialize the project (if it isn't already)
+
+If this is a fresh project that hasn't been bootstrapped with the kit, run from the kit's clone:
+
+```bash
+/opt/homebrew/bin/bash scripts/init-project.sh /path/to/your/project \
+  --config /path/to/init-project-config.yml \
+  --snippets=<stack> --with-ci-templates
+```
+
+The script installs 11 one-shot templates (`CLAUDE.md`, cheatsheet, AI usage charter, MCP policy, security checklist, PR template, issue templates, specs index, etc.), substitutes the 18 `{{...}}` placeholders from your config, and writes `<project>/.unify-kit-project-manifest.json` so future re-runs are safe. See [`scripts/README.md`](../scripts/README.md#init-projectsh) for the full flag set, `--skip <basename>` opt-outs, and worked examples. `init-project.sh` requires Bash 4+ — `/opt/homebrew/bin/bash` is the macOS Homebrew install location.
+
+If the project IS already bootstrapped, `<project>/.unify-kit-project-manifest.json` will exist — verify it's current by running `init-project.sh <project> --dry-run --config <preset>` and confirming `no changes needed`, then skip to §1.
+
 ## 1. Set up your machine
 
 Install Claude Code per the official docs at `https://docs.claude.com/claude-code`. Verify the install:
@@ -74,12 +88,13 @@ The trivial fix is the means, not the end. By the time the comment posts you've 
 
 Check each one before logging off:
 
+- [ ] `scripts/init-project.sh` exits 0 against the project repo (or `<project>/.unify-kit-project-manifest.json` exists and `init-project.sh <project> --dry-run` reports `no changes needed`)
 - [ ] `bootstrap-claude-config.sh` exits 0 — output captured in your terminal
 - [ ] `audit-scan.sh ~/.claude/settings.json` exits 0 with zero `critical` findings
 - [ ] First PR opened against the project repo (any branch with at least one committed change)
 - [ ] `/claude-review` invoked on that PR and a tiered review comment is posted
 
-These four are objectively verifiable. If any is missing, day 1 isn't complete — fix it before moving to week 1. The hard gates are deliberately short — four items, all artifact-based, all enforceable by a glance at git or the terminal.
+These five are objectively verifiable. If any is missing, day 1 isn't complete — fix it before moving to week 1. The hard gates are deliberately short — five items, all artifact-based, all enforceable by a glance at git or the terminal.
 
 ## Day-1 soft guidance
 

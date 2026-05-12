@@ -1,6 +1,6 @@
 # Spec 11 — GitHub Repo Scaffolding (PR + Issue Templates)
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (vision + sourcing modes), 01 (filename canon), 02 (placeholder vocabulary), 08 (CHANGELOG discipline + ADR format), 09 (kit's own CI), 10 (SDD layer — these templates encode SDD discipline)
 > Related: forthcoming 12 (test discipline), 13 (consumer CLAUDE.md enrichment)
 

@@ -1,6 +1,6 @@
 # Spec 04 — GitHub Actions
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (sourcing modes, glossary), 01 (filename canon), 02 (cheatsheet sourcing for command vocab in the prompt)
 > Related: 03 (security mindset), 06 (curriculum's review loop), 09 (kit's own CI lints this workflow's YAML)
 

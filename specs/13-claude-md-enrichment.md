@@ -1,6 +1,6 @@
 # Spec 13 — Consumer CLAUDE.md Enrichment + Retro Template + Onboarding Ramp
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (vision + sourcing modes), 01 (filename canon), 02 (placeholder vocabulary + claude.md.template's 8-section shape), 06 (onboarding curriculum), 07 (philosophy + methodology canon), 08 (CHANGELOG discipline), 10 (SDD layer — referenced by claude.md.template's spec-discipline expansion), 11 (PR template referenced by claude.md.template's PR Merge Process), 12 (test-discipline layer)
 > Related: closes the v0.2.x absorption-from-source-project arc; v1.0.0 follow-ups remain (CODE_OF_CONDUCT, SECURITY, branch protection).
 

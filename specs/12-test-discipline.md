@@ -1,6 +1,6 @@
 # Spec 12 — Test Discipline (CI Test-Split + Pyramid Canon + Workflow Templates)
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (vision + sourcing modes), 01 (filename canon), 02 (placeholder vocabulary), 07 (philosophy + methodology canon), 08 (CHANGELOG discipline), 09 (kit's own CI), 10 (SDD layer — BDD-Lite naming used here)
 > Related: 11 (PR template's Verification Checklist references the per-PR test command)
 

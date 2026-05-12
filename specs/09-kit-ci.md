@@ -1,6 +1,6 @@
 # Spec 09 — The Kit's Own CI
 
-> Status: Draft / awaiting review
+> Status: Implemented in v0.2.x
 > Depends on: 00 (forbidden-strings list, glossary), 01 (filename canon), 02 (placeholder vocabulary), 03 (hook bundle), 04 (workflow YAML), 05 (bootstrap script + fixtures), 08 (CHANGELOG discipline)
 > Related: every other spec — this one validates them.
 

@@ -22,7 +22,7 @@ This directory ships ONE workflow that consumers copy into their own repos: a co
 
 1. Copy `claude-code-review.yml` to `.github/workflows/` in your repo.
 2. Copy `prompts/code-review.md` to `.github/workflows/prompts/` in your repo.
-3. Add the `ANTHROPIC_API_KEY` repo secret. In GitHub: **Settings → Secrets and variables → Actions → New repository secret**. (Alternative: install Anthropic's GitHub App and use `claude_code_oauth_token` instead — see [Secrets](#secrets) below.)
+3. **Install the [Claude Code GitHub App](https://github.com/apps/claude)** on your repo or org — required for both auth paths (see [Secrets](#secrets) below). Then add the `ANTHROPIC_API_KEY` repo secret via **Settings → Secrets and variables → Actions → New repository secret**, or via `gh secret set ANTHROPIC_API_KEY --body "$YOUR_KEY"`. (If you prefer OAuth over an API key, use `CLAUDE_CODE_OAUTH_TOKEN` instead — see [Secrets](#secrets).)
 4. Edit `prompts/code-review.md`'s `Stack-specific opt-in` section. Uncomment the blocks that apply to your stack; remove or replace the rest. Add your own conventions in the generic placeholder block.
 5. Open a test PR and comment `/claude-review`. Verify the tiered summary comment posts within ~2 minutes.
 
@@ -38,14 +38,22 @@ The workflow exposes three configurable inputs via repo variables (override via 
 
 ## Secrets
 
-`ANTHROPIC_API_KEY` is required by default. The workflow reads it via `${{ secrets.ANTHROPIC_API_KEY }}`.
+The `anthropics/claude-code-action@v1` action **requires the [Claude Code GitHub App](https://github.com/apps/claude)** to be installed on your repo or org. The app provides the GitHub-side OIDC token-exchange that the action's `setupGitHubToken` step needs. Without the app installed, the action exits early with `401 Claude Code is not installed on this repository` regardless of which auth secret you set — this is true for both the API-key and OAuth auth paths. Install the app first, then add ONE of the following secrets.
 
-**Alternative — Anthropic GitHub App (OAuth):** install Anthropic's GitHub App on your org or repo. The App provides a `claude_code_oauth_token` that the action can use in place of an API key. To switch:
+**API key (default):** add an `ANTHROPIC_API_KEY` repo secret. The workflow reads it via `${{ secrets.ANTHROPIC_API_KEY }}`. Setup:
+
+```bash
+gh secret set ANTHROPIC_API_KEY --repo <your-org>/<your-repo> --body "$ANTHROPIC_API_KEY"
+```
+
+Or via the GitHub UI: **Settings → Secrets and variables → Actions → New repository secret**.
+
+**OAuth (alternative):** the Claude Code GitHub App also provides a `claude_code_oauth_token` that the action can use in place of an API key. To switch:
 
 - Replace `anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}` with `claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}` in `claude-code-review.yml`.
 - Remove the `ANTHROPIC_API_KEY` repo secret if you are not using it elsewhere.
 
-The kit ships with the API-key default because it has fewer setup steps for consumers without Anthropic GitHub App access.
+The kit ships with the API-key default because it has fewer setup steps; the GitHub App install is required either way.
 
 ## Verification recipe
 
@@ -57,7 +65,8 @@ The kit does NOT run live PR reviews against itself in CI (recursion + cost — 
 
 If nothing posts within 5 minutes, check the **Actions** tab → **Claude Code Review** run → step logs. Common failure modes:
 
-- `ANTHROPIC_API_KEY` repo secret not set → action exits early with an auth error in the logs.
+- Claude Code GitHub App not installed → action exits early with `401 Claude Code is not installed on this repository` on the `setupGitHubToken` step. Install the app at <https://github.com/apps/claude>.
+- `ANTHROPIC_API_KEY` repo secret not set (or `CLAUDE_CODE_OAUTH_TOKEN` if using OAuth) → action exits early with an auth error in the logs.
 - `CLAUDE_MD_PATH` points to a non-existent file → workflow logs a warning and continues without project context (this is informational, not a failure).
 - Claude API rate-limited or 5xx → action surfaces the error; retry the `/claude-review` comment after a few minutes.
 - Repo runner permissions stripped (`permissions: contents: read` removed) → action cannot read the diff; restore the workflow's `permissions:` block exactly as shipped.
