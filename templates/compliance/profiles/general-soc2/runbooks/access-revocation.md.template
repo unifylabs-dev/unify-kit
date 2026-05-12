@@ -1,0 +1,142 @@
+<!--
+templates/compliance/profiles/general-soc2/runbooks/access-revocation.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Access Revocation Runbook (SOC 2-aligned)
+
+> **This is a starting-point template, not audit advice and not legal advice.**
+> SOC 2 auditors evaluate joiner / mover / leaver control operation across
+> the audit period. Documented procedure + per-event evidence is what
+> auditors sample.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## When to invoke
+
+- A team member or contractor leaves the organization (planned or
+  immediate).
+- A team member's role changes such that one or more access grants
+  are no longer aligned with least privilege.
+- A vendor or contractor engagement ends.
+- A credential is suspected of compromise (also see
+  [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md)).
+
+## SLAs (auditor-sampled)
+
+| Tier | Examples | SLA target |
+|---|---|---|
+| **Critical** | Production secrets, root cloud accounts, database admin, security-tooling admin. | ≤ 1 hour from trigger. |
+| **Elevated** | Production application access, customer-data access, deployment pipelines, on-call paging. | ≤ 4 hours from trigger. |
+| **Standard** | Development environments, internal-tool accounts, documentation systems. | ≤ 24 hours from trigger. |
+| **Reference-only** | Read-only public docs. | ≤ 72 hours from trigger. |
+
+For suspected compromise, all tiers compress to "immediate."
+
+## Steps
+
+### 1. Ticketed revocation request (CC6.3 evidence)
+
+A revocation event begins with a ticket. The ticket captures:
+
+- Subject (person whose access is being revoked).
+- Trigger (termination, role change, contract end, compromise
+  suspected).
+- Scope (which systems / roles).
+- Tier (drives SLA).
+- Requestor (and approver, where applicable).
+- Target completion timestamp.
+
+Auditors sample these tickets during the audit period.
+
+### 2. Identify scope (≤ 30 minutes from trigger)
+
+- Pull the subject's row from the access matrix.
+- Pull active sessions / tokens / API keys.
+- Identify in-flight work requiring handoff.
+- Identify vendor / integration credentials issued to the subject.
+
+### 3. Revoke (per tier SLA, highest tier first)
+
+- Identity provider / SSO.
+- Direct vendor accounts.
+- API tokens / service accounts.
+- Physical access (badges, keys) where applicable.
+
+### 4. Confirm least privilege for the remaining access (mover only)
+
+When this is a role change rather than a termination, after revoking
+the old role's grants, confirm the *new* role's grants do not exceed
+least privilege.
+
+### 5. Audit-log the action (CC4 + CC6 evidence)
+
+Per
+[`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md),
+log each revocation with standard fields plus the ticket reference.
+
+### 6. Capture evidence
+
+For audit purposes, capture:
+
+- The ticket (created, approved, completed timestamps).
+- The audit-log entries for the revocations.
+- A "before / after" snapshot of the subject's access matrix.
+
+Store under the audit-evidence retention path (`[fill in]`).
+
+### 7. Quarterly access review (CC6.3 evidence)
+
+Independently of trigger events, every quarter:
+
+- Each system owner attests that current access grants align with
+  current roles.
+- Discrepancies are remediated (most common: grants left over from
+  past projects, contractor whose engagement ended without ticketed
+  offboarding).
+
+The quarterly attestation itself is a sampled artifact in the audit.
+
+### 8. Notify
+
+- Affected person + their manager (role change).
+- Team per internal-comms policy (termination).
+- Vendor account-management contacts (vendor offboarding).
+- For suspected compromise: legal counsel first; do not notify the
+  affected person.
+
+## Failure modes (auditor-relevant)
+
+- Subject's access persists past the SLA → escalation procedure
+  defined; escalations themselves are sampled.
+- No ticket exists for an observed revocation → control gap.
+- Quarterly review missed → control gap; documented compensating
+  control + remediation plan needed before audit.
+- Mover scenario with old grants left in place → access-review
+  catches it; if it persists past the next quarterly review, it's a
+  control failure.
+
+## Verification (within 24 hours of completion)
+
+- [ ] Re-attempt login at SSO. Expectation: fail.
+- [ ] Spot-check 3 critical-tier systems. Expectation: no active
+      session.
+- [ ] Spot-check API tokens. Expectation: rejected.
+- [ ] Ticket marked complete with evidence attached.
+- [ ] Audit log shows the revocation actions.
+
+## Related
+
+- [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md) —
+  containment when compromise is suspected.
+- [`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md) —
+  evidence requirements.
+- [`../docs/compliance/soc2-controls-mapping.md`](../docs/compliance/soc2-controls-mapping.md) —
+  CC6 controls implemented by this runbook.
+- [`../docs/compliance/security-policies-index.md`](../docs/compliance/security-policies-index.md) —
+  Access Control policy + HR Security policy reference this runbook.
+- baseline:
+  [`../../baseline-pipeda/runbooks/access-revocation.md`](../../baseline-pipeda/runbooks/access-revocation.md).

@@ -1,0 +1,194 @@
+<!--
+templates/compliance/profiles/general-soc2/docs/compliance/breach-response.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Pattern reference: NIST SP 800-61 Rev. 2 incident-handling phase model
+  (Preparation → Detection & Analysis → Containment, Eradication, &
+  Recovery → Post-Incident Activity); public-information structure;
+  prose authored independently.
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+When composed with baseline-pipeda, this file replaces baseline's
+breach-response.md. PIPEDA notification still applies if personal
+information is in scope.
+-->
+
+# {{PROJECT_NAME}} — Incident Response Runbook (SOC 2-aligned)
+
+> **This is a starting-point template, not audit advice and not legal advice.**
+> SOC 2 auditors examine the IR program's design, testing,
+> and operating effectiveness. The runbook below is a structural
+> scaffold consistent with NIST SP 800-61 and TSC CC7; an actual audit
+> measures the gap between the documented program and operating
+> reality.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]` · **Last tabletop exercise**:
+`[fill in: YYYY-MM-DD + summary]`
+
+## Authoritative references
+
+- AICPA 2017 TSC (CC7 — System Operations):
+  <https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022>
+  (accessed 2026-05-12).
+- NIST SP 800-61 Rev. 2 (Computer Security Incident Handling Guide):
+  <https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final>
+  (accessed 2026-05-12).
+
+## Definitions
+
+- **Event** — an observed occurrence that may be relevant to security.
+- **Incident** — an event that violates or threatens to violate the
+  organization's security objectives.
+- **Breach** — an incident involving confirmed unauthorized access to,
+  disclosure of, or compromise of data.
+- **Severity (1–4)** — internal scale; see Phase 2.
+
+## Roles
+
+| Role | Person (today) | Responsibilities |
+| --- | --- | --- |
+| Incident Commander | `[fill in]` | Coordinates response; final-call authority on containment trade-offs. |
+| Technical Lead | `[fill in]` | Investigates; contains; preserves evidence. |
+| Communications Lead | `[fill in]` | Internal updates; customer notifications; status-page updates. |
+| Legal / Compliance | `[fill in]` | Regulatory notification analysis; subpoena handling. |
+| Scribe | `[fill in]` | Maintains incident timeline; document for post-mortem. |
+
+The Incident Commander and Technical Lead are different people when
+the incident is severe enough to require both running simultaneously.
+
+## Phase 1 — Preparation (continuous)
+
+Activities that happen **before** an incident:
+
+- Maintain on-call rotation and paging.
+- Maintain the incident-runbook (this document).
+- Maintain alert routes to the right team.
+- Quarterly tabletop exercise; annual full-scope exercise.
+- Maintain notification templates (customer, regulator, internal).
+- Maintain the evidence-collection toolkit (forensic snapshots, log
+  exports).
+- Maintain customer-contract IR commitments (notification SLAs vary
+  by contract — track the strictest applicable SLA).
+
+## Phase 2 — Detection & Analysis
+
+### Detection sources
+
+- Monitoring / alerting (`[fill in: tooling]`).
+- Customer report.
+- Internal report (engineer, security, support).
+- Vendor advisory.
+- External researcher / bug bounty.
+
+### Initial analysis (≤ 30 minutes from page)
+
+- Confirm the event is plausibly real (rule out monitoring noise).
+- Classify severity:
+  - **Sev 1**: confirmed breach of customer data; service entirely
+    unavailable; safety / regulatory exposure.
+  - **Sev 2**: significant impact to a subset of customers or
+    confirmed unauthorized access without confirmed data exfiltration;
+    or wide-blast-radius performance event.
+  - **Sev 3**: degradation affecting some customers; security finding
+    that needs prompt response but not active exploit.
+  - **Sev 4**: minor, contained, no customer impact.
+
+### Triage (≤ 1 hour from detection for Sev 1 / Sev 2)
+
+- Scope: how many customers / records affected?
+- Vector: how did the event happen?
+- Active vs. contained?
+- Reportable to a regulator? (Compose with privacy profile; e.g.,
+  PIPEDA RROSH analysis.)
+- Reportable to customers per contract?
+
+## Phase 3 — Containment, Eradication & Recovery
+
+### Containment (Sev 1 ≤ 1 hour; Sev 2 ≤ 4 hours)
+
+- Disable the affected endpoint / route.
+- Revoke compromised credentials.
+- Isolate affected systems.
+- Snapshot for forensic analysis.
+- Document every action in the incident channel.
+
+### Eradication
+
+- Remove the root cause (patch, configuration fix, removed
+  malicious artifact, revoked compromised vendor).
+- Verify the cause is fully removed (search for related
+  indicators).
+- Confirm no backdoors / persistence.
+
+### Recovery
+
+- Restore service.
+- Monitor closely for recurrence.
+- Update customer status page.
+
+## Phase 4 — Post-Incident Activity
+
+### Notifications
+
+- **Customer notifications** per contract SLA. Track each customer's
+  specific SLA (some require notification within 24 hours of
+  detection; some within 72 hours of confirmation).
+- **Regulator notifications** per the composed privacy profile.
+- **Public statement** for Sev 1 incidents with material customer
+  impact.
+- **Vendor escalation** if a vendor was the source.
+
+### Post-mortem (within 7 days of containment for Sev 1 / Sev 2)
+
+- Blameless post-mortem.
+- Root cause + contributing factors + timeline + lessons.
+- Action items with owners and dates.
+- Update [`audit-log-requirements.md`](audit-log-requirements.md)
+  if a gap in logging surfaced.
+- Update
+  [`soc2-controls-mapping.md`](soc2-controls-mapping.md) if a
+  control gap surfaced.
+
+### Audit artifact
+
+For SOC 2 purposes, the incident post-mortem + the timeline
+artifact + the customer-notification records collectively
+demonstrate the IR program operated. Retain these for the audit
+period plus the look-back required by the auditor (commonly
+12 months after the audit period ends).
+
+## Notification templates (drafted with Communications + Legal)
+
+- [ ] Customer Sev 1 notification.
+- [ ] Customer Sev 2 notification.
+- [ ] Status page incident.
+- [ ] Internal all-hands update.
+- [ ] Vendor escalation message.
+- [ ] Regulator narrative (when composed with a privacy profile).
+
+## Contact list
+
+- **Internal incident channel**: `[fill in]`.
+- **Legal**: `[fill in]`.
+- **Insurance (cyber liability)**: `[fill in]`.
+- **Customer success on-call** (for customer-facing communication):
+  `[fill in]`.
+
+## Tabletop exercise log
+
+| Date | Scenario | Severity | Outcome | Action items |
+|---|---|---|---|---|
+| `[fill in]` | `[fill in]` | `[fill in]` | `[fill in]` | `[fill in]` |
+
+## Related
+
+- [`soc2-controls-mapping.md`](soc2-controls-mapping.md) — CC7
+  controls implemented by this runbook.
+- [`audit-log-requirements.md`](audit-log-requirements.md) — evidence
+  during Detection / Analysis.
+- [`security-policies-index.md`](security-policies-index.md) —
+  Incident Response policy registration.
+- baseline:
+  [`../../baseline-pipeda/docs/compliance/breach-response.md`](../../baseline-pipeda/docs/compliance/breach-response.md) —
+  PIPEDA regulator obligations layered on top of this IR program.

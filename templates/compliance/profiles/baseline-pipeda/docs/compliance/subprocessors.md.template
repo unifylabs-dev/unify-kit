@@ -1,0 +1,83 @@
+<!--
+templates/compliance/profiles/baseline-pipeda/docs/compliance/subprocessors.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Subprocessors
+
+> **This is a starting-point template, not legal advice.** Verify each
+> vendor's current data-processing terms and region(s) before relying on
+> the entries below. Subprocessor accuracy is part of PIPEDA Principle 1
+> (Accountability) — out-of-date entries are an accountability gap.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Last reviewed**: `[fill in: YYYY-MM-DD]` ·
+**Review cadence**: `[fill in: quarterly is a common starting point]`
+
+## How to read this list
+
+Each row represents a third-party service we use that may receive or
+process personal information collected through {{PROJECT_NAME}}. We are
+accountable under PIPEDA for these subprocessors' practices when they
+process personal information on our behalf.
+
+| Column | Meaning |
+|---|---|
+| **Vendor** | Legal name + service. |
+| **Data category** | What classes of personal information the vendor processes (account, billing, communications, technical, etc.). |
+| **Region** | Where the vendor processes the data (e.g., Canada-only, US, EU, global). |
+| **DPA / contract** | Whether a data-processing agreement (or equivalent) is in place. |
+| **Notes** | Anything customers should know — sub-subprocessor list URL, SOC 2 report availability, BAA path for health data, etc. |
+
+## Current subprocessors
+
+> Replace the example rows below with the actual services your project
+> uses. Remove rows for services you don't use. The categories shown are
+> typical of a Canadian SaaS project; your set will differ.
+
+| Vendor | Data category | Region | DPA / contract | Notes |
+|---|---|---|---|---|
+| `[fill in: hosting provider]` | account, technical | `[fill in: e.g., Canada (ca-central-1)]` | `[fill in: signed YYYY-MM-DD or "not yet"]` | Sub-subprocessor list at vendor URL. |
+| `[fill in: database / managed Postgres]` | account, service-use | `[fill in]` | `[fill in]` | Backup region: `[fill in]`. Encryption-at-rest enabled by default. |
+| `[fill in: transactional email]` | account, communications | `[fill in]` | `[fill in]` | Used for account verification, password reset, security notifications — not marketing. |
+| `[fill in: marketing email]` | account, marketing-consent | `[fill in]` | `[fill in]` | Separate from transactional. CASL-compliant double-opt-in. |
+| `[fill in: error monitoring]` | technical | `[fill in]` | `[fill in]` | We scrub PII from error context before sending — see project's error-reporting wrapper. |
+| `[fill in: product analytics]` | service-use | `[fill in]` | `[fill in]` | Event schema explicitly excludes content of user-generated data. |
+
+## Changes
+
+When a subprocessor is added, changed, or removed:
+
+1. Update the table above (and the "Last reviewed" date).
+2. Notify active customers per the privacy policy's "Changes" section if
+   the change is material (new vendor, new data category, new region).
+3. If the new vendor introduces a region outside the customer's
+   expectation (e.g., a Canadian-data-residency customer and a US-based
+   new vendor), notify those customers individually.
+4. Record the change in the CHANGELOG with the date and reason.
+
+## Vendor onboarding checklist
+
+Before adding a vendor that will process personal information:
+
+- [ ] Identify the data categories the vendor will receive.
+- [ ] Confirm the vendor's processing region(s).
+- [ ] Sign a data-processing agreement (or use vendor-default DPA terms
+      after review).
+- [ ] Review the vendor's security posture (SOC 2 Type II report,
+      pen-test summary, or equivalent).
+- [ ] If the vendor will process sensitive categories (health data,
+      financial data), confirm BAA / DPA terms appropriate to the
+      category.
+- [ ] Add the vendor to this table.
+- [ ] Notify customers per the privacy policy where required.
+
+## Related
+
+- [`privacy-policy.md`](privacy-policy.md) §4 — "How we share information"
+  links here for the active list.
+- [`pipeda-readiness.md`](pipeda-readiness.md) Principle 1 (Accountability)
+  — our accountability extends to these subprocessors.
+- [`../../runbooks/vendor-escape-template.md`](../../runbooks/vendor-escape-template.md) —
+  the runbook for migrating off a subprocessor when needed.

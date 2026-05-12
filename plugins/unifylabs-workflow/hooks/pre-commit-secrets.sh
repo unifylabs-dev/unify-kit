@@ -39,13 +39,21 @@ PY
 cat >/dev/null
 
 if ! command -v git >/dev/null 2>&1; then
-  printf '[hook: %s] git not found in PATH — allowing.\n' "$_NAME" >&2
-  _hook_log allow "$_MATCHER" "no-git"
-  exit 0
+  printf '[hook: %s] git not found in PATH; cannot scan staged diff for secrets. The Bash(git commit:*) matcher fired so something git-like exists — set CLAUDE_HOOKS_DISABLE=%s if you trust this commit-path; blocking conservatively.\n' "$_NAME" "$_NAME" >&2
+  _hook_log block "$_MATCHER" "no-git"
+  exit 2
 fi
 
 # Cap the diff so multi-megabyte commits don't stall the hook.
-_diff="$(git diff --cached --diff-filter=ACMR -U0 2>/dev/null | head -n 10000 || true)"
+_diff="$(git diff --cached --diff-filter=ACMR -U0 2>/tmp/pre-commit-secrets.git.err | head -n 10000)"
+_rc=${PIPESTATUS[0]}
+if (( _rc != 0 )) && (( _rc != 141 )); then
+  printf '[hook: %s] git diff failed (rc=%d): %s; blocking conservatively.\n' "$_NAME" "$_rc" "$(cat /tmp/pre-commit-secrets.git.err 2>/dev/null || echo unknown)" >&2
+  rm -f /tmp/pre-commit-secrets.git.err
+  _hook_log block "$_MATCHER" "git-diff-failed"
+  exit 2
+fi
+rm -f /tmp/pre-commit-secrets.git.err
 
 if [[ -z "$_diff" ]]; then
   _hook_log allow "$_MATCHER" "empty-staged-diff"

@@ -1,0 +1,205 @@
+<!--
+templates/compliance/profiles/baseline-pipeda/docs/compliance/breach-response.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Pattern reference: OPC's mandatory breach reporting guidance (CC-BY 2.5 CA);
+  structure (detect → triage → contain → notify → remediate → postmortem) is
+  a standard incident-response shape; prose authored independently.
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Breach Response Runbook (PIPEDA)
+
+> **This is a starting-point template, not legal advice.** Adapt the roles,
+> contacts, and notification templates to your team before relying on this
+> in an actual incident, and have counsel review the public-facing language
+> before it leaves your incident channel.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## Authoritative reference
+
+- OPC mandatory breach reporting guidance:
+  <https://www.priv.gc.ca/en/privacy-topics/business-privacy/breaches-and-safeguards/privacy-breaches-at-your-business/gd_pb_201810/>
+  (accessed 2026-05-12).
+- "Real risk of significant harm" assessment tool:
+  <https://www.priv.gc.ca/en/privacy-topics/business-privacy/breaches-and-safeguards/privacy-breaches-at-your-business/rrosh-tool/>
+  (accessed 2026-05-12).
+- Breach record-keeping: PIPEDA Breach of Security Safeguards Regulations,
+  SOR/2018-64, s. 6 (24-month retention; see authoritative legal source for
+  current text).
+
+## Definitions
+
+- **Breach of security safeguards** (PIPEDA s. 10.1): the loss of,
+  unauthorized access to, or unauthorized disclosure of personal information
+  resulting from a breach of an organization's security safeguards or from
+  a failure to establish those safeguards.
+- **Real risk of significant harm (RROSH)**: PIPEDA's mandatory-reporting
+  threshold. Significant harm includes bodily harm, humiliation, damage to
+  reputation or relationships, loss of employment / business / professional
+  opportunities, financial loss, identity theft, negative effects on a
+  credit record, and damage to or loss of property. "Real risk" is assessed
+  using two factors: sensitivity of the information and probability of
+  misuse.
+
+## Roles
+
+| Role                   | Person (today)              | Responsibilities                                      |
+| ---------------------- | --------------------------- | ----------------------------------------------------- |
+| Breach Response Lead   | `[fill in]`                 | Coordinate response; primary regulator contact.       |
+| Technical Lead         | `[fill in]`                 | Investigate root cause; contain; preserve evidence.   |
+| Legal counsel          | `[fill in: external lawyer]`| Notification language; regulatory correspondence.    |
+| Communications Lead    | `[fill in]`                 | Affected-individual notification; public statements.  |
+| Records Officer        | `[fill in]`                 | Maintain the 24-month breach register.                |
+
+When the team is small, one person may hold multiple roles. Document the
+fallback before an incident, not during one.
+
+## Phase 1 — Detect
+
+Signal sources:
+
+- Error-monitoring alerts (`[fill in: Sentry / Rollbar / etc.]`).
+- Anomaly alerts from analytics or auth providers.
+- Audit-log review (regular cadence + on-demand on suspicion — see
+  [`audit-log-requirements.md`](audit-log-requirements.md)).
+- Customer / partner report ("I think I saw someone else's data").
+- Vendor security advisory.
+- External pen-test or bug-bounty disclosure.
+
+**Action on signal**:
+
+1. Triage severity (next phase).
+2. **Do not delete logs or audit entries.** Preserve evidence.
+3. Page the Breach Response Lead immediately.
+
+## Phase 2 — Triage (≤ 1 hour from detection)
+
+Determine:
+
+- **Scope**: how many individuals / records affected?
+- **Data class**: PII only? Sensitive PII (financial, health, biometric)?
+- **Confirmed vs. suspected**: real breach or near-miss?
+- **Active vs. contained**: is the vulnerability still exploitable now?
+- **Reportable**: apply the RROSH two-factor test (sensitivity ×
+  probability-of-misuse). When in doubt, lean toward reporting.
+
+**Action**:
+
+1. Open a private incident channel (`[fill in: Slack / Linear / GitHub
+   Discussion]`).
+2. Page legal counsel if personal information is involved at all.
+3. If active and exploitable, jump to containment immediately.
+
+## Phase 3 — Contain (≤ 4 hours from detection for active exploits)
+
+Goal: stop the bleed without destroying evidence.
+
+Common containment levers:
+
+- **Disable the affected endpoint or route** at the edge or load balancer.
+- **Revoke compromised credentials**: rotate API keys, invalidate sessions,
+  reset OAuth tokens.
+- **Pause background jobs** if they're pumping bad data.
+- **Lock the affected scope** (mark an account / tenant `read_only` until
+  investigation completes).
+- **Snapshot the database / object store** for forensic analysis.
+
+**Action**:
+
+1. Document every action taken in the incident channel.
+2. Preserve audit logs + error-monitoring data (no deletion).
+3. Confirm containment with a verification check (the vulnerable path no
+   longer leaks data).
+
+## Phase 4 — Notify (PIPEDA timing)
+
+PIPEDA mandates three notifications when the RROSH threshold is met:
+
+### 4a. Affected individuals
+
+- **Threshold**: real risk of significant harm.
+- **Timing**: "as soon as feasible" after the determination is made.
+- **Content** (PIPEDA Breach Regulations s. 6): description of the breach,
+  date / period, types of personal information involved, steps the
+  organization is taking to reduce risk of harm, steps the individual can
+  take, contact information for follow-up.
+- **Channel**: direct (email + postal where mailing addresses are on
+  file). Indirect notice (e.g., public posting) is allowed only when
+  direct notice is impractical or would itself cause harm.
+
+### 4b. Office of the Privacy Commissioner of Canada (OPC)
+
+- **Threshold**: same RROSH threshold.
+- **Timing**: "as soon as feasible" after determination.
+- **How**: OPC breach report form linked from
+  <https://www.priv.gc.ca/en/report-a-concern/report-a-privacy-breach-at-your-business/report-a-privacy-breach-at-your-organization/>.
+  Verify current submission channel at incident time — the form URL has
+  moved historically.
+
+### 4c. Other organizations that may help reduce harm
+
+- E.g., credit bureaus, law enforcement, government institutions. Notify
+  when their involvement materially reduces risk.
+
+### 4d. Record-keeping (ALL breaches, not just reportable)
+
+PIPEDA requires keeping a record of **every** breach of security
+safeguards — reportable or not — for **24 months** after the day the
+organization determined the breach occurred. If a breach was not reported,
+the record must include a brief explanation of why the RROSH threshold was
+not met. Failure to maintain these records is a quasi-criminal offence
+under PIPEDA.
+
+`[fill in: where {{PROJECT_NAME}} maintains its breach register — file
+path, repository, ticketing system — and who is responsible for its
+upkeep.]`
+
+## Phase 5 — Remediate
+
+- Patch the vulnerability.
+- Add a regression test that proves the vulnerability cannot recur.
+- Update the threat model in `docs/architecture.md` (or equivalent) if
+  the breach exposed a structural gap.
+- If the breach involved a subprocessor, escalate to the vendor and
+  reassess their entry in [`subprocessors.md`](subprocessors.md).
+
+## Phase 6 — Postmortem (within 7 days of containment)
+
+- Blameless postmortem doc (`[fill in: where postmortems live in your
+  project — e.g., docs/runbooks/postmortems/<date>-<slug>.md]`).
+- Root cause + contributing factors + timeline + lessons.
+- Action items with owners + due dates.
+- Update `CLAUDE.md` "Lessons Learned" if a future contributor needs to
+  inherit a behavioral change (e.g., a check that gets added to the
+  security checklist).
+
+## Notification templates (to be drafted with counsel)
+
+- [ ] Affected-individual notification email.
+- [ ] Affected-individual postal-mail template (where applicable).
+- [ ] OPC notification submission narrative.
+- [ ] Public statement (when the breach is large enough to warrant).
+- [ ] Vendor-escalation message (where the breach was vendor-caused).
+
+## Contact list
+
+- **Internal incident channel**: `[fill in]`.
+- **Legal counsel**: `[fill in: name + firm + phone]`.
+- **OPC contact**: see authoritative URL above.
+- **Public security contact**: `[fill in: security@yourdomain — published
+  in security.txt + privacy policy]`.
+
+## Related
+
+- [`pipeda-readiness.md`](pipeda-readiness.md) — Principle 7 (Safeguards)
+  and the upstream controls that should prevent this runbook from being
+  invoked in the first place.
+- [`audit-log-requirements.md`](audit-log-requirements.md) — evidence
+  needed during Phase 2 triage and Phase 3 containment.
+- [`subprocessors.md`](subprocessors.md) — vendor entries to escalate
+  during Phase 5 when the breach is vendor-caused.
+- [`../../runbooks/access-revocation.md`](../../runbooks/access-revocation.md) —
+  containment action when the breach involves credential compromise.

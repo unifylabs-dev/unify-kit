@@ -1,0 +1,207 @@
+<!--
+templates/compliance/profiles/financial-canada/docs/compliance/fintrac-readiness.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — FINTRAC Readiness
+
+> **This is a starting-point template, not legal advice.** FINTRAC
+> obligations depend on the reporting-entity sector your project
+> operates in, the volume of activity, and the specific service
+> offering. Counsel + an experienced AML compliance officer should
+> validate this document for your circumstances. Reporting thresholds,
+> forms, and methods evolve — verify the latest at FINTRAC's site
+> before relying on numbers in this template.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Last reviewed**: `[fill in: YYYY-MM-DD]` ·
+**Compliance officer**: `[fill in: name + email]` ·
+**Reporting-entity sector(s)**: `[fill in: e.g., securities dealer,
+money services business, mortgage administrator, etc.]`
+
+## Authoritative references
+
+- FINTRAC guidance index:
+  <https://fintrac-canafe.canada.ca/guidance-directives/guidance-directives-eng>
+  (accessed 2026-05-12).
+- Large-cash-transaction reporting:
+  <https://fintrac-canafe.canada.ca/guidance-directives/transaction-operation/lctr-doie/lctr-doie-eng>
+  (accessed 2026-05-12).
+- PCMLTFA (statute):
+  <https://laws-lois.justice.gc.ca/eng/acts/p-24.501/> (verify currency
+  before relying).
+
+> **Currency note**: significant regulatory changes took effect in
+> 2024 and additional changes took effect in 2025. Examples include
+> the expansion of reporting-entity coverage to mortgage brokers /
+> lenders / administrators (effective October 2024) and armoured-car
+> services. Verify FINTRAC's "What's new" page before authoring any
+> claims about your sector's specific obligations.
+
+## Compliance program (PCMLTFA + Regulations)
+
+Every reporting entity must maintain a compliance program comprised of:
+
+### 1. Compliance officer
+
+- **What it requires**: a person appointed by the reporting entity
+  who is responsible for implementing the compliance program. For a
+  small entity, this can be the owner or a senior staff member.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: name + title + date
+  appointed + reporting line]`.
+- **TBD**: written job description; succession plan if the compliance
+  officer leaves.
+
+### 2. Written policies and procedures
+
+- **What it requires**: documented policies and procedures that
+  describe how the entity meets its identification, record-keeping,
+  reporting, risk-assessment, and training obligations.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: where the AML
+  policy doc lives]`.
+- **TBD**: annual policy review + sign-off cadence.
+
+### 3. Risk assessment
+
+- **What it requires**: a documented assessment of the entity's
+  exposure to money-laundering / terrorist-financing risk, factoring
+  in clients, geographies, products, services, and delivery
+  channels. Reassessed periodically.
+- **How {{PROJECT_NAME}} meets it**: `[fill in]`.
+- **TBD**: documented mitigation steps for each elevated-risk
+  category.
+
+### 4. Training program
+
+- **What it requires**: ongoing training for employees, agents, and
+  others authorized to act on the entity's behalf. Frequency and
+  content driven by the risk assessment.
+- **How {{PROJECT_NAME}} meets it**: `[fill in]`.
+- **TBD**: training records (who completed which module on which
+  date).
+
+### 5. Effectiveness review (the "two-year review")
+
+- **What it requires**: every two years (at minimum), an independent
+  review of the program's effectiveness — controls, training,
+  policies, risk assessment. The reviewer must be independent of
+  day-to-day program operations.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: planned reviewer +
+  cadence]`.
+- **TBD**: scope template for the reviewer; remediation tracking.
+
+## Client identification (KYC)
+
+Specific identification methods and thresholds are sector-dependent.
+Common elements:
+
+- Verify identity at account opening for products / services in the
+  reporting-entity sector.
+- Re-verify identity periodically (sector-dependent intervals).
+- Verify beneficial ownership for entity clients (25%+ ownership
+  threshold is common; verify current requirement for your sector).
+- Identify and screen politically exposed persons (PEPs), heads of
+  international organizations (HIOs), and their close associates /
+  family members.
+- Apply enhanced due diligence for high-risk clients.
+
+**How {{PROJECT_NAME}} meets it**: `[fill in: KYC vendor + workflow]`.
+
+## Recording
+
+- Keep records sufficient to demonstrate compliance for **at least
+  five years** from the day they were created (specific record types
+  may have longer retention). Records must be retrievable to FINTRAC
+  within 30 days of a request.
+- Records include: client-identification records, transaction
+  records, beneficial-ownership records, risk-assessment records,
+  policy versions, training records, and copies of all reports
+  submitted to FINTRAC.
+
+**How {{PROJECT_NAME}} meets it**: `[fill in: storage location + access
+controls + retention enforcement]`.
+
+## Reporting to FINTRAC
+
+### Suspicious transaction reports (STRs)
+
+- **Trigger**: reasonable grounds to suspect that a transaction or
+  attempted transaction is related to a money-laundering or terrorist-
+  financing offence. **No monetary threshold** — value is irrelevant
+  to the duty to report.
+- **Timing**: as soon as practicable after completing the measures
+  that led to the determination.
+- **Channel**: FINTRAC's reporting portal (current method:
+  FINTRAC Web Reporting System / electronic API; verify before
+  submission).
+
+### Large cash transaction reports (LCTRs)
+
+- **Trigger**: receipt of CAD 10,000 or more in cash (or equivalent in
+  foreign currency) in a single transaction, or two or more cash
+  transactions of less than CAD 10,000 each that total CAD 10,000 or
+  more within 24 hours and are conducted by or on behalf of the same
+  person/entity ("aggregation rule" — verify current language).
+- **Timing**: within 15 calendar days of the transaction.
+
+### Large virtual currency transaction reports (LVCTRs)
+
+- **Trigger**: receipt of CAD 10,000 or more in virtual currency
+  (or equivalent), with aggregation rule analogous to LCTR.
+- **Timing**: within 5 working days of the transaction.
+
+### Electronic funds transfer reports (EFTRs)
+
+- **Trigger**: international EFT of CAD 10,000 or more (sector-
+  specific applicability).
+- **Timing**: within 5 working days.
+
+### Casino disbursement reports / terrorist property reports
+
+Not applicable for most reporting-entity sectors; relevant for
+casinos and where terrorist-property triggers apply.
+
+## Ministerial directives and sanctions
+
+- **OSFI sanctions list** (Canadian autonomous sanctions): screen
+  clients and transactions against the consolidated list. Multiple
+  Acts feed this list (Special Economic Measures Act, JVCFOA,
+  Sergei Magnitsky Law, UN Acts).
+- **Ministerial directives** issued by the Minister of Finance under
+  PCMLTFA s. 11.42 may impose enhanced obligations toward specified
+  jurisdictions or persons. Subscribe to FINTRAC updates and respond
+  promptly when issued.
+
+## Recent enforcement context
+
+FINTRAC has been actively enforcing in recent years, including
+material monetary penalties for under-reporting of suspicious
+transactions and KYC deficiencies. The "good faith effort" defence
+has been narrow in practice — documented procedures + evidence of
+execution are critical.
+
+## Lawyer + compliance-officer review checklist
+
+- [ ] Reporting-entity sector(s) confirmed; obligations mapped.
+- [ ] Compliance officer appointed in writing.
+- [ ] Written policies and procedures reviewed.
+- [ ] Risk assessment performed, documented, signed.
+- [ ] Training plan executed; records current.
+- [ ] Two-year effectiveness review scheduled or completed.
+- [ ] KYC procedures aligned with the sector's specific identification
+      methods.
+- [ ] STR + LCTR + LVCTR + EFTR procedures rehearsed.
+- [ ] Sanctions screening process in place.
+
+## Related
+
+- [`provincial-securities-overview.md`](provincial-securities-overview.md) —
+  parallel-track securities-regulator obligations.
+- [`breach-response.md`](breach-response.md) — incident response
+  intersecting with suspicious-activity reporting.
+- [`audit-log-requirements.md`](audit-log-requirements.md) — financial
+  events that feed the AML monitoring layer.
+- [`subprocessors.md`](subprocessors.md) — KYC vendor scope.
+- baseline:
+  [`../../baseline-pipeda/docs/compliance/pipeda-readiness.md`](../../baseline-pipeda/docs/compliance/pipeda-readiness.md).

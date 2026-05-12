@@ -1,0 +1,198 @@
+<!--
+templates/compliance/profiles/financial-canada/docs/compliance/breach-response.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+When composed with baseline-pipeda, this file replaces baseline's
+breach-response.md. PIPEDA reporting applies; financial-specific
+overlays (sanctions, suspicious-activity intersection, regulator
+notification expectations) are added.
+-->
+
+# {{PROJECT_NAME}} — Breach Response Runbook (Canadian financial)
+
+> **This is a starting-point template, not legal advice.** Financial-
+> services breaches can simultaneously trigger PIPEDA reporting,
+> FINTRAC suspicious-transaction reporting (if the incident touches
+> illicit-activity indicators), and provincial-securities-regulator
+> notification expectations. Counsel involvement is required from
+> the moment a breach is suspected.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## Authoritative references
+
+- OPC mandatory breach reporting (PIPEDA):
+  <https://www.priv.gc.ca/en/privacy-topics/business-privacy/breaches-and-safeguards/privacy-breaches-at-your-business/gd_pb_201810/>
+  (accessed 2026-05-12).
+- FINTRAC suspicious transaction reporting:
+  <https://fintrac-canafe.canada.ca/guidance-directives/guidance-directives-eng>
+  (accessed 2026-05-12).
+- Provincial securities commissions:
+  [`provincial-securities-overview.md`](provincial-securities-overview.md).
+
+## Definitions
+
+- **Breach of security safeguards** — PIPEDA s. 10.1 definition.
+- **Real risk of significant harm (RROSH)** — PIPEDA threshold for
+  mandatory reporting.
+- **Suspicious activity (SA)** — facts giving reasonable grounds to
+  suspect a transaction relates to money-laundering or terrorist-
+  financing.
+- **Sanctions hit** — match against the consolidated Canadian
+  sanctions list (administered through OSFI).
+
+A single incident may attract more than one regulatory pathway —
+e.g., a credential-stuffing attack against a brokerage account
+leaves a PIPEDA-reportable breach **and** a FINTRAC-reportable
+suspicious-transaction record if the attacker initiated withdrawals.
+
+## Roles
+
+| Role                   | Person (today)              | Responsibilities                                                  |
+| ---------------------- | --------------------------- | ----------------------------------------------------------------- |
+| Breach Response Lead   | `[fill in]`                 | Coordinate response across all regulators.                        |
+| Technical Lead         | `[fill in]`                 | Investigate root cause; contain; preserve evidence.               |
+| Compliance Officer (AML) | `[fill in]`               | Assesses STR / sanctions-screening implications.                  |
+| Legal counsel          | `[fill in]`                 | Notification language; regulator correspondence.                  |
+| Customer Liaison       | `[fill in]`                 | Affected-client communication.                                    |
+| Records Officer        | `[fill in]`                 | Maintains the breach register.                                    |
+
+## Phase 1 — Detect
+
+Signal sources include the baseline plus:
+
+- Anomaly detection on transaction monitoring (large transfers,
+  unusual destinations, sanctions-jurisdiction touches).
+- KYC-vendor alert on a verification anomaly.
+- Sanctions-screening hit.
+- Custodian or clearing partner notification of a downstream issue.
+- Regulator inquiry that suggests an incident.
+
+## Phase 2 — Triage (≤ 1 hour from detection)
+
+In addition to the baseline triage questions:
+
+- Does the incident touch client funds or financial assets? If yes,
+  containment becomes a fiduciary-duty matter, not just a privacy
+  matter.
+- Does the incident involve indicia of money-laundering or
+  terrorist-financing? If yes, route in parallel to the AML
+  compliance officer.
+- Does the incident involve a sanctions-listed party? If yes, freeze
+  the relevant transactions and notify OSFI per the applicable
+  sanctions regime.
+- Does the incident trigger a notification expectation with any
+  provincial securities commission you are registered with? Confirm
+  with counsel.
+
+## Phase 3 — Contain (≤ 4 hours from detection for active exploits)
+
+Same baseline levers, plus:
+
+- **Halt suspect transactions** — pause withdrawals, transfers, or
+  trades originating from the compromised scope.
+- **Freeze the account(s)** under the firm's "account hold" policy.
+- **Snapshot transaction logs** for forensic analysis (these may also
+  be FINTRAC-relevant evidence).
+- **Coordinate with custodian / clearing** if assets are held
+  elsewhere.
+
+## Phase 4 — Notify
+
+### 4a. Affected individuals (PIPEDA)
+
+Same as baseline: RROSH threshold, "as soon as feasible," content
+per PIPEDA Breach Regulations s. 6.
+
+### 4b. Office of the Privacy Commissioner of Canada (PIPEDA)
+
+Same as baseline.
+
+### 4c. FINTRAC — Suspicious Transaction Report (where applicable)
+
+If the breach involves transactions giving reasonable grounds to
+suspect ML/TF activity, the firm submits a Suspicious Transaction
+Report. **The privacy breach and the suspicious transaction are
+distinct regulatory events** — both processes proceed in parallel.
+The AML compliance officer drives the STR side; the Breach Response
+Lead drives the privacy side.
+
+### 4d. Provincial securities regulator (where applicable)
+
+Some registration categories carry an expectation (or requirement)
+to notify the regulator of material operational incidents — including
+cyber incidents affecting clients. Specific requirements vary by
+jurisdiction and category. Confirm with counsel.
+
+### 4e. Custodian, clearing, transfer agent, or insurer
+
+If the firm holds client assets at a custodian, the custodian's
+incident-notification clause typically requires prompt notification
+on incidents affecting custodied assets.
+
+### 4f. CIRO (where applicable)
+
+CIRO-regulated firms have specific cybersecurity incident-reporting
+expectations under CIRO rules. Confirm timing + content.
+
+### 4g. Record-keeping
+
+Maintain the PIPEDA breach register (24-month minimum). Maintain
+parallel FINTRAC-required records (5-year minimum). Where these
+overlap, store the union: the longer retention controls.
+
+## Phase 5 — Remediate
+
+Same as baseline, plus:
+
+- If KYC controls were bypassed, harden the KYC vendor integration
+  and re-screen affected accounts.
+- If the breach exposed a sanctions-screening gap, retest the
+  screening pipeline against current consolidated lists.
+
+## Phase 6 — Postmortem
+
+Same as baseline, with explicit attention to:
+
+- Did transaction-monitoring fire as expected?
+- Did sanctions screening fire as expected?
+- Did the audit-log requirements in
+  [`audit-log-requirements.md`](audit-log-requirements.md) capture
+  the evidence needed to reconstruct the incident? If not, what's
+  missing?
+
+## Notification templates (to be drafted with counsel)
+
+- [ ] Affected-client notification email.
+- [ ] OPC narrative.
+- [ ] FINTRAC STR narrative (the AML compliance officer drives).
+- [ ] Provincial securities regulator notice (if applicable).
+- [ ] Custodian / clearing notification.
+- [ ] Public statement (if breach is large enough).
+
+## Contact list
+
+- Internal incident channel: `[fill in]`.
+- Legal counsel: `[fill in]`.
+- AML compliance officer: `[fill in]`.
+- OPC contact: see authoritative URL above.
+- FINTRAC: see authoritative URL above.
+- Provincial securities regulator(s): see
+  [`provincial-securities-overview.md`](provincial-securities-overview.md).
+- Custodian / clearing: `[fill in]`.
+
+## Related
+
+- [`fintrac-readiness.md`](fintrac-readiness.md) — STR + LCTR + EFTR
+  + sanctions context.
+- [`provincial-securities-overview.md`](provincial-securities-overview.md) —
+  registrant-side notification expectations.
+- [`audit-log-requirements.md`](audit-log-requirements.md) — evidence
+  needed during Phase 2 + Phase 5.
+- [`../../runbooks/access-revocation.md`](../../runbooks/access-revocation.md) —
+  containment for credential compromise.
+- baseline:
+  [`../../baseline-pipeda/docs/compliance/breach-response.md`](../../baseline-pipeda/docs/compliance/breach-response.md).

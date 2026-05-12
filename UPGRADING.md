@@ -4,6 +4,32 @@
 > changelog says **what changed**; this file says **what to DO when something
 > changed**.
 
+## v1.0.0 → v2.0.0 (breaking)
+
+v2.0.0 cuts over from the consumer-side `bootstrap-claude-config.sh` model
+to the Claude Code marketplace + plugin model. Full migration steps live
+in [`CHANGELOG.md`](CHANGELOG.md) under the `[2.0.0]` "Migration from
+v1.0.0" subsection — read that first. TL;DR:
+
+1. From a Claude session:
+   `/plugin marketplace add github.com/unifylabs-dev/unify-kit` then
+   `/plugin install unifylabs-workflow`. Replaces what
+   `bootstrap-claude-config.sh` used to do on `~/.claude/`.
+2. (Kit authors only — Tomer) Run `bash scripts/dev-symlink-skills.sh`
+   once from this repo's clone. Backs up `~/.claude/skills/*` +
+   commands/hooks/statusline, then symlinks user-level paths into the
+   plugin tree. `--dry-run` and `--rollback` available.
+3. (Per existing v1.0.0 project) Re-run
+   `bash scripts/init-project.sh <dir> --compliance=<profile> --snippets=<stack>`.
+   The script's manifest + SHA-256 detection handles safe re-runs.
+
+The rest of this document covers the historical v0.x → v1.x upgrade
+paths. The `bootstrap-claude-config.sh` references below are v1-era;
+v2.0.0 deletes that script. Use them only if you're upgrading between
+v0.x / v1.x patch versions on a machine that hasn't moved to v2 yet.
+
+---
+
 The kit ships three classes of artifact, each with its own upgrade mechanism.
 Read [§Overview](#overview) for the taxonomy, then jump to the section that
 matches the artifact class you're updating.
@@ -19,7 +45,7 @@ The kit's artifacts fall into three classes per
 | Class | Examples | Update mechanism |
 | --- | --- | --- |
 | **Drop-in** | `hooks/*.sh`, `scripts/*.sh`, `github-actions/*.yml`, `~/.claude/settings.json` entries | Re-run [`scripts/bootstrap-claude-config.sh`](scripts/bootstrap-claude-config.sh) after `git pull`. Manifest + SHA-256 detects tampered files; `--force` restores kit content. |
-| **Fork-and-customize** | `templates/*.md.template`, `templates/snippets/*`, `templates/issue-templates/*`, `templates/specs/*` | Re-run [`scripts/init-project.sh`](scripts/init-project.sh) with `--dry-run`; classify each diverged file; merge by hand OR `--force` (with auto-backup) OR `--skip <basename>`. |
+| **Fork-and-customize** | `templates/core/*.md.template`, `templates/snippets/<stack>/*`, `templates/core/issue-templates/*`, `templates/core/specs/*` | Re-run [`scripts/init-project.sh`](scripts/init-project.sh) with `--dry-run`; classify each diverged file; merge by hand OR `--force` (with auto-backup) OR `--skip <basename>`. |
 | **Reference** | [`docs/philosophy.md`](docs/philosophy.md), [`docs/methodology.md`](docs/methodology.md), [`docs/decisions/`](docs/decisions/), the 14 specs under [`specs/`](specs/) | Cite by URL (auto-fetches latest) OR snapshot into `<consumer>/CLAUDE.md` (frozen at snapshot time). Kit updates don't auto-propagate. |
 
 If you're not sure which class an artifact falls into, check the relevant
@@ -160,7 +186,7 @@ filters out untouched files.
 
 ### Hand-customized templates
 
-If you've heavily edited a kit template (say, `templates/claude.md.template`
+If you've heavily edited a kit template (say, `templates/core/claude.md.template`
 became your `<project>/CLAUDE.md` and you've added 200 lines of project-specific
 sections), the upgrade flow is:
 
@@ -168,7 +194,7 @@ sections), the upgrade flow is:
 2. Diff the kit's old template against the new one yourself:
 
    ```bash
-   git -C /path/to/unify-kit diff v0.2.0..v1.0.0 -- templates/claude.md.template
+   git -C /path/to/unify-kit diff v0.2.0..v1.0.0 -- templates/core/claude.md.template
    ```
 
 3. Decide which of the kit's changes to port into your version. Merge by hand.

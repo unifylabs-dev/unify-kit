@@ -21,10 +21,11 @@ jobs:
       - name: Scan shipped artifacts for forbidden strings
         run: |
           set -euo pipefail
-          # In-scope paths (shipped artifacts; must be clean):
+          # In-scope paths (shipped artifacts; must be clean). v2: hooks/ at
+          # repo root removed; security hooks live under plugins/.
           SCOPE=(
             templates
-            hooks
+            plugins
             github-actions
             README.md
             CHANGELOG.md
@@ -73,13 +74,15 @@ jobs:
       - name: Verify {{...}} placeholders are in supported vocabulary
         run: |
           set -euo pipefail
-          # Supported vocabulary (18 placeholders per specs/02-templates.md).
+          # Supported vocabulary (20 placeholders per specs/02-templates.md +
+          # templates/README.md). v2 added {{REPO_OWNER}} (CODEOWNERS) and
+          # {{COMPLIANCE_PROFILE}} (compliance addendum + worked example).
           SUPPORTED=$(printf '%s\n' \
-            '{{BUILD_CMD}}' '{{DATA_MODEL_PATH}}' '{{DB}}' '{{FRAMEWORK}}' \
-            '{{KEY_LIBS}}' '{{LANG}}' '{{LANG_VERSION}}' '{{LINT_CMD}}' \
-            '{{ONE_LINE_DESCRIPTION}}' '{{PROJECT_NAME}}' '{{REPO_URL}}' '{{ROOT}}' \
-            '{{STACK}}' '{{TEAM_NAME}}' '{{TEST_CI_CMD}}' '{{TEST_E2E_DIR}}' \
-            '{{TEST_FULL_CMD}}' '{{TYPECHECK_CMD}}' \
+            '{{BUILD_CMD}}' '{{COMPLIANCE_PROFILE}}' '{{DATA_MODEL_PATH}}' '{{DB}}' \
+            '{{FRAMEWORK}}' '{{KEY_LIBS}}' '{{LANG}}' '{{LANG_VERSION}}' \
+            '{{LINT_CMD}}' '{{ONE_LINE_DESCRIPTION}}' '{{PROJECT_NAME}}' \
+            '{{REPO_OWNER}}' '{{REPO_URL}}' '{{ROOT}}' '{{STACK}}' '{{TEAM_NAME}}' \
+            '{{TEST_CI_CMD}}' '{{TEST_E2E_DIR}}' '{{TEST_FULL_CMD}}' '{{TYPECHECK_CMD}}' \
             | sort)
           # Regex permits uppercase letters, digits, and underscores
           # (e.g. {{TEST_E2E_DIR}} contains a digit). Identifiers must still

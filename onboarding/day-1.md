@@ -35,23 +35,30 @@ You should see a version line. If not, the install didn't succeed — fix that b
 
 Stack-specific install steps (Node, Python, your build tools, etc.) live in your project's `setup_guide.md` or equivalent — read that next.
 
-## 2. Bootstrap your `~/.claude`
+## 2. Install the `unifylabs-workflow` plugin
 
-From the kit repo (clone it if you haven't):
+From any Claude Code session, register the marketplace and install the plugin:
 
-```bash
-./scripts/bootstrap-claude-config.sh
+```
+/plugin marketplace add github.com/unifylabs-dev/unify-kit
+/plugin install unifylabs-workflow
 ```
 
-This installs the kit's six security hooks into `~/.claude/hooks/` and registers them in `~/.claude/settings.json`. The script is idempotent — re-runs are safe — and creates a backup before modifying anything. If you hit a merge conflict between an existing hook entry and the kit's, the script tells you and exits without writing.
+This installs the kit's 9 skills, 10 commands, and 7 security hooks under
+`${CLAUDE_PLUGIN_ROOT}` — Claude Code resolves the hooks declared in the
+plugin's `hooks/hooks.json` automatically. No filesystem edits to
+`~/.claude/hooks/` or `~/.claude/settings.json` are needed.
 
-Then confirm the install:
+Then confirm the install with the kit's audit script (clone the kit repo if
+you haven't):
 
 ```bash
-./scripts/audit-scan.sh ~/.claude/settings.json
+./scripts/audit-scan.sh ~/.claude/settings.json --check-plugin
 ```
 
-Expect exit 0 and zero `critical` findings. Anything `critical` means the bootstrap left you in an unsafe state — escalate to your lead before continuing.
+Expect exit 0 and zero `critical` findings, plus a `plugin-installed`
+confirmation. Anything `critical` means the install left you in an unsafe
+state — escalate to your lead before continuing.
 
 ## 3. Required reading (~90 minutes total)
 
@@ -59,8 +66,8 @@ In order:
 
 - The project's `<consumer>/CLAUDE.md` start-to-finish — this is the project's memory file; everything in it constrains how Claude Code behaves on this codebase.
 - The project's `docs/architecture.md` (or equivalent) — the system overview, so you know which subsystem you're in when you read code later.
-- The kit's `templates/cheatsheet.md.template` — the command vocabulary you'll use daily (8 commands), the daily skills, the context-discipline thresholds, and the reviewer mapping (Appendix A).
-- The kit's `templates/ai-usage-charter.md.template` — what's permitted, what isn't, and the hard rule that AI-generated code passes the same review as human code.
+- The kit's `templates/core/cheatsheet.md.template` — the command vocabulary you'll use daily (8 commands), the daily skills, the context-discipline thresholds, and the reviewer mapping (Appendix A).
+- The kit's `templates/core/ai-usage-charter.md.template` — what's permitted, what isn't, and the hard rule that AI-generated code passes the same review as human code.
 
 If you only have 30 minutes, read `<consumer>/CLAUDE.md` and the cheatsheet. Skim the rest. You'll re-read all four in week 1 anyway.
 
@@ -89,8 +96,8 @@ The trivial fix is the means, not the end. By the time the comment posts you've 
 Check each one before logging off:
 
 - [ ] `scripts/init-project.sh` exits 0 against the project repo (or `<project>/.unify-kit-project-manifest.json` exists and `init-project.sh <project> --dry-run` reports `no changes needed`)
-- [ ] `bootstrap-claude-config.sh` exits 0 — output captured in your terminal
-- [ ] `audit-scan.sh ~/.claude/settings.json` exits 0 with zero `critical` findings
+- [ ] `unifylabs-workflow` plugin installed — verified by `/plugin list` in a Claude session
+- [ ] `audit-scan.sh ~/.claude/settings.json --check-plugin` exits 0 with zero `critical` findings AND a `plugin-installed` line
 - [ ] First PR opened against the project repo (any branch with at least one committed change)
 - [ ] `/claude-review` invoked on that PR and a tiered review comment is posted
 

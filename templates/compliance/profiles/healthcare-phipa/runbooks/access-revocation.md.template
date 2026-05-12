@@ -1,0 +1,162 @@
+<!--
+templates/compliance/profiles/healthcare-phipa/runbooks/access-revocation.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+When composed with baseline-pipeda, this file replaces baseline's
+runbooks/access-revocation.md. PHIPA-flavored: PHI access has a
+heightened compliance posture.
+-->
+
+# {{PROJECT_NAME}} — Access Revocation Runbook (PHIPA)
+
+> **This is a starting-point template, not legal advice.** Where the
+> revoked role had access to PHI, the access-reconciliation step is
+> non-optional: PHIPA s. 10.1 makes the audit log a compliance artifact,
+> and unauthorized PHI access is a reportable event under PHIPA s. 12.2.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## When to invoke
+
+- A practitioner, staff member, or contractor leaves the organization.
+- A role change reduces the legitimate care relationship between an
+  actor and one or more patients/clients (e.g., a practitioner moves
+  to a different service line).
+- A College disciplinary outcome restricts a regulated health
+  professional's practice — access must be revoked or scoped
+  immediately.
+- A credential is suspected of compromise (also see
+  [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md)).
+- A HIC tenant of {{PROJECT_NAME}} (when {{PROJECT_NAME}} is an Agent)
+  terminates the service relationship — the HIC's data is locked down
+  and the HIC's users' access is revoked from {{PROJECT_NAME}}.
+
+## Tier classification
+
+PHIPA-aware tiering:
+
+| Tier | Examples | SLA target |
+|---|---|---|
+| **Critical (PHI write)** | Practitioner accounts that can create/modify PHI; production DB admin; cloud root. | ≤ 1 hour from trigger. |
+| **Elevated (PHI read)** | Staff accounts that can read PHI; reporting tools; analytics with PHI access. | ≤ 4 hours from trigger. |
+| **Standard** | Development environments without PHI; internal-tools without PHI access. | ≤ 24 hours from trigger. |
+| **Reference-only** | Read-only public docs. | ≤ 72 hours from trigger. |
+
+For a suspected compromise involving PHI, all tiers compress to
+"immediate."
+
+## Steps
+
+### 1. Identify scope (≤ 30 minutes from trigger)
+
+- Identify the person + reason for revocation.
+- Enumerate the systems and roles to be revoked.
+- Enumerate the **active care relationships** the person held — these
+  patients/clients may need to be reassigned for continuity of care.
+- Identify any in-flight clinical work (open charts, pending
+  documents, draft notes) that needs handoff to another practitioner.
+- Identify any vendor or integration credentials issued under the
+  person's name.
+
+### 2. Revoke credentials (per tier SLA)
+
+Order: highest tier first.
+
+- Identity provider / SSO first.
+- Direct vendor accounts without SSO.
+- API tokens / service accounts the person owns.
+- Physical access (badges, keys) where applicable.
+- EHR / EMR / clinical-system access (often a separate identity
+  domain).
+
+### 3. Invalidate active sessions
+
+- Force-logout active sessions everywhere supported.
+- Revoke OAuth grants.
+- Revoke long-lived browser cookies / "remember me" tokens.
+- Revoke mobile-device app sessions (clinical-app tokens often need
+  explicit revocation; password reset alone is not enough).
+
+### 4. Audit-log the action
+
+For each revocation, write an audit event capturing the standard
+fields from [`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md)
+plus:
+
+- The practitioner-patient relationships terminated as a result of
+  the revocation.
+- Confirmation of clinical-work handoff (e.g., open chart reassigned,
+  draft notes finalized or migrated).
+
+### 5. PHI access reconciliation (PHIPA s. 10.1)
+
+This step is PHIPA-specific and goes beyond the baseline runbook.
+
+- [ ] Pull the audit log for the revoked account over the last
+      `[fill in: e.g., 90 days]`.
+- [ ] Filter for PHI access events.
+- [ ] For each accessed patient/client, confirm an active care
+      relationship existed at the time of access.
+- [ ] Flag any access that does not match an active care
+      relationship for "appropriate-access review" — this may
+      surface a breach that pre-dates the revocation.
+- [ ] If a breach is suspected, jump to the breach-response runbook.
+
+### 6. Reassign clinical work
+
+- Reassign open charts, draft notes, and active care relationships
+  to a current practitioner with appropriate scope.
+- Document the reassignment in each patient's/client's record per
+  the project's clinical-handoff conventions.
+- If a regulated health professional left in mid-treatment, follow
+  the College's continuity-of-care expectations (`[fill in: pointer
+  to the project's continuity-of-care doc, if separate]`).
+
+### 7. Notify
+
+- For role-changes: notify the affected person + their manager.
+- For terminations: notify the team per internal communications.
+- For HIC-side terminations (Agent case): notify the HIC's
+  accountable officer.
+- For suspected compromise: do **not** notify the affected person
+  until legal counsel confirms.
+- For College-driven restrictions: follow the College's notification
+  requirements (which may include notifying patients).
+
+## Failure modes
+
+- A system has no SSO and was missed in step 2 → maintain a
+  PHI-system access matrix that lists every PHI-touching system the
+  account was provisioned on.
+- The audit log shows PHI access without a corresponding care
+  relationship → escalate to breach response *before* completing the
+  revocation.
+- A practitioner leaves with open charts that cannot be reassigned
+  immediately → place them in a "pending reassignment" queue with
+  read-only access by the privacy officer; do not leave them
+  orphaned.
+
+## Verification (within 24 hours of completion)
+
+- [ ] Re-attempt login at the SSO layer. Expectation: fail.
+- [ ] Spot-check 3 PHI-touching systems. Expectation: no active
+      session.
+- [ ] Audit log shows the revocation actions and the PHI-access-
+      reconciliation results.
+- [ ] If applicable, HIC has acknowledged the revocation.
+
+## Related
+
+- [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md) —
+  containment when a credential compromise is suspected; PHIPA s. 12.2
+  notification flow.
+- [`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md) —
+  the audit events written + reviewed by this runbook.
+- [`../docs/compliance/phipa-readiness.md`](../docs/compliance/phipa-readiness.md) —
+  items 2 (Agent obligations), 6 (Safeguards), 7 (Audit log).
+- baseline:
+  [`../../baseline-pipeda/runbooks/access-revocation.md`](../../baseline-pipeda/runbooks/access-revocation.md) —
+  general framing.

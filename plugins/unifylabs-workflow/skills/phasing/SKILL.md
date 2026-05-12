@@ -596,6 +596,8 @@ No DEFERRED. No defer-to-orchestrator (see Phase session §7 hard rule).
 
 Orchestrator reads handoff, then runs its own checks. Re-runs key `command` steps for high-stakes phases. Confirms files claimed in handoff actually exist with claimed content. Confirms cross-phase consistency (does this phase's output respect prior phases' decisions?). Surfaces anything notable in plain language.
 
+For deeper spec-conformance review of a completed phase's deliverables, invoke `/iterative-review phase <run-id> <N>` — auto-detects phase mode, reads the spec + handoff, and runs the bounded review-fix-verify loop. Plan-affecting findings surface through the existing handoff "Open questions for downstream" channel, so the locked master plan is never modified. Reserve this for phases where structural verification alone isn't enough (e.g., docs-heavy phases, cross-cutting refactors).
+
 ### §9.3 Self-healing on issues
 
 If post-phase verification finds problems, render the issue + a proposed fix. `AskUserQuestion`:

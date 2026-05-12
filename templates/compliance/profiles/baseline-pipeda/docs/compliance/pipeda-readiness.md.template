@@ -1,0 +1,166 @@
+<!--
+templates/compliance/profiles/baseline-pipeda/docs/compliance/pipeda-readiness.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Pattern reference: OPC's "PIPEDA fair information principles" page (CC-BY 2.5 CA);
+  prose authored independently — structure mirrors the 10-principle spine.
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — PIPEDA Readiness
+
+> **This is a starting-point template, not legal advice.** Consult qualified
+> Canadian privacy counsel before relying on this document for compliance
+> purposes. Each principle below maps to PIPEDA's Schedule 1 fair-information
+> principles; the "How {{PROJECT_NAME}} meets it" entries are placeholders
+> that your team fills in with current-state facts. The "TBD" markers signal
+> work the lawyer-review pass should resolve before any external-facing
+> artifact (privacy policy, ToS, DPA) is finalized.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Last reviewed**: `[fill in: YYYY-MM-DD]` ·
+**Privacy officer**: `[fill in: name + email]`
+
+## PIPEDA — 10 Fair Information Principles
+
+PIPEDA (Personal Information Protection and Electronic Documents Act,
+S.C. 2000, c. 5) is Canada's federal private-sector privacy law. Ten
+principles structure compliance.
+
+Authoritative reference: <https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/p_principle/>
+(Office of the Privacy Commissioner of Canada; accessed 2026-05-12).
+
+### 1. Accountability
+
+- **What it requires**: designate someone accountable for compliance;
+  document policies; train staff; ensure subprocessors meet equivalent
+  standards.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: name of accountable
+  officer + their email + reporting chain]`. Policy docs in this
+  directory. Subprocessor list at [`subprocessors.md`](subprocessors.md).
+- **TBD (lawyer review)**: written privacy management program;
+  subprocessor DPA exchange template; internal review cadence (annual is
+  a common starting point).
+
+### 2. Identifying Purposes
+
+- **What it requires**: identify the purposes of collection at or before
+  the time of collection.
+- **How {{PROJECT_NAME}} meets it**: privacy policy (see
+  [`privacy-policy.md`](privacy-policy.md)) lists purposes per data
+  category. `[fill in: brief summary of your major data categories and
+  their purposes — e.g., account, transactional, marketing, analytics]`.
+- **TBD**: lawyer review of purpose statements; per-tenant or per-feature
+  customization where collection scope varies.
+
+### 3. Consent
+
+- **What it requires**: knowledge + consent for collection, use, and
+  disclosure (with limited exceptions in PIPEDA s. 7).
+- **How {{PROJECT_NAME}} meets it**: `[fill in: consent mechanism —
+  e.g., signup flow check-box, intake form e-signature, opt-in modal]`;
+  explicit opt-in for marketing email is separated from transactional
+  consent (CASL requirement layered on top).
+- **TBD**: granular consent UI for secondary uses; consent log retention
+  policy; consent withdrawal mechanism reachable from the user account.
+
+### 4. Limiting Collection
+
+- **What it requires**: collect only what is necessary for the identified
+  purposes.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: data-collection review
+  practice — when forms are added or modified, who reviews the fields
+  for necessity]`.
+- **TBD**: periodic schema audit; "what we collect" review at every
+  feature add.
+
+### 5. Limiting Use, Disclosure, and Retention
+
+- **What it requires**: use only for the identified purposes; retain
+  only as long as needed; dispose of personal information in a secure
+  manner.
+- **How {{PROJECT_NAME}} meets it**: data retention policy `[fill in:
+  link to or describe the project's retention rules per data class]`.
+  No data sale; secondary uses (analytics, model training) are scoped to
+  what was consented to.
+- **TBD**: retention windows per data class (lawyer-confirmed);
+  automated purge after retention expires.
+
+### 6. Accuracy
+
+- **What it requires**: keep personal information accurate, complete,
+  and up-to-date as is necessary for the purposes.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: where users can edit
+  their profile / submit corrections]`.
+- **TBD**: process for individual-initiated correction requests routed
+  to the right team; SLA for correction.
+
+### 7. Safeguards
+
+- **What it requires**: physical, organizational, and technological
+  safeguards proportional to the sensitivity of the information.
+- **How {{PROJECT_NAME}} meets it**: TLS in transit; encryption at rest
+  (vendor default); database access controls; audit logging (see
+  [`audit-log-requirements.md`](audit-log-requirements.md)); role-based
+  access; secret-scanning hooks on commits.
+  `[fill in: project-specific safeguards — RLS rules, IAM model, etc.]`.
+- **TBD**: external penetration test cadence; tabletop incident
+  exercise; vendor-incident escalation paths.
+
+### 8. Openness
+
+- **What it requires**: make policies and practices about the management
+  of personal information readily available.
+- **How {{PROJECT_NAME}} meets it**: privacy policy published at
+  `[fill in: public URL]`. Subprocessor list available on request and
+  published if/when the project ships SaaS.
+- **TBD**: "policy version + last-updated" header on the public privacy
+  policy; subprocessor-change notification mechanism for active
+  customers.
+
+### 9. Individual Access
+
+- **What it requires**: on request, individuals can access their personal
+  information and know how it has been used and disclosed.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: data-subject-access-
+  request (DSAR) channel — email, in-app, or both — and the SLA the team
+  commits to]`. PIPEDA's default response SLA is 30 days from receipt.
+- **TBD**: DSAR runbook; right-to-deletion flow; format of the data
+  export.
+
+### 10. Challenging Compliance
+
+- **What it requires**: a complaint pathway for individuals who believe
+  the organization has not complied.
+- **How {{PROJECT_NAME}} meets it**: contact `[fill in: privacy
+  contact email — e.g., privacy@example.com]`. Escalation to the OPC
+  via <https://www.priv.gc.ca/en/report-a-concern/file-a-formal-privacy-complaint/file-a-complaint-against-a-business/>.
+- **TBD**: contact channel + escalation path documented in the public
+  privacy policy.
+
+## Lawyer-review checklist (before any external launch)
+
+- [ ] Privacy policy reviewed for PIPEDA + provincial alignment.
+- [ ] Terms of Service reviewed (data-ownership and account-termination
+      data-export language).
+- [ ] DPA template ready for customers who request one.
+- [ ] CASL-compliant marketing-email opt-in flow reviewed.
+- [ ] Right-to-access + right-to-deletion flows reviewed.
+- [ ] Breach response runbook reviewed (see
+      [`breach-response.md`](breach-response.md) — notification timing,
+      OPC contact path, internal escalation).
+- [ ] Subprocessor list reviewed (DPAs in place for vendors that touch
+      personal information).
+- [ ] Audit-log content reviewed against the requirements in
+      [`audit-log-requirements.md`](audit-log-requirements.md).
+
+## Related
+
+- [`breach-response.md`](breach-response.md) — Principle 7 (Safeguards)
+  failure path.
+- [`subprocessors.md`](subprocessors.md) — Principle 1 (Accountability)
+  vendor scope.
+- [`privacy-policy.md`](privacy-policy.md) — Principles 2 (Identifying
+  Purposes), 3 (Consent), 8 (Openness), 9 (Individual Access), 10
+  (Challenging Compliance).
+- [`audit-log-requirements.md`](audit-log-requirements.md) — Principle
+  7 (Safeguards) operational layer.

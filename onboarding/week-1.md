@@ -11,7 +11,7 @@ By end of week 1 you should fluently run the canonical workflows, understand the
 
 ## 1. Workflows
 
-The kit's canonical command list lives in `templates/cheatsheet.md.template` (the source of truth). This file does not restate it. The five most common in your first week:
+The kit's canonical command list lives in `templates/core/cheatsheet.md.template` (the source of truth). This file does not restate it. The five most common in your first week:
 
 - `/work-issue <N>` — issue-tracked work with acceptance criteria. Default for any GitHub issue with checkbox ACs.
 - `/brainstorm` → `writing-plans` → `executing-plans` — for ambiguous features and "we should probably…" requests. Brainstorm to surface intent, plan to make implementation reviewable, execute under hard gates.
@@ -27,7 +27,7 @@ The cheatsheet (same file, second table) lists the daily skills: `brainstorming`
 
 ## 3. Reviewers you invoke
 
-The canonical "which reviewer when" mapping lives at `templates/cheatsheet.md.template` Appendix A. The mapping covers TypeScript review, security/permission/credential review, architectural review, error-handling review, and DB-migration review. Read Appendix A before opening your first non-trivial PR. The mapping is updated when the reviewer roster changes — that's a cheatsheet edit, not a methodology rewrite. This curriculum cites Appendix A; it does not restate the list.
+The canonical "which reviewer when" mapping lives at `templates/core/cheatsheet.md.template` Appendix A. The mapping covers TypeScript review, security/permission/credential review, architectural review, error-handling review, and DB-migration review. Read Appendix A before opening your first non-trivial PR. The mapping is updated when the reviewer roster changes — that's a cheatsheet edit, not a methodology rewrite. This curriculum cites Appendix A; it does not restate the list.
 
 ## 4. Test pyramid
 

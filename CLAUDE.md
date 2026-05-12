@@ -1,5 +1,5 @@
 <!--
-templates/claude.md.template
+templates/core/claude.md.template
 Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
 Distilled minimal stack-agnostic core. Structurally inspired by but not lifted
 from the Ultimate Guide CLAUDE.md example. Project-specific identifiers belong
@@ -14,8 +14,8 @@ License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"Licen
 
 This file is project memory for Claude Code. Keep it accurate; stale entries
 teach errors. Update in the same commit as the code change that invalidates a
-section. Stack-specific patterns live in `templates/snippets/` and are appended
-here à la carte by consumers on Next.js (or skipped on other stacks).
+section. Stack-specific patterns live in `templates/snippets/<stack>/` and are
+appended here à la carte by consumers on Next.js (or skipped on other stacks).
 
 ## 1. Project Overview
 
@@ -26,24 +26,47 @@ here à la carte by consumers on Next.js (or skipped on other stacks).
 
 ## 2. Architecture
 
-unify-kit is a template / docs / scripts repository — no runtime, no DB. Consumers
-adopt it via two scripts that mutate filesystem state.
+unify-kit is a Claude Code marketplace + plugin + template-tier scaffolding
+kit — one repo, three roles. No runtime, no DB.
 
-- **Entry points**: `scripts/bootstrap-claude-config.sh` (per-machine `~/.claude/`
-  hook + settings install) and `scripts/init-project.sh` (per-project template
-  install with placeholder substitution). `scripts/audit-scan.sh` is a read-only
-  consumer-side check.
-- **Data layer**: none. Per-project state lives in `<consumer>/.unify-kit-project-manifest.json`
-  (SHA-256 manifest written by `init-project.sh` for idempotent re-runs).
+- **Marketplace** (`.claude-plugin/marketplace.json`): curates the
+  `unifylabs-workflow` plugin. External plugins consumers may want
+  (`superpowers`, the Supabase suite, the full Vercel suite — ~28 in total)
+  are listed in `docs/curated-plugins.md` with install commands; users add
+  their own marketplaces independently. `compound-engineering` is explicitly
+  excluded (opted out).
+- **Plugin** (`plugins/unifylabs-workflow/`): ships 9 skills (`work-issue`,
+  `ship`, `review-prototype`, `analyze-comms`, `phasing`,
+  `promote-to-marketplace`, `compliance-research`, `iterative-review`,
+  `humanizer`), 10 commands (9 `phase*` + `iterative-review`), 7 security
+  hooks (resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in statusline. Users
+  install with `/plugin marketplace add github.com/unifylabs-dev/unify-kit`
+  then `/plugin install unifylabs-workflow` from a Claude session.
+- **Template tree** (`templates/`): organized into 5 tiers — `core/`
+  (always applied), `claude-runtime/` (always applied: `.mcp.json` +
+  `.claude/settings.json`), `optional/` (opt-in via `--include=`),
+  `compliance/profiles/` (opt-in via `--compliance=`; ships
+  `baseline-pipeda`, `healthcare-phipa`, `financial-canada`,
+  `general-soc2`), and `snippets/{nextjs,testing,ci}/` (opt-in via
+  `--snippets=`). `scripts/init-project.sh <dir> --compliance=<profile>
+  --snippets=<stack>` lays the tree down with placeholder substitution.
+- **Scripts** (`scripts/`): `init-project.sh` (per-project scaffold),
+  `audit-scan.sh` (read-only health check: inline-credential scan +
+  unrestricted-MCP scan + optional `--check-plugin`), and the kit-author
+  `dev-symlink-skills.sh` (one-time `~/.claude/skills/*` ↔ plugin symlink
+  migration; not a consumer-facing script).
+- **Data layer**: none. Per-project state lives in
+  `<consumer>/.unify-kit-project-manifest.json` (SHA-256 + applied profiles
+  + includes + snippets — basis for idempotent re-runs).
 - **External services**: GitHub Actions for kit-CI (`lint`, `scrub-check`,
-  `bootstrap-fixture`, `changelog-check` workflows under `.github/workflows/`).
-  No cloud services in the kit's own runtime.
+  `plugin-install-fixture`, `changelog-check` workflows under
+  `.github/workflows/`). No cloud services in the kit's own runtime.
 
 ## 3. Conventions
 
 - **Commit convention**: Conventional Commits enforced (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
-- **File naming**: lowercase-dash for shell scripts (`bootstrap-claude-config.sh`); `.template` suffix on every consumer-facing template under `templates/`; UPPERCASE Markdown at root for canonical docs (`README.md`, `CHANGELOG.md`, `BACKLOG.md`).
-- **Bash version**: `init-project.sh` requires Bash 4+ (associative arrays). `bootstrap-claude-config.sh` is Bash 3.2-compatible (macOS default).
+- **File naming**: lowercase-dash for shell scripts (`init-project.sh`, `dev-symlink-skills.sh`); `.template` suffix on every consumer-facing template under `templates/`; UPPERCASE Markdown at root for canonical docs (`README.md`, `CHANGELOG.md`, `BACKLOG.md`).
+- **Bash version**: `init-project.sh` + `dev-symlink-skills.sh` require Bash 4+ (associative arrays). On macOS, install via `brew install bash` and invoke as `/opt/homebrew/bin/bash <script>`. Plugin hooks ship under `plugins/unifylabs-workflow/hooks/` and are shellchecked against the same exclusion set.
 - **Substitution invariant**: every `{{...}}` placeholder must resolve to a non-empty value OR be explicitly listed in `templates/README.md`'s vocabulary table as "may be empty". `scrub-check.yml` enforces this.
 - **Error handling**: scripts use `set -euo pipefail` + atomic-write via tmp-file-then-rename; never partial state on failure.
 
@@ -65,11 +88,14 @@ closes when the resulting PR merges. Example: `feature/83-staff-management`.
 Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
 gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec sync
 → analysis → branch → planning → TDD → verification → review prep → PR creation.
-Ships in the `superpowers` + `compound-engineering` plugins. Phase 0 reads
-`<consumer>/docs/specs/` before any code work; see `docs/methodology.md` §B
-(Specification-Driven Development) and §D (Issue-driven dev) for the contract.
-See `templates/cheatsheet.md.template` for the daily command list — this file
-does not restate it.
+Ships in the `unifylabs-workflow` plugin (this repo's `plugins/unifylabs-workflow/skills/work-issue/`).
+The plugin bundles 9 skills total: `work-issue`, `ship`, `review-prototype`,
+`analyze-comms`, `phasing`, `promote-to-marketplace`, `compliance-research`,
+`iterative-review`, and `humanizer`. Phase 0 reads `<consumer>/docs/specs/`
+before any code work; see `docs/methodology.md` §B (Specification-Driven
+Development) and §D (Issue-driven dev) for the contract. See
+`templates/core/cheatsheet.md.template` for the daily command list — this
+file does not restate it.
 
 ### Specification Discipline
 
@@ -86,7 +112,7 @@ begins. Hard rules (full discipline in `docs/methodology.md` §B):
 - Bug-fix-only PRs (drift fix, no behavior change) tick the "no spec changes
   needed" box in the PR template.
 
-See `templates/specs/{module,journey,README}.md.template` for the spec
+See `templates/core/specs/{module,journey,README}.md.template` for the spec
 scaffolding.
 
 ## 5. TDD Enforcement
@@ -98,10 +124,10 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), CI-fixture runs (`bootstrap-fixture` + `init-project-fixture` jobs), and the `scrub-check` workflow that enforces the substitution invariant + template-vocabulary contract.
-- **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `bootstrap-fixture`, `changelog-check`) run automatically on push + PR.
-- **Full local**: `gh workflow run bootstrap-fixture.yml` (runs both `bootstrap-fixture` and `init-project-fixture` jobs end-to-end against the fixture sets under `scripts/test-fixtures/`).
-- **Tier discipline**: fixtures are the kit's e2e layer (known-good outputs committed); shell-level checks are the unit layer (shellcheck). No traditional unit/integration tests — the scripts are too simple and the workflows ARE the integration.
+- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
+- **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `plugin-install-fixture`, `changelog-check`) run automatically on push + PR.
+- **Full local**: `gh workflow run plugin-install-fixture.yml` (runs all structural + init-project + audit-scan + dev-symlink dry-run jobs end-to-end against `$RUNNER_TEMP` targets).
+- **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the unit layer. No traditional unit/integration tests — the scripts are too simple and the workflows ARE the integration.
 
 ## 7. Documentation Requirements
 
@@ -119,12 +145,12 @@ behavior changes require which file to update.
 
 Before merging any PR, complete this checklist:
 
-1. Run the full test suite (`gh workflow run bootstrap-fixture.yml`) — all tests pass (0 failures).
-2. Lint clean (`shellcheck scripts/*.sh hooks/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
+1. Run the full test suite (`gh workflow run plugin-install-fixture.yml`) — all tests pass (0 failures).
+2. Lint clean (`shellcheck -e SC2086,SC2155,SC2034 scripts/*.sh plugins/unifylabs-workflow/hooks/*.sh plugins/unifylabs-workflow/statusline/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
 3. Feature verification: trace each test-plan item end-to-end; confirm
-   the relevant fixture set under `scripts/test-fixtures/` was regenerated +
-   committed if the script's output shape changed; confirm CHANGELOG `[Unreleased]`
-   has an entry covering the change.
+   the relevant fixtures under `scripts/test-fixtures/` are consistent with
+   any script-output changes; confirm CHANGELOG `[Unreleased]` has an entry
+   covering the change.
 4. Merge: `gh pr merge <number> --merge` (or your team's policy).
 5. Pull updated default branch locally; confirm a clean working tree.
 6. Update the project's living-doc set per the §"Documentation Requirements"
@@ -152,5 +178,7 @@ README) for the universal Living Documents principle.
 
 ---
 
-Stack-specific patterns are NOT in this template. They live in `templates/snippets/`.
-A consumer using Next.js patterns appends snippet content into their filled-in `CLAUDE.md`.
+Stack-specific patterns are NOT in this template. They live in `templates/snippets/{nextjs,testing,ci}/`.
+A consumer using Next.js patterns references the relevant snippet by path
+from their filled-in `CLAUDE.md`; `init-project.sh --snippets=<stack>`
+records the chosen stack(s) in the project manifest.

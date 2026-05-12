@@ -1,0 +1,90 @@
+<!--
+templates/compliance/profiles/healthcare-phipa/docs/compliance/subprocessors.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Subprocessors (PHI scope)
+
+> **This is a starting-point template, not legal advice.** Subprocessors
+> that touch PHI must be vetted for PHIPA-equivalent safeguards. Verify
+> each vendor's current data-processing terms, region(s), and audit
+> reports before relying on the entries below. For HICs, the IPC has
+> published guidance on third-party service providers handling PHI.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Last reviewed**: `[fill in: YYYY-MM-DD]` ·
+**Review cadence**: `[fill in: quarterly is a common starting point;
+more often for new vendors in their first year]`
+
+## How to read this list
+
+Each row represents a third-party service we use that may receive or
+process PHI or other personal information collected through
+{{PROJECT_NAME}}. We are accountable under PHIPA (s. 17, s. 12) and
+PIPEDA (Principle 1) for these subprocessors' practices when they
+process PHI on our behalf.
+
+| Column | Meaning |
+|---|---|
+| **Vendor** | Legal name + service. |
+| **Data category** | What classes of information the vendor processes (PHI, billing, communications, technical, etc.). |
+| **PHI access** | Does the vendor touch PHI directly? (`yes` / `no` / `incidental`). |
+| **Region** | Where the vendor processes the data. |
+| **DPA / contract** | Data-processing agreement; for PHI-touching vendors, what equivalent of a Business Associate Agreement is in place. |
+| **Audit evidence** | SOC 2 Type II, ISO 27001, HITRUST, or other independent attestation. |
+| **Notes** | Anything customers should know. |
+
+## Current subprocessors
+
+> Replace the example rows below with the actual services your project
+> uses. Remove rows for services you don't use.
+
+| Vendor | Data category | PHI access | Region | DPA / contract | Audit evidence | Notes |
+|---|---|---|---|---|---|---|
+| `[fill in: hosting / cloud provider]` | account, technical, PHI-at-rest | yes | `[fill in: e.g., Canada (ca-central-1)]` | `[fill in]` | `[fill in: SOC 2 Type II + HIPAA add-on if applicable]` | Backup region: `[fill in]`. |
+| `[fill in: database / managed Postgres]` | account, PHI | yes | `[fill in]` | `[fill in]` | `[fill in]` | Row-level access controls + encryption-at-rest. |
+| `[fill in: EHR / EMR integration]` | PHI | yes | `[fill in]` | `[fill in]` | `[fill in]` | Integration scope: `[fill in: read / write / both]`. |
+| `[fill in: lab / imaging integration]` | PHI (results) | yes | `[fill in]` | `[fill in]` | `[fill in]` | HL7 / FHIR / proprietary: `[fill in]`. |
+| `[fill in: secure messaging]` | PHI (clinical messages) | yes | `[fill in]` | `[fill in]` | `[fill in]` | Patient-facing; consent captured at signup. |
+| `[fill in: appointment reminders]` | identifying info, appointment metadata (not clinical content) | incidental | `[fill in]` | `[fill in]` | `[fill in]` | Templates exclude clinical content. |
+| `[fill in: billing / claims]` | financial + identifying info, sometimes PHI | yes | `[fill in]` | `[fill in]` | `[fill in]` | OHIP-claim path: `[fill in]`. |
+| `[fill in: transactional email]` | account, communications metadata | incidental | `[fill in]` | `[fill in]` | `[fill in]` | Templates explicitly exclude PHI in subject lines and bodies. |
+| `[fill in: error monitoring]` | technical | no (PII scrubbed) | `[fill in]` | `[fill in]` | `[fill in]` | We scrub PHI + PII from error context before sending. |
+| `[fill in: product analytics]` | service-use metadata | no | `[fill in]` | `[fill in]` | `[fill in]` | Event schema explicitly excludes PHI. |
+
+## PHI-touching vendor onboarding
+
+Before adding a vendor that will process PHI:
+
+- [ ] Confirm the vendor offers PHIPA-equivalent contractual terms
+      (data-processing agreement covering use, disclosure, retention,
+      safeguards, subprocessing, breach notification).
+- [ ] Confirm independent audit evidence (SOC 2 Type II at minimum;
+      HITRUST or ISO 27001 where available).
+- [ ] Confirm processing region(s) and whether cross-border processing
+      is required.
+- [ ] Confirm the vendor's breach-notification SLA matches our
+      breach-response runbook.
+- [ ] Confirm the vendor's account-deletion / data-return process.
+- [ ] Add the vendor to this table.
+- [ ] Notify customers per the privacy policy where required.
+- [ ] If {{PROJECT_NAME}} is an Agent of a HIC, notify the HIC of the
+      new subprocessor before activation.
+
+## Changes
+
+When a subprocessor is added, changed, or removed:
+
+1. Update the table above (and the "Last reviewed" date).
+2. Notify active customers per the privacy policy if material.
+3. If {{PROJECT_NAME}} is an Agent: notify the HIC.
+4. Record the change in the CHANGELOG.
+
+## Related
+
+- [`phipa-readiness.md`](phipa-readiness.md) item 2 (Agent
+  obligations) and item 6 (Safeguards).
+- [`privacy-policy.md`](privacy-policy.md) §7.
+- [`../../runbooks/vendor-escape-template.md`](../../baseline-pipeda/runbooks/vendor-escape-template.md)
+  — runbook for migrating off a subprocessor.

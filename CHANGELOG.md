@@ -6,16 +6,288 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
+<!--
+New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
+-->
+
 ### Security
 
-<!--
-New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, hooks/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
--->
+- **Plugin security hooks fail closed instead of open.** `dangerous-actions-blocker.sh` and `file-guard.sh` now exit 2 (block) instead of exit 0 (allow) when (a) `python3` is missing from PATH, or (b) the tool-input JSON payload fails to parse. Previously a stripped-down environment without python3, or any Claude Code payload schema drift, silently disabled both hooks with only a stderr line that the user might miss. Diagnostic now names the hook and points at `CLAUDE_HOOKS_DISABLE=<name>` for explicit opt-out.
+- **`pre-commit-secrets.sh` fail-closed on missing git or git-diff failure.** Previously a `Bash(git commit:*)` matcher firing without `git` on PATH, or a `git diff --cached` that errored (corrupt index, `safe.directory` rejection), would silently allow the commit through. Both now block (exit 2) with the captured git stderr.
+- **`mcp-config-integrity.sh` surfaces baseline-write failures.** Previously `mkdir -p` and the baseline-file write silently swallowed filesystem errors via `2>/dev/null || true`, so a read-only `HOME` or wrong perms on `~/.claude/.mcp-hashes/` permanently disabled the CVE-2025-54135 / 54136 mitigation with no diagnostic. Now emits a one-line stderr explaining drift detection is disabled (still exit 0 — the hook is advisory).
+
+### Fixed
+
+- **`changelog-check.yml` trigger paths matched v2.** `^hooks/` (repo-root `hooks/` was deleted in v2) replaced with `^plugins/` + `^\.claude-plugin/`. Without this, every plugin / marketplace edit silently bypassed the per-PR `[Unreleased]` discipline that the workflow exists to enforce.
+- **`marketplace.json` description matches `plugin.json`.** Now lists 9 skills (adds `iterative-review`, `humanizer`) and "10 phase + review commands" instead of v1's "skills (work-issue, ship, …, compliance-research), 9 phase commands."
+- **`scripts/dev-symlink-skills.sh` migration is atomic across the seam.** (a) `_symlink` now uses `ln -s` to a `.new.$$` sibling then `mv -f` rename — Ctrl-C between operations no longer leaves a deleted user_path with no replacement. (b) `settings.json` is edited via `jq` BEFORE hook files are deleted, with the jq stderr captured and surfaced on failure; previously a jq error left the hook files deleted but `settings.json` still referencing them, breaking every subsequent session. (c) `_backup_path` handles empty-subdir destination cleanly so the post-hoc `BACKUP_DIR//statusline.sh` rename hack drops away.
+- **`scripts/init-project.sh` `_install_compliance` surfaces find failures.** Compliance profile enumeration via `find` ran inside `< <(...)` process substitution with `2>/dev/null` — a missing subdir or permission error produced the misleading "no docs/compliance or runbooks content" warning. Now pre-checks each subdir's existence, stages the file list to a tempfile, fails loudly via `_err` + `exit 1` on real find errors.
+- **`scripts/README.md` rewritten for v2.** Old 474-line doc still documented `bootstrap-claude-config.sh` (deleted), referenced `../hooks/README.md` (deleted), and claimed "11 templates" / "6 hooks" (both v1 numbers). Replaced with a concise v2 stub pointing at the canonical README + `init-project.sh --help`.
+- **`scripts/ci/run-hook-recipes.sh` deleted.** Read recipes from `hooks/README.md` (deleted in v2) and was only ever invoked by `bootstrap-fixture.yml` (also deleted). Hook-firing verification is user-gated post-install per CLAUDE.md §6.
+- **`onboarding/day-1.md` step 2 + day-1 hard gate refreshed for v2.** Bootstrap step swapped from `./scripts/bootstrap-claude-config.sh` to `/plugin marketplace add … && /plugin install unifylabs-workflow`; audit-scan step now uses `--check-plugin`.
+- **`.github/pull_request_template.md` workflow reference renamed.** `gh workflow run bootstrap-fixture.yml` → `gh workflow run plugin-install-fixture.yml` (2 occurrences).
+- **`plugins/unifylabs-workflow/commands/iterative-review.md` "see also" pointer.** Replaced `~/.claude/skills/iterative-review/SKILL.md` (only resolves after `dev-symlink-skills.sh` migration) with a posture-neutral reference to the bundled skill.
+- **`marketplace-drift-check.sh` uses `set -euo pipefail` per CLAUDE.md §3.** Was `set -uo` (no `-e`); now `-euo` with `trap 'exit 0' ERR` to preserve the advisory contract while still benefiting from `-e` during development.
+
+### CI
+
+- **`plugin-install-fixture.yml` adds two structural assertions.** (a) `bash -n` parse check across all hook scripts + `statusline.sh` (catches unterminated heredocs / `$(...)` that shellcheck can miss). (b) `hooks.json` `command` paths are extracted via jq, `${CLAUDE_PLUGIN_ROOT}` is resolved, and each referenced file is asserted to exist on disk (catches typos that currently fail only at user runtime).
+
+## [2.0.0] - 2026-05-12
+
+Major release reshaping unify-kit from v1's "generic kickstarter via consumer-side scripts" into v2's "Tomer's principles + plugin curation kit." One repo now serves three roles: (a) a Claude Code marketplace at `.claude-plugin/marketplace.json` curating the `unifylabs-workflow` plugin, (b) the `unifylabs-workflow` plugin at `plugins/unifylabs-workflow/` (9 skills, 10 commands, 7 security hooks, opt-in statusline), (c) a tier-organized template tree at `templates/{core,claude-runtime,optional,compliance,snippets}/` with per-project compliance subsystem (PHIPA / PIPEDA / financial-Canada / SOC 2). v1.0.0's machine-state install via `scripts/bootstrap-claude-config.sh` is replaced by `/plugin install unifylabs-workflow` from a Claude session; the repo-root `hooks/` directory is migrated into the plugin (functionally identical hook content; only path resolution changed, from absolute `~/.claude/hooks/` to plugin-rooted `${CLAUDE_PLUGIN_ROOT}/hooks/`).
+
+### Migration from v1.0.0
+
+v1.0.0 audience was ~1 day old (essentially Tomer + close clients). No automated migration script; manual steps:
+
+1. **One-time per machine**: from a fresh Claude session, run
+   `/plugin marketplace add github.com/unifylabs-dev/unify-kit` then
+   `/plugin install unifylabs-workflow`. Verify with `/help` — you should see
+   `work-issue`, `ship`, `phasing`, `compliance-research`, plus the 9 `phase*`
+   commands and `iterative-review`.
+2. **Optional (kit-author only — Tomer)**: from this repo's clone, run
+   `bash scripts/dev-symlink-skills.sh`. Backs up `~/.claude/skills/*`,
+   `~/.claude/commands/*`, `~/.claude/hooks/*.sh`, `~/.claude/statusline.sh`
+   to `~/.claude/.v2-migration-backup-<UTC-ts>/`, then symlinks the
+   user-level paths into `plugins/unifylabs-workflow/`. `--dry-run` and
+   `--rollback` available. Consumers do NOT need this script — `/plugin install`
+   wires everything up via Claude Code's plugin loader.
+3. **Per existing project on v1.0.0**: re-run
+   `bash scripts/init-project.sh <dir> --compliance=<profile> --snippets=<stack>`.
+   The script handles `<dir>/.unify-kit-project-manifest.json` SHA comparison
+   for safe re-runs (no surprise overwrites of consumer-edited files; use
+   `--force` to override). v2's manifest schema is a superset of v1's — old
+   manifests are compatible.
+
+### Added
+
+- **Marketplace** (`.claude-plugin/marketplace.json`) listing the
+  `unifylabs-workflow` plugin. External plugins worth pairing with this kit
+  (`superpowers`, the Supabase suite, the full Vercel suite — ~28 in total)
+  are documented in `docs/curated-plugins.md` with install commands. Users
+  add their own marketplaces independently. `compound-engineering` is
+  explicitly excluded (opted out).
+- **`unifylabs-workflow` plugin** at `plugins/unifylabs-workflow/`
+  (v2.0.0). Ships:
+  - **9 skills**: `work-issue` (8-phase issue-driven dev), `ship`
+    (commit + push + PR), `review-prototype` (turn a prototype branch into
+    an acceptance-criteria-backed issue), `analyze-comms` (analyze incoming
+    client/vendor messages), `phasing` (multi-phase orchestration across
+    fresh Claude sessions), `promote-to-marketplace` (move a personal
+    `~/.claude/skills/X` into the plugin), `compliance-research`
+    (interactive industry/geo/regulator walkthrough), `iterative-review`
+    (bounded review-fix-verify loop; auto-detects code / doc / phase mode),
+    `humanizer` (remove signs of AI-generated writing; MIT vendor from
+    `devnen/Humanizer-Skill`).
+  - **10 commands**: `phase`, `phase-abort`, `phase-archive`, `phase-execute`,
+    `phase-list`, `phase-next`, `phase-resume`, `phase-retry`, `phase-status`,
+    `iterative-review`.
+  - **7 security hooks**: `pre-commit-secrets`, `output-secrets-scanner`,
+    `file-guard`, `dangerous-actions-blocker`, `claudemd-scanner`,
+    `mcp-config-integrity`, `marketplace-drift-check`. Wired in
+    `plugins/unifylabs-workflow/hooks/hooks.json` with `${CLAUDE_PLUGIN_ROOT}`
+    path resolution.
+  - **Opt-in statusline** at `plugins/unifylabs-workflow/statusline/statusline.sh`.
+- **Template tier reorganization**: `templates/` restructured into
+  `core/` (always applied — `claude.md`, `cheatsheet`, `ai-usage-charter`,
+  `mcp-policy`, `security-checklist`, `pull-request-template`,
+  `issue-templates/`, `specs/`, `github/CODEOWNERS`), `claude-runtime/`
+  (always applied — `.mcp.json`, `.claude/settings.json`), `optional/`
+  (`team-onboarding`, `methodology-retro`, `llms.txt`), `compliance/profiles/`
+  (4 profiles), `snippets/{nextjs,testing,ci}/`. All moves used `git mv`
+  so `git log --follow` works on every renamed file.
+- **Compliance subsystem** under `templates/compliance/profiles/`:
+  - `baseline-pipeda` — Canadian privacy floor. PIPEDA's 10 fair-information
+    principles; OPC breach-reporting (RROSH threshold, 24-month record
+    retention); CASL-aware privacy policy; OWASP-aligned safeguards.
+  - `healthcare-phipa` — Ontario PHIPA. HIC vs. Agent role distinction;
+    consent + lockbox; s. 10.1 electronic audit log; s. 12.2 breach
+    notification "at the first reasonable opportunity" (PHIPA s. 12.2
+    canonical wording — superseding the master plan's outdated "24-hr"
+    framing); IPC reporting flow; PHI access-revocation with audit-log
+    reconciliation. Extends `baseline-pipeda`.
+  - `financial-canada` — FINTRAC readiness (PCMLTFA compliance program,
+    STR / LCTR / LVCTR / EFTR reporting); provincial-securities-overview
+    linking the CSA + each provincial commission + CIRO + OBSI;
+    multi-regulator breach response; financial-flavored privacy + audit-log
+    + access-revocation. Extends `baseline-pipeda`.
+  - `general-soc2` — SOC 2 TSC mapping (CC1–CC9 + Availability +
+    Confidentiality + Processing Integrity + Privacy framing);
+    `security-policies-index.md` listing the 22 policy artifacts auditors
+    expect; NIST SP 800-61-aligned IR runbook; vendor-management runbook
+    covering 4-tier classification and onboarding/re-review/termination.
+    Independent of baseline (framework, not law); composes alongside
+    `baseline-pipeda` for Canadian B2B SaaS.
+- **Composition / extends mechanism** in `init-project.sh`: when an
+  extender profile is named (`healthcare-phipa`, `financial-canada`),
+  baseline-pipeda is auto-prepended. Install order is
+  `baseline → extender → general-soc2` (later writes win on collision).
+  Cross-profile relative links (e.g., baseline's `vendor-escape-template.md`
+  referenced from an extender) are rewritten during install from
+  `../../baseline-pipeda/runbooks/<file>` to `runbooks/<file>` to match
+  the flattened consumer tree.
+- **`/compliance-research` skill** at
+  `plugins/unifylabs-workflow/skills/compliance-research/SKILL.md` — ~235-line
+  interactive flow. Walks user through industry / customer-geography /
+  data-classes / specific-regulator questions via `AskUserQuestion`; applies
+  a deterministic recommendation matrix; gap-analyzes any existing
+  `docs/compliance/`; fetches current regulatory text via `context7` MCP
+  (preferred) then `WebSearch` (fallback); writes
+  `docs/compliance/research-notes/<YYYY-MM-DD>-<topic-slug>.md` with YAML
+  frontmatter. Offline-friendly fallback.
+- **`iterative-review` skill + command** at
+  `plugins/unifylabs-workflow/skills/iterative-review/` and
+  `plugins/unifylabs-workflow/commands/iterative-review.md` — bounded
+  review-fix-verify loop. Auto-detects code, doc, or phase mode. Severity-
+  gated stopping (Critical always gates user; Important auto-fixes by
+  default; Suggestions surface in report only). 3-iteration hard cap,
+  skip-if-clean pre-gate (avoids Snorkel self-critique 41pt accuracy drop),
+  fixed-point early exit, 5× token-budget circuit breaker. Cross-referenced
+  from `plugins/unifylabs-workflow/skills/phasing/SKILL.md` §9.2 as a
+  deeper post-phase conformance-review option.
+- **`humanizer` skill** at `plugins/unifylabs-workflow/skills/humanizer/`
+  — vendored from `devnen/Humanizer-Skill` (MIT). Removes AI-writing tells
+  per Wikipedia's "Signs of AI writing" guide. Includes LICENSE, SKILL.md,
+  README.md, WARP.md (the upstream `.git/` was excluded from vendor).
+- **`scripts/init-project.sh` v2 refactor**:
+  - New tier mapping (core/ + claude-runtime/ always applied).
+  - `--compliance=<comma-list>` flag with extends auto-resolution.
+  - `--include=<comma-list>` flag for optional templates
+    (`team-onboarding`, `llms-txt`).
+  - `--snippets=<stack>` extended to support comma-separated combos of
+    `nextjs`, `testing`, `ci`, `none`.
+  - 2 new placeholders: `{{REPO_OWNER}}` (CODEOWNERS) and
+    `{{COMPLIANCE_PROFILE}}` (addenda). Vocabulary grew from 18 → 20.
+  - Manifest schema: top-level `compliance_profiles`, `includes`, `snippets`
+    arrays in `<target>/.unify-kit-project-manifest.json`.
+  - Compliance addenda baked into CLAUDE.md upfront (per-profile
+    `<!-- compliance-addendum:<slug> -->` markers; idempotent across re-runs).
+- **`scripts/audit-scan.sh` v2 refactor**: drops the v1 hook-existence
+  check (hooks now live in the plugin and resolve via `${CLAUDE_PLUGIN_ROOT}`);
+  adds `--check-plugin` flag probing `~/.claude/plugins/installed.json` and
+  `~/.claude/plugins/unifylabs-workflow/.claude-plugin/plugin.json`. Inline-
+  credential + unrestricted-MCP scans unchanged.
+- **`scripts/dev-symlink-skills.sh`** (new) — one-time kit-author migration:
+  back up `~/.claude/skills/*`, `~/.claude/commands/*`, `~/.claude/hooks/*.sh`,
+  `~/.claude/statusline.sh` to `~/.claude/.v2-migration-backup-<UTC-ts>/`,
+  then symlink user-level paths into `plugins/unifylabs-workflow/`. Atomic
+  backup-then-symlink; `--dry-run` and `--rollback` flags; idempotent
+  (already-correct symlinks left alone). Surgically strips user-level hook
+  command entries from `~/.claude/settings.json` (plugin provides hooks).
+- **`.github/workflows/plugin-install-fixture.yml`** (new) — replaces
+  `bootstrap-fixture.yml`. Structural validation (marketplace + plugin
+  JSON validity, 9-skill description, 10 commands, hook executability,
+  `${CLAUDE_PLUGIN_ROOT}` resolution) + ephemeral `init-project.sh`
+  smoke tests across compliance profiles + audit-scan happy/sad path +
+  dev-symlink-skills dry-run.
+- **`docs/curated-plugins.md`** (new) — ~28 external plugins documented
+  by category: Process/Workflow (`superpowers`), Supabase suite (2),
+  Vercel suite (~24). Per-plugin one-line description + install command.
+  Linked from rewritten root `README.md`.
+- **`specs/14-marketplace.md`** (new) — documents
+  `.claude-plugin/marketplace.json` schema, curation policy, the
+  `marketplace-drift-check.sh` SessionStart hook, and what's explicitly
+  out of scope (auto-installing externals).
+- **5 new Next.js snippets** under `templates/snippets/nextjs/`:
+  `prisma-7.md`, `drizzle.md`, `custom-auth.md`, `forms.md`,
+  `semantic-release.md`. Each 80–200 lines.
+- **`templates/core/github/CODEOWNERS.template`** (new) — routes
+  `.claude/`, `.mcp.json`, `CLAUDE.md`, `ONBOARDING.md`, and
+  `docs/compliance/` to a configurable repo owner via `{{REPO_OWNER}}`.
+- **`templates/claude-runtime/`** (new dir) — `.mcp.json.template`
+  (empty `{ "mcpServers": {} }` skeleton), `.mcp.json.examples.md`
+  (companion reference with Supabase / Playwright / context7 worked
+  examples — JSON doesn't support inline comments, hence the sibling
+  reference doc), `.claude-settings.json.template`
+  (`enableAllProjectMcpServers: true` + 15-entry permission allowlist).
+- **`templates/compliance/README.md`** finalized — composition section
+  with 3 worked examples (default Canadian project; Ontario clinic;
+  Canadian fintech doing enterprise sales); "Extends mechanism" walkthrough
+  explaining install order + overwrite-on-collision logic; profile-author
+  checklist; "not legal advice" disclaimer.
+
+### Changed
+
+- **`init-project.sh` SOURCE_TARGET_MAP** rewritten to read from
+  `templates/core/` and `templates/claude-runtime/`; `--snippets=` extended
+  from `nextjs|none` to `nextjs,testing,ci|none` (comma-separated); v1's
+  `--with-ci-templates` flag dropped (CI snippets now live under
+  `templates/snippets/ci/` and are addressable via `--snippets=ci`).
+- **`audit-scan.sh`** plugin-aware (drops repo-hook tracking; adds
+  `--check-plugin` probe).
+- **`CLAUDE.md`** §2 (Architecture) rewritten for the v2 model (marketplace
+  + plugin + tier-organized templates); §6 (Test Strategy) references
+  `plugin-install-fixture` instead of `bootstrap-fixture`; §4 (Issue-Driven
+  Development) corrected — `work-issue` ships in the `unifylabs-workflow`
+  plugin (this repo), not in `superpowers + compound-engineering`; PR Merge
+  Process checklist updated to use the new workflow + shellcheck scope.
+- **`README.md`** quickstart fully rewritten for the 3-step v2 flow
+  (plugin install / clone / `init-project.sh --compliance=...`); status
+  table to v2.0.0; bootstrap-fixture badge replaced with
+  plugin-install-fixture badge; new "What's new in v2" section; link to
+  `docs/curated-plugins.md`.
+- **`templates/README.md`** documents the v2 tier layout and the
+  `--include` / `--compliance` / `--snippets` flag contract; vocabulary
+  table extended to 20 placeholders.
+- **`templates/core/cheatsheet.md.template`** Appendix A reviewer roster
+  rewritten to be vendor-neutral (roles + how to invoke, no hard-coded
+  `compound-engineering:` plugin entries); removed the "Plan mode + phasing
+  trigger" mini-section (redundant with the `/phase` row in Daily
+  slash-commands).
+- **`templates/core/pull-request-template.md.template`** removed the
+  `## Design Decisions` H2 section (low-adoption; decisions belong inline
+  in Summary or in spec changes); slim from 73 to 70 lines.
+- **`.github/workflows/scrub-check.yml`** SUPPORTED placeholder list
+  extended from 18 to 20 entries (`{{REPO_OWNER}}`, `{{COMPLIANCE_PROFILE}}`);
+  shipped-artifact scope adjusted to scan `plugins/` instead of repo-root
+  `hooks/`.
+- **`.github/workflows/lint.yml`** shellcheck scope updated to
+  `scripts/*.sh + scripts/ci/*.sh + templates/snippets/ci/*.sh +
+  plugins/unifylabs-workflow/{hooks,statusline}/*.sh`; SC2034 added to the
+  exclusion set; the v1 `json-schema` job (validated the now-deleted
+  `hooks/settings-snippet.json`) removed.
+- **`specs/03-hooks.md`** appended with a "Migration to plugin (v2.0.0)"
+  section describing the move from `unify-kit/hooks/*.sh` to
+  `plugins/unifylabs-workflow/hooks/*.sh` with `${CLAUDE_PLUGIN_ROOT}`
+  resolution.
+- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`** version
+  finalized to `2.0.0`; description enumerates 9 skills; `[stub]` marker
+  on `compliance-research` removed.
+
+### Removed
+
+- **`scripts/bootstrap-claude-config.sh`** — replaced by `/plugin install
+  unifylabs-workflow` from a Claude session. v1 install steps in
+  `~/.claude/` (hooks, settings.json merge, kit-version manifest at
+  `~/.claude/.unify-kit-manifest.json`) are now handled by Claude Code's
+  plugin loader.
+- **`hooks/` directory at repo root** — 6 security hook scripts +
+  `hooks/README.md` + `hooks/settings-snippet.json`. The 6 hook scripts
+  are now byte-identical at `plugins/unifylabs-workflow/hooks/`. The
+  settings snippet is superseded by `plugins/unifylabs-workflow/hooks/hooks.json`
+  (uses `${CLAUDE_PLUGIN_ROOT}`).
+- **`.github/workflows/bootstrap-fixture.yml`** — replaced by
+  `plugin-install-fixture.yml`.
+- **`scripts/test-fixtures/init-project/full/`** + `full-with-ci/` —
+  v1 known-good output trees. v2 CI installs into `$RUNNER_TEMP` targets
+  and asserts structural invariants; committed known-good output proved
+  brittle (kit-version strings, platform-specific path differences).
+- **v1 `--with-ci-templates` flag** in `init-project.sh` (CI snippets
+  now addressable via the unified `--snippets=ci` syntax).
+
+### Fixed
+
+- **`CLAUDE.md` line 108** (v1) — "Ships in the `superpowers` +
+  `compound-engineering` plugins" was wrong; `work-issue` is Tomer's own
+  skill and ships in this repo's `unifylabs-workflow` plugin. Corrected.
+
+### Security
+
+- 7 security hooks (existing 6 + new `marketplace-drift-check.sh`) now
+  ship through the plugin install path. `marketplace-drift-check.sh`
+  (SessionStart, advisory) detects when `~/.claude/skills/X` exists but
+  isn't in the plugin and isn't on `~/.claude/.personal-skills` allowlist.
 
 ## [1.0.0] - 2026-05-11
 

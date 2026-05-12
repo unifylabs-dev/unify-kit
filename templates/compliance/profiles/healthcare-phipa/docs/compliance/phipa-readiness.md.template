@@ -1,0 +1,221 @@
+<!--
+templates/compliance/profiles/healthcare-phipa/docs/compliance/phipa-readiness.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Pattern reference: structure mirrors PHIPA's part-numbered obligations;
+  prose authored independently.
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — PHIPA Readiness
+
+> **This is a starting-point template, not legal advice.** PHIPA
+> obligations differ significantly between Health Information Custodians
+> (HICs) and Agents of HICs, and between custodian categories
+> (regulated health professionals, hospitals, long-term care homes,
+> etc.). Consult qualified Ontario health-privacy counsel before relying
+> on this document for compliance purposes.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Last reviewed**: `[fill in: YYYY-MM-DD]` ·
+**HIC contact (if applicable)**: `[fill in: name + College registration]` ·
+**Privacy officer**: `[fill in: name + email]`
+
+## What PHIPA covers
+
+PHIPA (Personal Health Information Protection Act, 2004, S.O. 2004, c. 3,
+Sched. A) is Ontario's health-sector privacy statute. It governs the
+collection, use, and disclosure of personal health information (PHI) by
+HICs and their Agents.
+
+Authoritative text: <https://www.ontario.ca/laws/statute/04p03>
+(accessed 2026-05-12).
+
+IPC's guidance and resources for HICs:
+<https://www.ipc.on.ca/en/health-organizations> (accessed 2026-05-12).
+
+## Project posture
+
+`[fill in: state whether {{PROJECT_NAME}} is operated by a HIC, is an
+Agent acting on a HIC's behalf, or is a vendor providing services to a
+HIC. PHIPA obligations attach differently in each case (HIC: direct;
+Agent: through the HIC's accountability chain; vendor: contractually).]`
+
+## Readiness items
+
+### 1. Custodian status (PHIPA s. 3)
+
+- **What it requires**: identify whether your project is operated by a
+  HIC (e.g., a regulated health professional, a hospital, a community
+  health centre, a long-term care home, etc.) or is acting as an Agent
+  of one (PHIPA s. 17). Vendors who are neither HICs nor Agents handle
+  PHI only under contract.
+- **How {{PROJECT_NAME}} meets it**: `[fill in]`.
+- **TBD**: written role declaration; lawyer review of the role
+  classification; per-tenant role declarations if you serve multiple
+  HICs.
+
+### 2. Agent obligations (PHIPA s. 17, s. 10)
+
+- **What it requires**: Agents act on behalf of a HIC and may only
+  collect, use, and disclose PHI as permitted by their HIC's mandate
+  and PHIPA. The HIC remains accountable for the Agent's acts.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: written terms between
+  {{PROJECT_NAME}} and the HIC delineating the Agent relationship;
+  the scope of authority; the safeguards the Agent commits to]`.
+- **TBD**: Information Manager Agreement template (where applicable
+  under PHIPA s. 10).
+
+### 3. Knowledgeable consent (PHIPA s. 18)
+
+- **What it requires**: collection, use, and disclosure of PHI requires
+  knowledgeable consent — the individual knows the purposes and the
+  consequences of giving or withholding consent. Some uses and
+  disclosures are permitted without consent (PHIPA s. 39–s. 50);
+  others always require it.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: consent flow on intake;
+  separate consent for purposes outside core care, such as research,
+  marketing, or analytics]`.
+- **TBD**: consent UI for secondary uses; consent-version tracking;
+  withdrawal mechanism reachable from the patient/client portal.
+
+### 4. Lockbox / express instructions (PHIPA s. 19, s. 37)
+
+- **What it requires**: individuals may give express instructions not
+  to use or disclose PHI for health-care purposes (often called the
+  "lockbox" right). Limited exceptions apply (e.g., when withholding
+  would result in significant harm).
+- **How {{PROJECT_NAME}} meets it**: `[fill in: how an individual can
+  mark a portion of their record withheld from a specific
+  practitioner or care context; how providers see and act on
+  lockbox markers]`.
+- **TBD**: lockbox UI; technical enforcement (data-access predicates);
+  override-and-flag flow for the s. 37(1)(a) "significant harm"
+  exception.
+
+### 5. Limiting collection, use, disclosure (PHIPA s. 30, s. 31, s. 32)
+
+- **What it requires**: collect, use, and disclose only what is
+  necessary for a lawful purpose; do not use or disclose PHI if
+  de-identified information would serve the purpose.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: data-minimization
+  practice — what fields collected for which purposes; where
+  de-identified or aggregated data substitutes for raw PHI]`.
+
+### 6. Safeguards (PHIPA s. 12)
+
+- **What it requires**: take reasonable steps to protect PHI against
+  theft, loss, and unauthorized use or disclosure. Includes
+  administrative, technical, and physical safeguards.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: TLS in transit;
+  encryption at rest; access controls (role-based, attribute-based);
+  audit logging (see [`audit-log-requirements.md`](audit-log-requirements.md));
+  secret management; vulnerability management]`.
+- **TBD**: external penetration test cadence; tabletop incident
+  exercise; vendor-security-review schedule.
+
+### 7. Audit log of PHI access (PHIPA s. 10.1)
+
+- **What it requires**: maintain, audit, and monitor an electronic
+  record of all accesses to records of PHI in electronic form.
+- **How {{PROJECT_NAME}} meets it**: see
+  [`audit-log-requirements.md`](audit-log-requirements.md).
+- **TBD**: log retention policy (clinical records commonly retained
+  10+ years per College guidelines; align audit logs); access-log
+  export capability for individuals (PHIPA s. 52 right of access
+  extends to logs in some interpretations).
+
+### 8. Breach notification (PHIPA s. 12.2)
+
+- **What it requires**: notify affected individuals at the first
+  reasonable opportunity if PHI is stolen, lost, or used or disclosed
+  without authority; notify the IPC in defined circumstances.
+- **How {{PROJECT_NAME}} meets it**: see
+  [`breach-response.md`](breach-response.md). The IPC's breach
+  protocol is at
+  <https://www.ipc.on.ca/en/health-organizations/responding-to-a-privacy-breach/privacy-breach-protocol>
+  (accessed 2026-05-12).
+- **TBD**: notification templates (affected individual, IPC, HIC if
+  this project is an Agent); rehearsed escalation path.
+
+### 9. Annual statistical reporting (PHIPA O. Reg. 224/17)
+
+- **What it requires**: HICs are required to submit annual aggregate
+  privacy-breach statistics to the IPC by March 1 of the following
+  calendar year, regardless of whether individual breaches were
+  reported at the time.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: who owns the annual
+  submission and how breach-register data is rolled up]`.
+- **TBD**: calendar reminder; submission rehearsal in Q1 of the first
+  full year.
+
+### 10. Individual right of access (PHIPA s. 52)
+
+- **What it requires**: an individual has a right of access to a record
+  of their PHI, subject to enumerated exceptions. Response is required
+  within 30 days, extendable to 60 days in specified circumstances.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: access-request channel
+  and SLA; format of disclosed record]`.
+
+### 11. Individual right of correction (PHIPA s. 55)
+
+- **What it requires**: an individual may request correction; the HIC
+  must respond within 30 days, granting or providing reasons for
+  refusal.
+- **How {{PROJECT_NAME}} meets it**: `[fill in]`.
+
+### 12. Disclosure for research (PHIPA s. 44)
+
+- **What it requires**: disclosure of PHI for research requires a
+  research plan approved by a Research Ethics Board (REB) and a
+  research agreement, except where the disclosure is otherwise
+  permitted.
+- **How {{PROJECT_NAME}} meets it**: `[fill in or "not applicable"
+  if no research use]`.
+
+### 13. Data residency expectation
+
+- **What it requires**: PHIPA does not strictly mandate Canadian
+  residency, but practical expectations (College guidance, HIC
+  preferences, patient expectations) favour Canadian residency where
+  feasible.
+- **How {{PROJECT_NAME}} meets it**: `[fill in: cloud region(s) where
+  PHI is stored; any cross-border processing]`.
+- **TBD**: subprocessor DPAs confirming residency or contractual
+  safeguards where data crosses the border.
+
+### 14. Information-Practice statement (PHIPA s. 16)
+
+- **What it requires**: each HIC must make readily available to the
+  public a written statement of their information practices.
+- **How {{PROJECT_NAME}} meets it**: see
+  [`privacy-policy.md`](privacy-policy.md).
+- **TBD**: counsel review.
+
+### 15. Complaint pathway (PHIPA s. 56, s. 57)
+
+- **What it requires**: a complaint mechanism within the organization
+  and access to the IPC for unresolved complaints.
+- **How {{PROJECT_NAME}} meets it**: contact `[fill in: privacy
+  contact]`. Escalation to the IPC.
+
+## Lawyer-review checklist
+
+- [ ] HIC vs. Agent role declared and documented.
+- [ ] Privacy / Information Practice statement reviewed.
+- [ ] Consent flows reviewed (knowledgeable consent + lockbox + research).
+- [ ] Breach response runbook reviewed (notification timing, IPC contact,
+      HIC coordination if Agent).
+- [ ] Access-request and correction-request flows reviewed.
+- [ ] Audit log content reviewed against PHIPA s. 10.1.
+- [ ] Subprocessor agreements reviewed for PHI-handling vendors.
+- [ ] Annual statistical reporting calendar in place.
+
+## Related
+
+- [`breach-response.md`](breach-response.md)
+- [`privacy-policy.md`](privacy-policy.md)
+- [`subprocessors.md`](subprocessors.md)
+- [`audit-log-requirements.md`](audit-log-requirements.md)
+- [`../../runbooks/access-revocation.md`](../../runbooks/access-revocation.md)
+- baseline: [`../../baseline-pipeda/docs/compliance/pipeda-readiness.md`](../../baseline-pipeda/docs/compliance/pipeda-readiness.md)
+  (PIPEDA principles continue to apply alongside PHIPA).
