@@ -37,4 +37,4 @@ Invokes the `iterative-review` skill which:
 
 In phase mode, plan-affecting findings flow through the existing handoff "Open questions for downstream" channel without modifying the locked master plan.
 
-See `~/.claude/skills/iterative-review/SKILL.md` for full orchestration logic.
+See the bundled `iterative-review` skill (`SKILL.md` + `references/`) for full orchestration logic.

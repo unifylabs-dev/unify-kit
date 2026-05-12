@@ -101,11 +101,21 @@ fi
 _baseline_dir="${HOME}/.claude/.mcp-hashes"
 _baseline_file="${_baseline_dir}/${_pwd_hash}.sha256"
 
-mkdir -p "$_baseline_dir" 2>/dev/null || true
+if ! mkdir -p "$_baseline_dir" 2>/tmp/mcp-config-integrity.mkdir.err; then
+  printf '[hook: %s] cannot create baseline dir %s: %s; drift-detection disabled this session.\n' "$_NAME" "$_baseline_dir" "$(cat /tmp/mcp-config-integrity.mkdir.err 2>/dev/null || echo unknown)" >&2
+  rm -f /tmp/mcp-config-integrity.mkdir.err
+  _hook_log warn "$_MATCHER" "baseline-dir-failed"
+  exit 0
+fi
 
 if [[ ! -f "$_baseline_file" ]]; then
   # First-run record. Silent allow.
-  printf '%s\n' "$_current" > "$_baseline_file" 2>/dev/null || true
+  if ! printf '%s\n' "$_current" > "$_baseline_file" 2>/tmp/mcp-config-integrity.write.err; then
+    printf '[hook: %s] cannot write baseline file %s: %s; drift-detection disabled this session.\n' "$_NAME" "$_baseline_file" "$(cat /tmp/mcp-config-integrity.write.err 2>/dev/null || echo unknown)" >&2
+    rm -f /tmp/mcp-config-integrity.write.err
+    _hook_log warn "$_MATCHER" "baseline-write-failed"
+    exit 0
+  fi
   _hook_log allow "$_MATCHER" "baseline-recorded"
   exit 0
 fi

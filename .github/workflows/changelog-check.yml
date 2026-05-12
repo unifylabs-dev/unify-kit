@@ -45,7 +45,8 @@ jobs:
           # Kit-artifact paths that trigger the changelog requirement (spec 09 §4).
           TRIGGER_PATTERNS=(
             '^templates/'
-            '^hooks/'
+            '^plugins/'
+            '^\.claude-plugin/'
             '^scripts/'
             '^github-actions/'
             '^specs/'

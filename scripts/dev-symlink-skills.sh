@@ -230,7 +230,12 @@ _init_backup_dir() {
 _backup_path() {
   local src="$1" dest_subdir="$2"
   local base; base="$(basename -- "${src}")"
-  local dest="${BACKUP_DIR}/${dest_subdir}/${base}"
+  local dest
+  if [[ -n "${dest_subdir}" ]]; then
+    dest="${BACKUP_DIR}/${dest_subdir}/${base}"
+  else
+    dest="${BACKUP_DIR}/${base}"
+  fi
 
   if [[ -L "${src}" ]]; then
     if [[ "${DRY_RUN}" == "true" ]]; then
@@ -270,8 +275,24 @@ _symlink() {
     _dry "would symlink ${user_path} -> ${plugin_path}"
     return 0
   fi
-  rm -rf -- "${user_path}"
-  ln -s "${plugin_path}" "${user_path}"
+  # Atomic replace via rename(2): create the new symlink at a sibling tmp
+  # path, then mv -f over the destination. If the script dies between
+  # steps, user_path either still holds the old content (or symlink) or
+  # the new symlink — never an empty/missing path. The trap in main()
+  # cleans up stray .new.$$ tmp links on signal.
+  #
+  # Caveat: rename(2) cannot replace a non-empty directory with a non-dir
+  # (returns EISDIR / ENOTDIR). When user_path is a real directory (first
+  # migration), remove it first — the data is already safe in BACKUP_DIR
+  # via the _backup_path call that precedes every _symlink call. When
+  # user_path is a symlink or file, atomic rename works directly.
+  local _tmp_link="${user_path}.new.$$"
+  rm -f -- "${_tmp_link}"
+  ln -s -- "${plugin_path}" "${_tmp_link}"
+  if [[ -d "${user_path}" && ! -L "${user_path}" ]]; then
+    rm -rf -- "${user_path}"
+  fi
+  mv -f -- "${_tmp_link}" "${user_path}"
   return 0
 }
 
@@ -324,6 +345,65 @@ _migrate_commands() {
 # that reference ~/.claude/hooks/*.
 _migrate_hooks() {
   local hooks_dir="${CLAUDE_HOME}/hooks"
+
+  # ORDER MATTERS: edit settings.json FIRST (and fail-closed if jq chokes),
+  # THEN delete the user-level hook .sh files. Reversing this risks leaving
+  # settings.json referencing freshly-deleted hook paths — every future
+  # Claude Code session would fail on hook load.
+  local settings="${CLAUDE_HOME}/settings.json"
+  local home_safe="${HOME//\//\\/}"
+
+  if [[ -f "${settings}" ]]; then
+    if [[ "${DRY_RUN}" == "true" ]]; then
+      if jq -e --arg home "${HOME}" '
+        (.hooks // {}) | to_entries
+        | map(.value[]?.hooks[]?.command)
+        | flatten | map(select(. != null))
+        | any(. as $c | $c | startswith($home + "/.claude/hooks/"))
+      ' "${settings}" >/dev/null 2>&1; then
+        _dry "would strip user-level hook command entries from ${settings}"
+      fi
+    else
+      # Back up settings.json BEFORE editing.
+      local settings_bak="${BACKUP_DIR}/settings.json"
+      cp -p -- "${settings}" "${settings_bak}"
+
+      # Filter out hooks[].hooks[] entries whose command starts with ~/.claude/hooks/.
+      local tmp jq_err
+      tmp="$(mktemp)"
+      jq_err="$(mktemp)"
+      if ! jq --arg home "${HOME}" '
+        .hooks //= {}
+        | .hooks |= with_entries(
+            .value |= map(
+              .hooks |= map(select((.command // "" | startswith($home + "/.claude/hooks/")) | not))
+            )
+            # Drop event-entries whose inner hooks array is now empty.
+            | .value |= map(select((.hooks // []) | length > 0))
+          )
+        # Drop event keys whose value array became empty.
+        | .hooks |= with_entries(select((.value // []) | length > 0))
+      ' "${settings}" > "${tmp}" 2>"${jq_err}"; then
+        local err_body
+        err_body="$(cat "${jq_err}" 2>/dev/null || echo unknown)"
+        rm -f -- "${tmp}" "${jq_err}"
+        _err "could not edit ${settings}: ${err_body}; aborting before deleting hook files. Restore from ${BACKUP_DIR} and fix settings.json manually."
+        exit 1
+      fi
+      rm -f -- "${jq_err}"
+      if ! cmp -s -- "${settings}" "${tmp}"; then
+        mv -- "${tmp}" "${settings}"
+        _say "stripped user-level hook entries from ${settings}"
+        CHANGED=true
+      else
+        rm -f -- "${tmp}"
+      fi
+    fi
+  fi
+  : "${home_safe:=}"  # silence shellcheck unused
+
+  # Now safe to delete the user-level hook .sh files: settings.json no
+  # longer references them (or never did).
   if [[ -d "${hooks_dir}" ]]; then
     local f
     while IFS= read -r -d '' f; do
@@ -336,54 +416,6 @@ _migrate_hooks() {
       fi
     done < <(find "${hooks_dir}" -maxdepth 1 -name '*.sh' -print0 2>/dev/null)
   fi
-
-  # Surgically strip user-level hook entries from ~/.claude/settings.json.
-  local settings="${CLAUDE_HOME}/settings.json"
-  [[ -f "${settings}" ]] || return 0
-  local home_safe="${HOME//\//\\/}"
-
-  if [[ "${DRY_RUN}" == "true" ]]; then
-    if jq -e --arg home "${HOME}" '
-      (.hooks // {}) | to_entries
-      | map(.value[]?.hooks[]?.command)
-      | flatten | map(select(. != null))
-      | any(. as $c | $c | startswith($home + "/.claude/hooks/"))
-    ' "${settings}" >/dev/null 2>&1; then
-      _dry "would strip user-level hook command entries from ${settings}"
-    fi
-    return 0
-  fi
-
-  # Back up settings.json BEFORE editing.
-  local settings_bak="${BACKUP_DIR}/settings.json"
-  cp -p -- "${settings}" "${settings_bak}"
-
-  # Filter out hooks[].hooks[] entries whose command starts with ~/.claude/hooks/.
-  local tmp; tmp="$(mktemp)"
-  if jq --arg home "${HOME}" '
-    .hooks //= {}
-    | .hooks |= with_entries(
-        .value |= map(
-          .hooks |= map(select((.command // "" | startswith($home + "/.claude/hooks/")) | not))
-        )
-        # Drop event-entries whose inner hooks array is now empty.
-        | .value |= map(select((.hooks // []) | length > 0))
-      )
-    # Drop event keys whose value array became empty.
-    | .hooks |= with_entries(select((.value // []) | length > 0))
-  ' "${settings}" > "${tmp}" 2>/dev/null; then
-    if ! cmp -s -- "${settings}" "${tmp}"; then
-      mv -- "${tmp}" "${settings}"
-      _say "stripped user-level hook entries from ${settings}"
-      CHANGED=true
-    else
-      rm -f -- "${tmp}"
-    fi
-  else
-    rm -f -- "${tmp}"
-    _warn "could not edit ${settings}; left untouched (manual cleanup may be needed)"
-  fi
-  : "${home_safe:=}"  # silence shellcheck unused
 }
 
 _migrate_statusline() {
@@ -392,12 +424,6 @@ _migrate_statusline() {
 
   if [[ -e "${user_path}" || -L "${user_path}" ]]; then
     _backup_path "${user_path}" ""
-    # Note: _backup_path for top-level files writes to BACKUP_DIR/<base>.
-    # The "" subdir makes it land at BACKUP_DIR//statusline.sh — clean up
-    # path by writing manually:
-    if [[ "${DRY_RUN}" != "true" ]]; then
-      mv -f -- "${BACKUP_DIR}//statusline.sh" "${BACKUP_DIR}/statusline.sh" 2>/dev/null || true
-    fi
   fi
 
   if _symlink "${user_path}" "${plugin_path}"; then
@@ -489,8 +515,18 @@ _summary() {
 
 # ----- main ------------------------------------------------------------------
 
+_cleanup_tmp_links() {
+  # Sweep stray .new.<pid> tmp symlinks created by _symlink if the script
+  # dies mid-flight (Ctrl-C, SIGTERM, ENOSPC). Safe on clean exit too.
+  local pid_suffix=".new.$$"
+  rm -f -- "${CLAUDE_HOME}/skills/"*"${pid_suffix}" 2>/dev/null || true
+  rm -f -- "${CLAUDE_HOME}/commands/"*"${pid_suffix}" 2>/dev/null || true
+  rm -f -- "${CLAUDE_HOME}/statusline.sh${pid_suffix}" 2>/dev/null || true
+}
+
 main() {
   _parse_args "$@"
+  trap _cleanup_tmp_links EXIT INT TERM
   _preflight
   if [[ "${ROLLBACK}" == "true" ]]; then
     _rollback

@@ -3,7 +3,7 @@ templates/core/pull-request-template.md.template
 Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
 Stack-agnostic PR template; structurally inspired by a real consumer
 project's pull_request_template.md, no expression lifted. Test/build
-commands parameterized via gh workflow run bootstrap-fixture.yml and .
+commands parameterized via gh workflow run plugin-install-fixture.yml and .
 
 When you adopt this template, save it as `<consumer>/.github/pull_request_template.md`
 (strip the `.template` suffix; lowercase filename per GitHub's convention)
@@ -56,7 +56,7 @@ Spec files modified:
 
 ## Verification Checklist
 
-- [ ] `gh workflow run bootstrap-fixture.yml` — all tests pass.
+- [ ] `gh workflow run plugin-install-fixture.yml` — all tests pass.
 - [ ] `shellcheck scripts/*.sh hooks/*.sh` + `actionlint .github/workflows/*.yml` — no warnings.
 - [ ] Feature verification: scripts behave as documented; fixture sets regenerated + committed if output shape changed.
 - [ ] Scope guard: all changed files map to acceptance criteria.

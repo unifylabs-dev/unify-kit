@@ -38,19 +38,29 @@ PY
 _payload="$(cat)"
 
 if ! command -v python3 >/dev/null 2>&1; then
-  printf '[hook: %s] python3 not found; cannot parse payload safely — allowing.\n' "$_NAME" >&2
-  _hook_log allow "$_MATCHER" "no-python3"
-  exit 0
+  printf '[hook: %s] python3 not found in PATH; this hook requires python3 to parse the Edit/Write payload. Install python3 or set CLAUDE_HOOKS_DISABLE=%s to acknowledge the bypass; blocking conservatively.\n' "$_NAME" "$_NAME" >&2
+  _hook_log block "$_MATCHER" "no-python3"
+  exit 2
 fi
 
+_path_rc=0
 _path="$(printf '%s' "$_payload" | python3 -c '
 import json, sys
 try:
     d = json.load(sys.stdin)
     print(d.get("tool_input", {}).get("file_path", ""))
-except Exception:
-    pass
-' 2>/dev/null || true)"
+except Exception as e:
+    print("PARSE_ERROR")
+    print(str(e), file=sys.stderr)
+' 2>/tmp/file-guard.parse.err)" || _path_rc=$?
+
+if [[ "${_path_rc:-0}" -ne 0 ]] || [[ "$_path" == "PARSE_ERROR" ]]; then
+  printf '[hook: %s] payload parse failed: %s; blocking conservatively.\n' "$_NAME" "$(cat /tmp/file-guard.parse.err 2>/dev/null || echo unknown)" >&2
+  rm -f /tmp/file-guard.parse.err
+  _hook_log block "$_MATCHER" "parse-error"
+  exit 2
+fi
+rm -f /tmp/file-guard.parse.err
 
 if [[ -z "$_path" ]]; then
   _hook_log allow "$_MATCHER" "no-file-path"

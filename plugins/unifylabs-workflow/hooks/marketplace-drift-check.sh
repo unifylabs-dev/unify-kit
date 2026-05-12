@@ -8,7 +8,9 @@
 #
 # Advisory only — exit 0 always; never blocks the session.
 
-set -uo pipefail
+set -euo pipefail
+# Advisory hook: never block the session even on internal errors.
+trap 'exit 0' ERR
 
 ALLOWLIST="$HOME/.claude/.personal-skills"
 SKILLS_DIR="$HOME/.claude/skills"

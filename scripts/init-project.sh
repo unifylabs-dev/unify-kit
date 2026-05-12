@@ -1106,18 +1106,29 @@ _install_compliance() {
     profile_dir="templates/compliance/profiles/${profile}"
     # Iterate every .md / .md.template under docs/compliance/ + runbooks/.
     local found_any=false
+    local _find_dirs=()
+    [[ -d "${KIT_ROOT}/${profile_dir}/docs/compliance" ]] && _find_dirs+=("${KIT_ROOT}/${profile_dir}/docs/compliance")
+    [[ -d "${KIT_ROOT}/${profile_dir}/runbooks" ]] && _find_dirs+=("${KIT_ROOT}/${profile_dir}/runbooks")
+    if (( ${#_find_dirs[@]} == 0 )); then
+      _warn "compliance profile ${profile}: no docs/compliance or runbooks subdir under ${profile_dir}; nothing to install"
+      continue
+    fi
+
+    local _list_tmp
+    _list_tmp="$(mktemp)"
+    if ! find "${_find_dirs[@]}" -type f \( -name '*.md' -o -name '*.md.template' \) > "${_list_tmp}"; then
+      _err "find failed enumerating ${profile_dir} content"
+      rm -f -- "${_list_tmp}"
+      exit 1
+    fi
+
     while IFS= read -r f; do
       [[ -z "${f}" ]] && continue
       tgt="$(_compliance_target_for "${f}")"
       _install_artifact "${f}" "${tgt}" "auto" "rewrite"
       found_any=true
-    done < <(
-      find "${KIT_ROOT}/${profile_dir}/docs/compliance" \
-           "${KIT_ROOT}/${profile_dir}/runbooks" \
-           -type f \( -name '*.md' -o -name '*.md.template' \) 2>/dev/null \
-        | sed -e "s|^${KIT_ROOT}/||" \
-        | sort
-    )
+    done < <(sed -e "s|^${KIT_ROOT}/||" "${_list_tmp}" | sort)
+    rm -f -- "${_list_tmp}"
     if [[ "${found_any}" == "false" ]]; then
       _warn "compliance profile ${profile}: no docs/compliance or runbooks content"
     fi

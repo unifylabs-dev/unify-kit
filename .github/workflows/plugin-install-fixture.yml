@@ -100,6 +100,40 @@ jobs:
             | all(. as $c | $c | startswith("${CLAUDE_PLUGIN_ROOT}"))
           ' plugins/unifylabs-workflow/hooks/hooks.json > /dev/null
 
+      - name: Hook scripts parse cleanly (bash -n)
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in plugins/unifylabs-workflow/hooks/*.sh plugins/unifylabs-workflow/statusline/statusline.sh; do
+            if ! bash -n "$f"; then
+              echo "::error file=$f::failed bash -n"
+              fail=1
+            fi
+          done
+          if [[ $fail -ne 0 ]]; then
+            exit 1
+          fi
+          echo "all hook scripts parse cleanly"
+
+      - name: hooks.json references existing files
+        run: |
+          set -euo pipefail
+          fail=0
+          # Extract every command path, substitute ${CLAUDE_PLUGIN_ROOT} with the
+          # plugin directory, and assert the file exists.
+          while IFS= read -r cmd; do
+            [[ -z "$cmd" ]] && continue
+            resolved="${cmd/\$\{CLAUDE_PLUGIN_ROOT\}/plugins/unifylabs-workflow}"
+            if [[ ! -e "$resolved" ]]; then
+              echo "::error::hooks.json references missing file: $cmd (resolved: $resolved)"
+              fail=1
+            fi
+          done < <(jq -r '[.. | objects | select(has("command")) | .command] | .[]' plugins/unifylabs-workflow/hooks/hooks.json)
+          if [[ $fail -ne 0 ]]; then
+            exit 1
+          fi
+          echo "all hooks.json file references exist on disk"
+
       - name: Statusline present + executable
         run: |
           set -euxo pipefail
