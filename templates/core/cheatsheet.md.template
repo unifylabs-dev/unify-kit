@@ -1,0 +1,90 @@
+<!--
+templates/core/cheatsheet.md.template
+Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
+Single source of truth for: command vocabulary (8 daily commands), daily skills (4),
+reviewer-agent mapping (Appendix A). docs/methodology.md §I references Appendix A;
+the onboarding curriculum (onboarding/week-1.md) references this whole file.
+Body fits one US-letter page when rendered at 12pt; Appendix A is the only
+spillable section.
+Authored: 2026-05-04
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Cheatsheet
+
+The pocket reference for working in this project. Skip the long docs on day one;
+read this. Everything here is one click into a longer canon (`docs/methodology.md`,
+the project's `<consumer>/CLAUDE.md`, or a kit skill).
+
+## Daily slash-commands
+
+| Command | When to invoke | Notes |
+|---|---|---|
+| `/work-issue <N>` | Any GitHub issue with acceptance criteria. | Runs the 8-phase gated flow (Phase 0–7): spec sync → analysis → branch → planning → TDD → verification → review prep → PR creation. Phase 0 (Spec Sync) reads `<consumer>/docs/specs/` before any code work — see `docs/methodology.md` §B + §D. |
+| `/brainstorm` | Ambiguous requests, new features, "we should probably…". | One question at a time, multiple choice, narrow scope. Hands off to `writing-plans`. |
+| `/phase` | Cross-cutting work (>8 files / >2 subsystems / >12 task bullets / natural break points). | Master plan + per-phase specs + handoffs + verification gates. |
+| `/lfg` | Well-scoped autonomous work where you've already aligned on approach. | Continuous execution; you can interrupt with course corrections. |
+| `/ship` | Final commit + push + PR in one step. | Wraps up an end-of-task flow. After ship, update the project's living-doc set per `<consumer>/CLAUDE.md` §"Documentation Requirements" — see `docs/methodology.md` §G. |
+| `/review` | Want a second opinion on the current diff before pushing. | Pairs well with one or more reviewer agents (see Appendix A). |
+| `/commit` | Stage and create a single commit. | For when you don't want push or PR yet. |
+| `/commit-push-pr` | Same as `/ship` but explicit about each step. | Useful when you want commit-vs-PR separation in your head. |
+
+## Daily skills
+
+| Skill | Use when |
+|---|---|
+| `brainstorming` | Before any non-trivial new feature or design decision. Don't skip; AI amplifies whatever discipline you have. |
+| `writing-plans` / `executing-plans` | After brainstorming. Plan first, execute under hard gates. |
+| `test-driven-development` | Any new behavior. Red → Green → Refactor; stop after 3 GREEN failures and ask. |
+| `verification-before-completion` | Before claiming "done." Run the suite, run typecheck, re-read the diff, cross-reference each AC. |
+
+## Build / test / lint / typecheck
+
+| Command | What | When |
+|---|---|---|
+| `{{BUILD_CMD}}` | Build the project. | Before pushing if your branch touches build-affecting code. |
+| `{{TEST_CI_CMD}}` | Tests that run in CI. | Before opening a PR. |
+| `{{TEST_FULL_CMD}}` | Full local test suite (slower / e2e / integration). | Before merging anything load-bearing. |
+| `{{LINT_CMD}}` | Lint. | Before pushing. |
+| `{{TYPECHECK_CMD}}` | Type check. | Before pushing if your stack has one. |
+
+## Conventions
+
+| Convention | Rule |
+|---|---|
+| Branch name | `<type>/<issue-number>-<kebab-description>` (type ∈ `feature/` `fix/` `chore/` `refactor/`) |
+| Branch creation | `gh issue develop <N> --name <branch> --checkout --base main` (canonical issue-to-branch hop; auto-closes issue when PR merges) |
+| Spec discipline | Specs ship in the same PR as code. See `docs/methodology.md` §B. |
+| Living docs | Update on every ship. See `docs/methodology.md` §G + `<consumer>/CLAUDE.md` §"Documentation Requirements". |
+
+## Context thresholds
+
+| % | Action | Why |
+|---|---|---|
+| 0–50% | Work freely. | Cache warm; no concern. |
+| 50–70% | Pay attention; finish current focused work before adding scope. | The next big jump degrades quality. |
+| 70–90% | `/compact` to summarize. | Brings context back into a usable window without losing the thread. |
+| 90%+ | `/clear` (mandatory). | Past 90%, the agent starts hallucinating from truncated context. |
+
+Rationale: anchored on the prompt-cache 5-minute TTL + observed agent behavior under context pressure (see `docs/methodology.md` §H).
+
+---
+
+## Appendix A — Which reviewer when
+
+The reviewer roster is a per-project decision (it depends on which plugins
+you have installed). Map each role below to a concrete `Agent` invocation
+once — usually the agent name shipped by `pr-review-toolkit` or a similar
+review-focused plugin you've adopted.
+
+| Reviewer role | Use when | How to invoke |
+|---|---|---|
+| Language-strictness reviewer | Type/lint/strictness review of recently changed code (TypeScript, Go, Rust, etc.). | `Agent` tool with the relevant subagent (e.g. a TS-strict reviewer from your installed plugins). |
+| Security reviewer | Auth, permission, credential-handling, or PHI/PII-adjacent changes. | `Agent` tool. |
+| Architecture / design-pattern reviewer | Adding services or evaluating refactors. | `Agent` tool. |
+| Silent-failure / error-handling reviewer | Catch blocks, fallback logic, swallowed errors. | `pr-review-toolkit:silent-failure-hunter` (default; substitute equivalent). |
+| Data-migration reviewer | DB migration safety, ID mappings, schema changes. | `Agent` tool. |
+
+This table is a placeholder per role; fill in the concrete agent name for
+your stack once. When the agent suite you use changes, edit this file
+(not `docs/methodology.md`). `docs/methodology.md` §I cites this appendix.

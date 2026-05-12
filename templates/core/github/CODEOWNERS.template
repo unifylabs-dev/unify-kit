@@ -1,0 +1,29 @@
+# templates/core/github/CODEOWNERS.template
+# Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+# Routes Claude config + governance docs to the repo owner so they're
+# notified on every change. The owner can be a GitHub user (`@octocat`)
+# or a team (`@org/security`).
+#
+# When you adopt this template, save it as `<consumer>/.github/CODEOWNERS`
+# (strip the `.template` suffix; no extension) and search-and-replace
+# `{{REPO_OWNER}}` with your owner handle.
+#
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+#
+# Authored: 2026-05-12
+# License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+# Claude Code per-project config — any change here affects how every
+# Claude session in this repo behaves; reviewer should be the same
+# person who maintains the kit-level config.
+.claude/         @{{REPO_OWNER}}
+.mcp.json        @{{REPO_OWNER}}
+
+# Project memory and onboarding — load-bearing docs every Claude session
+# reads on start.
+CLAUDE.md        @{{REPO_OWNER}}
+ONBOARDING.md    @{{REPO_OWNER}}
+
+# Compliance docs — jurisdiction/regulator-specific content. A single
+# reviewer keeps voice + accuracy consistent.
+docs/compliance/ @{{REPO_OWNER}}
