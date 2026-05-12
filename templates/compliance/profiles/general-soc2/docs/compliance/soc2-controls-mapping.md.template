@@ -1,0 +1,211 @@
+<!--
+templates/compliance/profiles/general-soc2/docs/compliance/soc2-controls-mapping.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Pattern reference: AICPA 2017 Trust Services Criteria categories (CC, A,
+  PI, C, P) — public-information structure; control descriptions
+  authored independently for the kit.
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — SOC 2 Controls Mapping
+
+> **This is a starting-point template, not audit advice and not legal advice.**
+> A SOC 2 audit measures actual operating effectiveness over the audit period;
+> documenting controls is necessary but not sufficient. Engage a CPA
+> firm experienced with SOC 2 audits to scope and execute the audit.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Audit period (target)**: `[fill in]` ·
+**Auditor (planned)**: `[fill in]` · **Scope**: `[fill in: TSC categories
+covered — e.g., Security, Availability, Confidentiality]` ·
+**Last reviewed**: `[fill in: YYYY-MM-DD]`
+
+## Authoritative reference
+
+- 2017 Trust Services Criteria (with Revised Points of Focus — 2022):
+  <https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022>
+  (accessed 2026-05-12).
+- NIST SP 800-61 (incident handling — referenced by the IR criteria):
+  <https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final>
+  (accessed 2026-05-12).
+
+## How to use this template
+
+Each TSC criterion below has a "Control(s)" subsection. Fill in the
+controls your project actually operates and the evidence trail
+auditors will examine. Where a criterion is **out of scope** for your
+chosen TSC categories, mark it explicitly so the audit boundary is
+documented.
+
+## Common Criteria (CC) — Security baseline
+
+The Common Criteria apply to every SOC 2 engagement. They are the
+foundation; the other TSC categories layer additional criteria on
+top.
+
+### CC1 — Control Environment
+
+- **What it requires**: management's commitment to integrity, ethical
+  values, organizational structure, accountability.
+- **Control(s)**: `[fill in: code of conduct policy + acknowledgement;
+  organizational chart + reporting lines; quarterly management
+  reviews; board oversight if applicable]`.
+- **Evidence**: signed code-of-conduct acknowledgements; org-chart
+  version history; meeting minutes.
+
+### CC2 — Communication and Information
+
+- **What it requires**: relevant, quality information communicated
+  internally and externally.
+- **Control(s)**: `[fill in: internal-communications channels;
+  incident-communication channels; customer-communication channels;
+  security-related communication plans]`.
+- **Evidence**: communication archives; runbook publication history.
+
+### CC3 — Risk Assessment
+
+- **What it requires**: identification, analysis, and management of
+  risks to objectives.
+- **Control(s)**: `[fill in: annual risk-assessment process;
+  threat-modeling cadence for new features; vendor-risk assessment
+  (see runbooks/vendor-management.md)]`.
+- **Evidence**: risk register; threat models; vendor-risk
+  assessments.
+
+### CC4 — Monitoring Activities
+
+- **What it requires**: ongoing and / or periodic evaluation of
+  control operating effectiveness.
+- **Control(s)**: `[fill in: continuous control monitoring tooling;
+  quarterly access reviews; monthly log-review process]`.
+- **Evidence**: review tickets, dashboards, exception-tracking.
+
+### CC5 — Control Activities
+
+- **What it requires**: policies and procedures that operationalize
+  the control environment.
+- **Control(s)**: see [`security-policies-index.md`](security-policies-index.md)
+  for the policy inventory.
+
+### CC6 — Logical and Physical Access Controls
+
+- **What it requires**: logical and physical access controls protect
+  against unauthorized access.
+- **Control(s)**: `[fill in: SSO + MFA on all production access;
+  role-based access; quarterly access reviews; password / secret
+  policy; physical-access controls inherited from cloud provider]`.
+- **Evidence**: access-matrix snapshots; review tickets; MFA-
+  enrollment reports; cloud-provider SOC 2 reports (inherited
+  control).
+
+### CC7 — System Operations
+
+- **What it requires**: system-operations procedures that maintain
+  control effectiveness during operation; vulnerability management;
+  incident detection.
+- **Control(s)**: `[fill in: change-management process; patching
+  policy; vulnerability scanning cadence; anomaly-detection alerts]`.
+- **Evidence**: change tickets; patch-tracking records; vuln-scan
+  output; alert dispositions.
+
+### CC8 — Change Management
+
+- **What it requires**: changes to system components are authorized,
+  designed, developed, configured, documented, tested, approved, and
+  implemented in alignment with security objectives.
+- **Control(s)**: `[fill in: PR review requirement; CI gate; staged
+  deploy + rollback; emergency-change procedure]`.
+- **Evidence**: PR-merge audit log; CI passing records; deploy logs.
+
+### CC9 — Risk Mitigation
+
+- **What it requires**: identification, selection, and development of
+  risk-mitigation activities, including business continuity.
+- **Control(s)**: `[fill in: BCP / DR plan; periodic DR exercise;
+  backup retention and restoration testing]`.
+- **Evidence**: DR-exercise reports; backup-restore test records.
+
+## Availability (A) — when in scope
+
+### A1.1 — Availability commitments
+
+- **Control(s)**: `[fill in: documented SLAs / SLOs; uptime monitoring;
+  customer-facing status page; capacity planning cadence]`.
+- **Evidence**: SLA documents; uptime reports; status-page incident
+  history.
+
+### A1.2 — Recovery commitments
+
+- **Control(s)**: `[fill in: documented RPO / RTO targets; backup
+  procedures; failover procedures; DR-exercise records]`.
+- **Evidence**: RPO/RTO documentation; DR exercise outcomes.
+
+## Confidentiality (C) — when in scope
+
+### C1.1 — Confidential information identification
+
+- **Control(s)**: `[fill in: data-classification policy; data-
+  inventory; customer-data tagging]`.
+- **Evidence**: data-inventory snapshot; classification scheme.
+
+### C1.2 — Confidential information protection
+
+- **Control(s)**: `[fill in: encryption in transit + at rest;
+  access-control gating customer data; data-disposal procedure on
+  customer offboarding]`.
+- **Evidence**: encryption configuration; offboarding-deletion
+  records.
+
+## Processing Integrity (PI) — when in scope
+
+### PI1.1 through PI1.5
+
+- **Control(s)**: `[fill in: input validation; processing
+  authorization; output reconciliation; data-quality monitoring]`.
+- **Evidence**: data-quality dashboards; reconciliation reports;
+  exception logs.
+
+## Privacy (P) — when in scope
+
+> **Note**: SOC 2 Privacy criteria measure the organization against
+> its **own** privacy commitments and against the AICPA / CICA
+> Generally Accepted Privacy Principles. They are not a substitute for
+> a privacy law that applies to your jurisdiction. If Privacy is in
+> scope, compose with `baseline-pipeda` (or jurisdiction-appropriate
+> profile) for the regulatory layer.
+
+### P1 through P8 (notice, choice, collection, use & retention,
+access, disclosure to third parties, quality, monitoring &
+enforcement)
+
+- **Control(s)**: see baseline `baseline-pipeda` profile docs +
+  this profile's [`security-policies-index.md`](security-policies-index.md)
+  for the policy artifacts auditors will sample.
+
+## Out-of-scope criteria
+
+`[fill in: any TSC category explicitly excluded from your audit
+scope — e.g., "Processing Integrity is out of scope; the service is
+not relied on for transaction-integrity in customer workflows."]`
+
+## Lawyer / audit review checklist
+
+- [ ] TSC scope selected and documented.
+- [ ] Controls mapped to each in-scope criterion.
+- [ ] Evidence collection process in place for each control.
+- [ ] CPA firm engagement letter signed.
+- [ ] Audit period start date confirmed.
+- [ ] Type I (point-in-time) vs. Type II (period of months) decision
+      documented.
+
+## Related
+
+- [`security-policies-index.md`](security-policies-index.md) — policy
+  artifacts referenced by the controls above.
+- [`audit-log-requirements.md`](audit-log-requirements.md) — log-
+  evidence requirements that auditors will sample (CC4, CC6).
+- [`breach-response.md`](breach-response.md) — IR program (CC7).
+- [`../../runbooks/access-revocation.md`](../../runbooks/access-revocation.md) —
+  joiner / mover / leaver control (CC6).
+- [`../../runbooks/vendor-management.md`](../../runbooks/vendor-management.md) —
+  vendor-risk control (CC3, CC9).

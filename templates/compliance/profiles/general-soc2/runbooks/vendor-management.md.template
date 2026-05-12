@@ -1,0 +1,152 @@
+<!--
+templates/compliance/profiles/general-soc2/runbooks/vendor-management.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Vendor Management Runbook (SOC 2-aligned)
+
+> **This is a starting-point template, not audit advice and not legal advice.**
+> SOC 2 CC3 (Risk Assessment) and CC9 (Risk Mitigation) include vendor / third-
+> party risk. Auditors sample the vendor-risk process: how vendors are
+> tiered, what evidence was collected, and how high-tier vendors are
+> re-reviewed.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## When to invoke
+
+- Onboarding a new vendor that will process customer data, handle
+  credentials, or be involved in a security-critical workflow.
+- Annual or other-cadence re-review of existing vendors.
+- Material change in a vendor relationship (new product, new region,
+  acquired by a third party, audit report expired).
+- Vendor security incident notification received.
+
+## Tier classification
+
+| Tier | Definition | Examples | Cadence |
+|---|---|---|---|
+| **Critical** | Vendor processes customer data, holds customer secrets, or is in the critical path of service delivery. | Cloud hosting, primary database, identity provider, payment processor. | Annual full review + ad-hoc on incident. |
+| **High** | Vendor handles material company / employee data or supports security operations. | Code repository, secret management, error monitoring, security tooling. | Annual review. |
+| **Medium** | Vendor supports operations but does not process customer data or company secrets. | Productivity SaaS, CI tooling, marketing email (separate from transactional). | Every 18 months. |
+| **Low** | Minor, replaceable vendor with no security impact. | Reference data feeds without integration; passive observability. | Every 24 months. |
+
+## Onboarding process
+
+### 1. Need + alternatives
+
+- Define the specific need.
+- Identify 2–3 alternatives (where reasonable) — having no alternative
+  is itself a risk.
+- Document why this vendor was selected.
+
+### 2. Tier classification
+
+- Apply the table above.
+- Tier sets the depth of evidence collection.
+
+### 3. Evidence collection
+
+For **Critical** vendors:
+
+- [ ] Independent audit report (SOC 2 Type II preferred; SOC 2 Type I
+      acceptable for early-stage vendors; ISO 27001 acceptable; HITRUST
+      where applicable).
+- [ ] DPA + privacy assessment.
+- [ ] BAA / equivalent if processing PHI (compose with
+      `healthcare-phipa`).
+- [ ] Public security disclosures (status page, security.txt,
+      vulnerability disclosure policy).
+- [ ] Incident-notification SLA in contract.
+- [ ] Data-deletion SLA at termination.
+- [ ] Insurance certificate (cyber-liability where applicable).
+
+For **High** vendors:
+
+- [ ] Independent audit report or security questionnaire response.
+- [ ] DPA (where personal data is processed).
+- [ ] Public security disclosures.
+- [ ] Incident-notification commitment.
+
+For **Medium** and **Low** vendors:
+
+- [ ] Public security disclosures.
+- [ ] DPA (where personal data is processed).
+
+### 4. Internal review
+
+- Security review of collected evidence.
+- Privacy review for vendors processing personal information.
+- Finance / legal review of contract terms.
+- Approval at the appropriate level (Critical-tier requires
+  CEO/CTO sign-off; the lower tiers can be delegated).
+
+### 5. Onboard
+
+- Add to
+  [`../docs/compliance/subprocessors.md`](../docs/compliance/subprocessors.md)
+  (from composed Canadian profile) where applicable.
+- Provision credentials with least privilege.
+- Document the integration's data flow.
+- Add to access matrix with the responsible owner.
+- Add to the vendor-review calendar at the appropriate cadence.
+
+## Re-review process
+
+At the cadence dictated by tier:
+
+- Pull current audit report. Verify currency (no expired SOC 2 reports
+  from a prior calendar year, no audit reports for the wrong scope).
+- Verify the vendor's product / region / sub-processor list has not
+  materially drifted.
+- Verify the vendor still has an insurance certificate (where
+  required).
+- Run a quick check on public security disclosures: any known
+  incidents in the period? Any CVEs in their core product?
+- Update the vendor record with the review date + outcome.
+
+## Material-change events
+
+Any of these triggers an out-of-cadence review:
+
+- Vendor acquired by or merged with another company.
+- Vendor announces a security incident.
+- Vendor changes regions or sub-processors materially.
+- Vendor's audit report expires without renewal.
+- Vendor's pricing changes substantially (sometimes a signal of
+  business-model stress).
+- Customer due-diligence questionnaire surfaces an undocumented
+  concern.
+
+## Termination process
+
+When ending a vendor relationship:
+
+1. Reference [`../../baseline-pipeda/runbooks/vendor-escape-template.md`](../../baseline-pipeda/runbooks/vendor-escape-template.md)
+   for the migration playbook.
+2. Confirm data-return / data-deletion per the contract.
+3. Capture the deletion confirmation as audit evidence.
+4. Update the access matrix.
+5. Remove from
+   [`../docs/compliance/subprocessors.md`](../docs/compliance/subprocessors.md)
+   (move to "Historical").
+
+## Vendor inventory
+
+The vendor inventory itself lives at `[fill in: path or system]` and
+is the source of truth for tier, cadence, and last-review-date. The
+auditor will examine this inventory.
+
+## Related
+
+- [`../docs/compliance/soc2-controls-mapping.md`](../docs/compliance/soc2-controls-mapping.md) —
+  CC3 + CC9 controls implemented by this runbook.
+- [`../docs/compliance/security-policies-index.md`](../docs/compliance/security-policies-index.md) —
+  Vendor Management policy lives here.
+- [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md) —
+  vendor-incident handling.
+- [`../../baseline-pipeda/runbooks/vendor-escape-template.md`](../../baseline-pipeda/runbooks/vendor-escape-template.md) —
+  migration playbook for vendor termination.
