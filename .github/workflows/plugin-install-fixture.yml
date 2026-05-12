@@ -1,0 +1,270 @@
+# .github/workflows/plugin-install-fixture.yml
+# Validates the unifylabs-workflow plugin's structural integrity + smoke-tests
+# scripts/init-project.sh against the v2 tier tree (core + claude-runtime +
+# optional + compliance) using ephemeral targets in $RUNNER_TEMP.
+#
+# Replaces v1's bootstrap-fixture.yml. The runner does NOT have the `claude`
+# CLI available, so this workflow validates structure + script behavior
+# instead of running the actual /plugin install command. Hook-firing
+# verification is user-gated post-install (see CHANGELOG [2.0.0]
+# "Migration from v1.0.0" section).
+#
+name: plugin-install-fixture
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/**'
+      - '.claude-plugin/**'
+      - 'scripts/init-project.sh'
+      - 'scripts/audit-scan.sh'
+      - 'scripts/dev-symlink-skills.sh'
+      - 'templates/**'
+      - 'scripts/test-fixtures/init-project/**'
+      - '.github/workflows/plugin-install-fixture.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  structural-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: marketplace.json + plugin.json are valid JSON
+        run: |
+          set -euxo pipefail
+          jq -e . .claude-plugin/marketplace.json > /dev/null
+          jq -e . plugins/unifylabs-workflow/.claude-plugin/plugin.json > /dev/null
+
+      - name: marketplace.json lists unifylabs-workflow
+        run: |
+          set -euxo pipefail
+          jq -e '.plugins[] | select(.name == "unifylabs-workflow")' \
+            .claude-plugin/marketplace.json > /dev/null
+
+      - name: plugin.json version is 2.0.0 with 9-skill description
+        run: |
+          set -euxo pipefail
+          v=$(jq -r .version plugins/unifylabs-workflow/.claude-plugin/plugin.json)
+          test "$v" = "2.0.0" || { echo "expected version 2.0.0, got $v"; exit 1; }
+          desc=$(jq -r .description plugins/unifylabs-workflow/.claude-plugin/plugin.json)
+          for s in iterative-review humanizer compliance-research promote-to-marketplace phasing; do
+            echo "$desc" | grep -q "$s" || { echo "description missing skill: $s"; exit 1; }
+          done
+          if echo "$desc" | grep -q '\[stub\]'; then
+            echo "description still contains [stub] marker"
+            exit 1
+          fi
+
+      - name: All skill SKILL.md files have name+description frontmatter
+        run: |
+          set -euxo pipefail
+          for f in plugins/unifylabs-workflow/skills/*/SKILL.md; do
+            head -10 "$f" | grep -qE '^name:' \
+              || { echo "$f missing name: frontmatter"; exit 1; }
+            head -10 "$f" | grep -qE '^description:' \
+              || { echo "$f missing description: frontmatter"; exit 1; }
+          done
+
+      - name: 9 skills + 10 commands present
+        run: |
+          set -euxo pipefail
+          n_skills=$(find plugins/unifylabs-workflow/skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+          test "$n_skills" = "9" || { echo "expected 9 skills, found $n_skills"; exit 1; }
+          n_cmds=$(find plugins/unifylabs-workflow/commands -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')
+          test "$n_cmds" = "10" || { echo "expected 10 commands, found $n_cmds"; exit 1; }
+
+      - name: humanizer has no .git/ leak
+        run: |
+          set -euxo pipefail
+          test ! -e plugins/unifylabs-workflow/skills/humanizer/.git
+
+      - name: Hook scripts executable + shebang + hooks.json uses CLAUDE_PLUGIN_ROOT
+        run: |
+          set -euxo pipefail
+          for f in plugins/unifylabs-workflow/hooks/*.sh; do
+            test -x "$f" || { echo "$f not executable"; exit 1; }
+            head -1 "$f" | grep -qE '^#!.*bash' \
+              || { echo "$f bad shebang"; exit 1; }
+          done
+          # Every command in hooks.json must use ${CLAUDE_PLUGIN_ROOT}.
+          jq -e '
+            [.. | objects | select(has("command")) | .command]
+            | all(. as $c | $c | startswith("${CLAUDE_PLUGIN_ROOT}"))
+          ' plugins/unifylabs-workflow/hooks/hooks.json > /dev/null
+
+      - name: Statusline present + executable
+        run: |
+          set -euxo pipefail
+          test -x plugins/unifylabs-workflow/statusline/statusline.sh
+
+  init-project-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq + bash
+        run: sudo apt-get update && sudo apt-get install -y jq bash
+
+      - name: init-project --help advertises v2 flags
+        run: |
+          set -euxo pipefail
+          out=$(scripts/init-project.sh --help 2>&1)
+          echo "$out" | grep -q -- '--compliance=' || { echo "missing --compliance"; exit 1; }
+          echo "$out" | grep -q -- '--include='    || { echo "missing --include";    exit 1; }
+          echo "$out" | grep -q -- '--snippets='   || { echo "missing --snippets";   exit 1; }
+
+      - name: init-project clean install (core + claude-runtime only)
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-bare"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml
+          # Core tier files exist.
+          for f in CLAUDE.md CHEATSHEET.md \
+                   docs/ai-usage-charter.md docs/mcp-policy.md \
+                   docs/security-checklist.md docs/specs/README.md \
+                   .github/pull_request_template.md \
+                   .github/ISSUE_TEMPLATE/feature_request.yml \
+                   .github/ISSUE_TEMPLATE/bug_report.yml \
+                   .github/CODEOWNERS \
+                   .mcp.json .claude/settings.json; do
+            test -f "$TGT/$f" || { echo "ERROR: missing $f"; exit 1; }
+          done
+          # Manifest schema.
+          jq -e '.compliance_profiles | length == 0' "$TGT/.unify-kit-project-manifest.json" > /dev/null
+          jq -e '.includes | length == 0'            "$TGT/.unify-kit-project-manifest.json" > /dev/null
+          jq -e '.snippets | length == 0'            "$TGT/.unify-kit-project-manifest.json" > /dev/null
+          # No unsubstituted placeholders.
+          if grep -rohE '\{\{[A-Z][A-Z0-9_]*\}\}' "$TGT"; then
+            echo "ERROR: unsubstituted placeholders remain"; exit 1
+          fi
+
+      - name: init-project compliance install (PHIPA + extends baseline)
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-phipa"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --compliance=healthcare-phipa
+          # PHIPA-specific
+          test -f "$TGT/docs/compliance/phipa-readiness.md"
+          # baseline carry-forward via extends
+          test -f "$TGT/docs/compliance/pipeda-readiness.md"
+          test -f "$TGT/runbooks/vendor-escape-template.md"
+          test -f "$TGT/runbooks/access-revocation.md"
+          # No cross-profile relative links remain
+          if grep -r '\.\./\.\./baseline-pipeda' "$TGT" 2>/dev/null; then
+            echo "ERROR: unrewritten relative links to baseline-pipeda"; exit 1
+          fi
+          # CLAUDE.md has both addenda markers
+          n=$(grep -c 'compliance-addendum' "$TGT/CLAUDE.md")
+          test "$n" = "2" || { echo "expected 2 addenda markers, got $n"; exit 1; }
+          # Manifest lists both profiles in order
+          jq -e '.compliance_profiles == ["baseline-pipeda", "healthcare-phipa"]' \
+            "$TGT/.unify-kit-project-manifest.json" > /dev/null
+
+      - name: init-project SOC2 + financial composition
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-fc-soc2"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --compliance=financial-canada,general-soc2 --snippets=nextjs
+          # All three (baseline auto-prepended, financial-canada, general-soc2).
+          jq -e '.compliance_profiles == ["baseline-pipeda", "financial-canada", "general-soc2"]' \
+            "$TGT/.unify-kit-project-manifest.json" > /dev/null
+          test -f "$TGT/docs/compliance/fintrac-readiness.md"
+          test -f "$TGT/docs/compliance/soc2-controls-mapping.md"
+          test -f "$TGT/runbooks/vendor-management.md"
+
+      - name: init-project --dry-run writes nothing
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-dry"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --compliance=baseline-pipeda --dry-run
+          if [ -n "$(find "$TGT" -type f 2>/dev/null)" ]; then
+            echo "ERROR: --dry-run created files"; exit 1
+          fi
+
+      - name: init-project re-run idempotency
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-phipa"
+          out=$(scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --compliance=healthcare-phipa 2>&1)
+          echo "$out"
+          # No preserved (user-edit detection) on a clean re-run.
+          echo "$out" | grep -qE 'Preserved: 0' || { echo "ERROR: re-run flagged preserved files"; exit 1; }
+          # No new backups (manual-edit re-runs would have created some).
+          new_baks=$(find "$TGT" -name '*.bak.*' 2>/dev/null || true)
+          if [ -n "$new_baks" ]; then echo "ERROR: re-run created backups: $new_baks"; exit 1; fi
+
+      - name: init-project --force restores tampered target
+        run: |
+          set -euxo pipefail
+          TGT="$RUNNER_TEMP/init-tamper"
+          mkdir -p "$TGT"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml > /dev/null
+          orig_sha=$(shasum -a 256 "$TGT/CLAUDE.md" | cut -d' ' -f1)
+          echo '# tampered' > "$TGT/CLAUDE.md"
+          scripts/init-project.sh "$TGT" \
+            --config scripts/test-fixtures/init-project/init-project-test-config.yml \
+            --force
+          restored=$(shasum -a 256 "$TGT/CLAUDE.md" | cut -d' ' -f1)
+          test "$restored" = "$orig_sha" \
+            || { echo "ERROR: --force did not restore (got=$restored expected=$orig_sha)"; exit 1; }
+          # Tampered version is backed up.
+          tampered_bak=""
+          for bak in "$TGT"/CLAUDE.md.bak.*; do
+            [ -f "$bak" ] || continue
+            if grep -q '^# tampered$' "$bak"; then
+              tampered_bak="$bak"; break
+            fi
+          done
+          test -n "$tampered_bak" || { echo "ERROR: tampered backup missing"; exit 1; }
+
+      - name: audit-scan happy path (good-fixture)
+        run: |
+          set -euxo pipefail
+          scripts/audit-scan.sh scripts/test-fixtures/settings.json.good-fixture
+
+      - name: audit-scan bad-fixture surfaces critical findings
+        run: |
+          set -euxo pipefail
+          if scripts/audit-scan.sh scripts/test-fixtures/settings.json.bad-fixture > out.txt 2>&1; then
+            echo "ERROR: bad-fixture should exit non-zero"; cat out.txt; exit 1
+          fi
+          cat out.txt
+          grep -q 'inline-credential'   out.txt || { echo "missing inline-credential";  exit 1; }
+          grep -q 'unrestricted-mcp'    out.txt || { echo "missing unrestricted-mcp";   exit 1; }
+
+      - name: audit-scan --check-plugin (plugin not installed → warning, exit 0)
+        run: |
+          set -euxo pipefail
+          out=$(scripts/audit-scan.sh scripts/test-fixtures/settings.json.good-fixture --check-plugin 2>&1)
+          echo "$out"
+          echo "$out" | grep -q 'plugin-not-detected' \
+            || { echo "expected plugin-not-detected warning"; exit 1; }
+
+      - name: dev-symlink-skills.sh --dry-run smoke
+        run: |
+          set -euxo pipefail
+          # Set CLAUDE_HOME to a tmp dir so we don't touch the runner's real ~/.claude.
+          # Script uses $HOME directly; override via HOME env.
+          HOME="$RUNNER_TEMP/fake-home" bash scripts/dev-symlink-skills.sh --dry-run

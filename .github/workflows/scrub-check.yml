@@ -21,10 +21,11 @@ jobs:
       - name: Scan shipped artifacts for forbidden strings
         run: |
           set -euo pipefail
-          # In-scope paths (shipped artifacts; must be clean):
+          # In-scope paths (shipped artifacts; must be clean). v2: hooks/ at
+          # repo root removed; security hooks live under plugins/.
           SCOPE=(
             templates
-            hooks
+            plugins
             github-actions
             README.md
             CHANGELOG.md

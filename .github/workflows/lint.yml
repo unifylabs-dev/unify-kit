@@ -26,7 +26,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run shellcheck
         run: |
-          shellcheck -e SC2086,SC2155 hooks/*.sh scripts/*.sh scripts/ci/*.sh templates/snippets/ci/*.sh
+          # Plugin-hosted hooks live under plugins/unifylabs-workflow/hooks/.
+          # Repo-root hooks/ was removed in v2 (migrated to the plugin).
+          # SC2034 (unused vars) excluded because vendored statusline scripts
+          # may set vars for documentation/forward-compat that shellcheck flags.
+          shellcheck -e SC2086,SC2155,SC2034 \
+            scripts/*.sh \
+            scripts/ci/*.sh \
+            templates/snippets/ci/*.sh \
+            plugins/unifylabs-workflow/hooks/*.sh \
+            plugins/unifylabs-workflow/statusline/*.sh
 
   actionlint:
     runs-on: ubuntu-latest
@@ -59,31 +68,6 @@ jobs:
             --no-progress --offline
             docs/**/*.md specs/*.md templates/**/*.md
             onboarding/*.md README.md CONTRIBUTING.md BACKLOG.md
-
-  json-schema:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Validate hooks/settings-snippet.json shape
-        run: |
-          python3 - <<'PY'
-          import json
-          with open('hooks/settings-snippet.json') as f:
-              d = json.load(f)
-          assert 'hooks' in d, 'missing top-level hooks key'
-          for event in ('PreToolUse', 'PostToolUse', 'SessionStart'):
-              assert event in d['hooks'], f'missing event: {event}'
-              for entry in d['hooks'][event]:
-                  assert 'matcher' in entry, f'missing matcher in {event}'
-                  assert 'hooks' in entry, f'missing hooks in {event} matcher entry'
-                  for h in entry['hooks']:
-                      assert h.get('type') == 'command', f'expected type=command in {event}'
-                      assert 'command' in h, f'missing command in {event}'
-          print('OK: hooks/settings-snippet.json valid')
-          PY
 
   prompt-headers:
     runs-on: ubuntu-latest
