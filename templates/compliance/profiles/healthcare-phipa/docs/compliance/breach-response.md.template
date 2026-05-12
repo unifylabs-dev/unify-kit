@@ -1,0 +1,210 @@
+<!--
+templates/compliance/profiles/healthcare-phipa/docs/compliance/breach-response.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+When this profile is composed with baseline-pipeda, this file replaces
+baseline's breach-response.md. The PIPEDA breach reporting obligations
+still apply for non-PHI personal information; for PHI, PHIPA controls.
+-->
+
+# {{PROJECT_NAME}} — PHIPA Breach Response Runbook
+
+> **This is a starting-point template, not legal advice.** PHIPA breach
+> obligations differ for HICs vs. Agents. If {{PROJECT_NAME}} is acting as
+> an Agent on behalf of a HIC, the HIC has the primary statutory
+> obligation and must be looped in immediately — your team supports
+> notifications rather than driving them. Counsel involvement is
+> expected from the moment a PHI breach is suspected.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## Authoritative references
+
+- PHIPA full text: <https://www.ontario.ca/laws/statute/04p03>
+  (accessed 2026-05-12).
+- IPC breach protocol for HICs:
+  <https://www.ipc.on.ca/en/health-organizations/responding-to-a-privacy-breach/privacy-breach-protocol>
+  (accessed 2026-05-12).
+- Report a health-privacy breach to the IPC:
+  <https://www.ipc.on.ca/en/health-organizations/report-a-privacy-breach>
+  (accessed 2026-05-12).
+
+## Definitions
+
+- **Personal health information (PHI)** — defined in PHIPA s. 4(1).
+- **Health Information Custodian (HIC)** — defined in PHIPA s. 3.
+- **Agent of a HIC** — defined in PHIPA s. 2 and s. 17.
+- **Breach** — for purposes of this runbook, any theft, loss, or
+  unauthorized use or disclosure of PHI, *and* any unauthorized access
+  to records of PHI in electronic form.
+
+PHIPA's reporting trigger is stricter than PIPEDA's: it does not depend
+on a "real risk of significant harm" test. Unauthorized access to PHI
+is itself the trigger.
+
+## Roles
+
+| Role                   | Person (today)              | Responsibilities                                                  |
+| ---------------------- | --------------------------- | ----------------------------------------------------------------- |
+| Breach Response Lead   | `[fill in]`                 | Coordinate response; primary point of contact with the HIC + IPC. |
+| Technical Lead         | `[fill in]`                 | Investigate root cause; contain; preserve evidence.               |
+| Legal counsel          | `[fill in: external lawyer]`| Notification language; IPC correspondence.                        |
+| HIC liaison            | `[fill in]`                 | Coordinate with HIC tenants (when {{PROJECT_NAME}} is an Agent).   |
+| Communications Lead    | `[fill in]`                 | Affected-individual notification (HIC-led where applicable).      |
+| Records Officer        | `[fill in]`                 | Maintain the breach register and annual statistical reporting.    |
+
+## Phase 1 — Detect
+
+Same signal sources as the baseline runbook, plus:
+
+- Audit-log review of PHI access flagged by anomaly detection (see
+  [`audit-log-requirements.md`](audit-log-requirements.md)).
+- HIC report ("a practitioner saw a record they should not have").
+- Patient/client report ("I think someone accessed my chart who
+  shouldn't have").
+
+**Action on signal**:
+
+1. Triage severity (next phase).
+2. **Do not delete logs or audit entries.** Preserve evidence — the
+   audit log is regulator-relevant evidence under PHIPA s. 10.1.
+3. Page the Breach Response Lead immediately.
+
+## Phase 2 — Triage (≤ 1 hour from detection)
+
+Determine:
+
+- **Scope**: how many individuals' PHI is involved?
+- **Custodian context**: which HIC(s) are accountable? Is
+  {{PROJECT_NAME}} acting as their Agent, or as an independent HIC?
+- **Confirmed vs. suspected**: is this a real PHI breach or a
+  near-miss?
+- **Active vs. contained**: is the unauthorized access still possible?
+- **Reportable to IPC**: PHIPA s. 12.2(1) describes the categories
+  that must be reported to the IPC. Lean toward reporting when in
+  doubt; the IPC's protocol supports a precautionary approach.
+
+**Action**:
+
+1. Open a private incident channel.
+2. Notify the HIC immediately if {{PROJECT_NAME}} is an Agent.
+3. Page legal counsel.
+4. If active and exploitable, jump to containment immediately.
+
+## Phase 3 — Contain (≤ 4 hours from detection for active exploits)
+
+Goal: stop unauthorized PHI access without destroying evidence.
+
+Common containment levers:
+
+- Disable the affected endpoint, route, or query path.
+- Revoke compromised credentials. Where the access vector was a
+  practitioner account: see [`../../runbooks/access-revocation.md`](../../runbooks/access-revocation.md).
+- Lock the affected record / chart for further access.
+- Snapshot the database (or relevant tables) for forensic analysis.
+- Preserve the audit log; tag the relevant rows as part of the
+  incident for retention beyond the standard window.
+
+## Phase 4 — Notify (PHIPA timing)
+
+### 4a. Affected individuals (PHIPA s. 12.2(1))
+
+- **Threshold**: PHI was stolen, lost, or used or disclosed without
+  authority — no harm-threshold filter.
+- **Timing**: "at the first reasonable opportunity." PHIPA does not
+  specify a numerical deadline; the IPC's guidance is that the
+  organization must move with appropriate urgency given the
+  circumstances. Verify the current statutory language at:
+  <https://www.ontario.ca/laws/statute/04p03> (specifically PHIPA
+  s. 12 and s. 12.2 in their current form).
+- **Content**: PHIPA s. 12.2(1) requires the notice to state that the
+  individual is entitled to make a complaint to the IPC.
+- **Channel**: direct notification, in writing. The HIC has the
+  primary obligation; if {{PROJECT_NAME}} is an Agent, the HIC drives
+  the notifications and {{PROJECT_NAME}} supports.
+
+### 4b. Information and Privacy Commissioner of Ontario (IPC)
+
+- **Threshold**: PHIPA s. 12.2(2) and Ontario Regulation 224/17
+  enumerate the circumstances requiring IPC notification (these
+  include use or disclosure without authority; further use or
+  disclosure of stolen PHI; significant breach involving multiple
+  individuals; pattern breach, etc.).
+- **Timing**: "at the first reasonable opportunity."
+- **How**: report via the IPC's submission form, linked from
+  <https://www.ipc.on.ca/en/health-organizations/report-a-privacy-breach>.
+
+### 4c. HIC (when {{PROJECT_NAME}} is an Agent)
+
+- The HIC is the accountable party; {{PROJECT_NAME}} as Agent must
+  notify the HIC immediately upon suspecting a breach. Do not bypass
+  the HIC in notifications to their patients/clients.
+
+### 4d. Other regulators (case-dependent)
+
+- A regulated health professional's College may require notification
+  (e.g., CPSO for physicians, CMTO for massage therapists, etc.).
+- For an Agent that is also a private organization with non-PHI personal
+  information involved, PIPEDA reporting obligations may also apply —
+  see [`../../baseline-pipeda/docs/compliance/breach-response.md`](../../baseline-pipeda/docs/compliance/breach-response.md).
+
+### 4e. Annual statistical reporting (O. Reg. 224/17)
+
+In addition to per-incident notification, HICs submit annual aggregate
+statistics to the IPC by March 1 of the following year, covering all
+breaches in the prior calendar year regardless of whether they were
+individually reported. Maintain the breach register (see
+[`audit-log-requirements.md`](audit-log-requirements.md) §"Evidence
+retention") to enable this submission.
+
+## Phase 5 — Remediate
+
+- Patch the vulnerability.
+- Add regression tests covering the access pattern that failed.
+- Update the threat model.
+- Update the access matrix if the breach exposed a role-design gap.
+- If the breach involved a subprocessor, escalate to the vendor and
+  reassess their entry in [`subprocessors.md`](subprocessors.md).
+
+## Phase 6 — Postmortem (within 7 days of containment)
+
+- Blameless postmortem.
+- Root cause + contributing factors + timeline + lessons.
+- Where the breach involved a practitioner accessing PHI outside
+  their care relationship (a "snooping" incident under PHIPA), the
+  postmortem should explicitly address access-control design, not
+  just the immediate user.
+- Action items with owners + due dates.
+
+## Notification templates (to be drafted with counsel)
+
+- [ ] Affected-individual notification (direct, in writing).
+- [ ] HIC-to-Agent notification (where {{PROJECT_NAME}} is an Agent
+      and the HIC is informing the patient/client; {{PROJECT_NAME}}
+      supplies the technical narrative).
+- [ ] IPC notification submission narrative.
+- [ ] College or other regulator notification (case-dependent).
+
+## Contact list
+
+- **Internal incident channel**: `[fill in]`.
+- **Legal counsel**: `[fill in]`.
+- **IPC contact**: see authoritative URL above.
+- **HIC accountable officer(s)** (when Agent): `[fill in]`.
+- **Public security contact**: `[fill in]`.
+
+## Related
+
+- [`phipa-readiness.md`](phipa-readiness.md) — items 6, 7, 8, 9.
+- [`audit-log-requirements.md`](audit-log-requirements.md) — evidence
+  needed during Phase 2 triage; supports IPC notification narratives.
+- [`../../runbooks/access-revocation.md`](../../runbooks/access-revocation.md) —
+  containment action when the breach involves a practitioner account
+  or a compromised credential.
+- baseline:
+  [`../../baseline-pipeda/docs/compliance/breach-response.md`](../../baseline-pipeda/docs/compliance/breach-response.md) —
+  PIPEDA-side obligations for non-PHI personal information in the same
+  incident.

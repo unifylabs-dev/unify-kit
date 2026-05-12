@@ -1,0 +1,173 @@
+<!--
+templates/compliance/profiles/healthcare-phipa/docs/compliance/privacy-policy.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+When composed with baseline-pipeda, this file replaces baseline's
+privacy-policy.md. It includes PHIPA-specific sections; the underlying
+PIPEDA framing carries forward where relevant.
+-->
+
+# {{PROJECT_NAME}} — Privacy Policy (PHIPA + PIPEDA draft)
+
+> **This is a starting-point template, not legal advice.** A public-
+> facing privacy policy for a HIC or Agent under PHIPA is a regulator-
+> facing artifact. Counsel review is required before posting.
+
+**Effective date**: `[fill in]` · **Version**: `[fill in]` ·
+**Last reviewed by counsel**: `[fill in: YYYY-MM-DD]`
+
+## 1. Who we are
+
+`[fill in: legal entity name, operating address, jurisdiction of
+incorporation, College registration if a regulated health
+professional]`. We operate {{PROJECT_NAME}}, which `[fill in: brief
+service description]`. Where we act as a Health Information Custodian
+(HIC) under PHIPA, that role is identified explicitly in §3 below.
+Where we act as an Agent of a HIC under PHIPA s. 17, the HIC is the
+accountable party and we operate under their authority.
+
+## 2. Personal health information (PHI) — what it is
+
+PHI means identifying information about an individual relating to
+their physical or mental health (including health-history information
+of family members), the provision of health care, payment or
+eligibility for health care, donation of body parts or substances,
+health-number identifiers, and substitute-decision-maker information,
+as defined in PHIPA s. 4(1).
+
+## 3. HIC vs. Agent role
+
+`[fill in: explicitly state {{PROJECT_NAME}}'s PHIPA role(s). If
+operating as a HIC: identify the HIC contact. If operating as an
+Agent: identify the HIC(s) on whose behalf the project operates and
+how the relationship is documented (e.g., Information Manager
+Agreement).]`
+
+## 4. What we collect
+
+We collect PHI and other personal information only as necessary for
+the purposes identified in this policy and consented to:
+
+- **Identifying information** — name, date of birth, contact, health
+  card number where applicable.
+- **Clinical record** — `[fill in: types of clinical content captured
+  by your service]`.
+- **Care-context information** — practitioner identity, appointment
+  records, service times.
+- **Payment information** — `[fill in: insurance details where
+  collected; billing information]`.
+- **Account information** — login credentials, account preferences.
+- **Technical information** — see baseline policy.
+
+PHIPA s. 30 requires us not to collect PHI if other information will
+serve the purpose; we apply this minimization principle at the
+form-design layer.
+
+## 5. Knowledgeable consent
+
+We rely on knowledgeable consent for collection, use, and disclosure
+of PHI (PHIPA s. 18) — meaning you understand the purposes and the
+consequences of giving or withholding consent. Specific points:
+
+- **Care provision** — consent for collection, use, and disclosure
+  within the care relationship is captured at intake.
+- **Lockbox right** — you may instruct us not to use or disclose
+  specified PHI for health-care purposes (PHIPA s. 19, s. 37). `[fill
+  in: how to issue such an instruction within {{PROJECT_NAME}}]`.
+- **Secondary uses** — where {{PROJECT_NAME}} uses PHI for purposes
+  beyond direct care (research, analytics, quality improvement),
+  separate consent is sought or a statutory permission is relied on.
+- **Withdrawal** — you may withdraw consent. Some withdrawals are
+  subject to statutory or professional exceptions (e.g., a record
+  required to be retained by the regulated health professional's
+  College).
+
+## 6. How we use and disclose PHI
+
+We use and disclose PHI for the following purposes:
+
+- Provision of health care (direct care, follow-up, referrals).
+- Communication with the individual about their care (appointments,
+  test results, secure messaging).
+- Billing and insurance.
+- Quality improvement and risk management within the practice.
+- Compliance with law (including responses to lawful subpoenas and
+  PHIPA-authorized disclosures).
+- `[fill in: any project-specific purpose]`.
+
+We do not sell PHI. We do not use PHI for marketing without separate
+express consent.
+
+## 7. Subprocessors
+
+We use service providers that process PHI on our behalf. Each is
+required to safeguard PHI under PHIPA-equivalent terms. See
+[`subprocessors.md`](subprocessors.md) for the current list, the data
+categories each one processes, and the regions those services operate
+in.
+
+## 8. Data residency
+
+`[fill in: where PHI is stored; cross-border processing if any; the
+contractual safeguards in place where data leaves Canada]`. Ontario
+HICs commonly prefer Canadian residency for PHI; the IPC has
+published guidance on cross-border processing that we follow.
+
+## 9. Your rights under PHIPA
+
+- **Access** to your record (PHIPA s. 52): 30-day default response,
+  extendable to 60 days in specific circumstances. Some exceptions
+  apply.
+- **Correction** of inaccurate or incomplete PHI (PHIPA s. 55).
+- **Withdrawal of consent** (subject to statutory exceptions).
+- **Complaint** — first to us at `[fill in: privacy contact]`, then
+  to the IPC at <https://www.ipc.on.ca/en/health-organizations> or
+  the IPC's complaints page.
+
+## 10. Safeguards
+
+We use administrative, technical, and physical safeguards proportional
+to the sensitivity of PHI (PHIPA s. 12). Highlights:
+
+- Encryption in transit and at rest.
+- Role-based and least-privilege access.
+- Audit logging of all PHI access (PHIPA s. 10.1) — see
+  [`audit-log-requirements.md`](audit-log-requirements.md).
+- Secure account-recovery flows that do not bypass the safeguards
+  above.
+- Vendor due diligence (see [`subprocessors.md`](subprocessors.md)).
+- Breach response runbook (see [`breach-response.md`](breach-response.md))
+  rehearsed periodically.
+
+## 11. Breach notification
+
+If we determine that your PHI has been stolen, lost, or used or
+disclosed without authority, we will notify you at the first
+reasonable opportunity in writing (PHIPA s. 12.2). The notice will
+inform you of your right to complain to the IPC.
+
+## 12. Retention
+
+PHI retention is governed by the applicable College's records-retention
+guidelines (often 10+ years from last contact, longer for minors) and
+by any contractual or statutory obligation. `[fill in: specific
+retention windows for your project's record categories]`.
+
+## 13. Contact
+
+- **Privacy contact**: `[fill in: privacy@yourdomain]`
+- **Accountable officer (PHIPA)**: `[fill in: name + title]`
+- **Mailing address**: `[fill in]`
+- **IPC of Ontario**: <https://www.ipc.on.ca/>
+
+## Related
+
+- [`phipa-readiness.md`](phipa-readiness.md)
+- [`breach-response.md`](breach-response.md)
+- [`audit-log-requirements.md`](audit-log-requirements.md)
+- [`subprocessors.md`](subprocessors.md)
+- baseline:
+  [`../../baseline-pipeda/docs/compliance/privacy-policy.md`](../../baseline-pipeda/docs/compliance/privacy-policy.md)
+  (for non-PHI personal information).
