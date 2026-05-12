@@ -1,8 +1,8 @@
 # Spec 03 — Hooks
 
-> Status: Implemented in v0.2.x
-> Depends on: 00 (sourcing modes, glossary), 01 (filename canon), 05 (bootstrap script + settings-merge algorithm), Claude Code hook schema (verified at implementation time — see [docs](https://docs.claude.com/en/docs/claude-code/hooks))
-> Related: 02 (security-checklist references hook bundle), 09 (kit's own CI shellchecks `hooks/*.sh`)
+> Status: Implemented in v0.2.x; migrated to plugin in v2.0.0 (see appendix).
+> Depends on: 00 (sourcing modes, glossary), 01 (filename canon), 14 (marketplace + plugin, v2.0.0+), Claude Code hook schema (verified at implementation time — see [docs](https://docs.claude.com/en/docs/claude-code/hooks))
+> Related: 02 (security-checklist references hook bundle), 09 (kit CI shellchecks `plugins/unifylabs-workflow/hooks/*.sh` post-migration)
 
 ## Purpose
 
@@ -201,3 +201,63 @@ with header attribution") is re-opened and resolved as `customization`. See
 [`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md).
 Upstream path corrected from `examples/hooks/<name>.sh` to
 `examples/hooks/bash/<name>.sh` (factual fix from the same Phase 2 discovery).
+
+## Migration to plugin (v2.0.0)
+
+Pre-v2, the 6 security hook scripts shipped at `unify-kit/hooks/*.sh` and
+were copied into `~/.claude/hooks/` by `scripts/bootstrap-claude-config.sh`;
+the bootstrap script also merged hook-registration entries into
+`~/.claude/settings.json` so Claude Code knew to invoke them.
+
+In v2.0.0, the hooks migrate into the `unifylabs-workflow` plugin at
+`plugins/unifylabs-workflow/hooks/*.sh`. The hook *content* is byte-identical
+to v1's; what changed is the path resolution:
+
+- **v1**: `~/.claude/settings.json` `hooks.{event}[].hooks[].command`
+  entries point at absolute paths like `~/.claude/hooks/pre-commit-secrets.sh`.
+- **v2**: `plugins/unifylabs-workflow/hooks/hooks.json` declares the same
+  `{event, matcher, command}` shape, but each `command` is prefixed with
+  the `${CLAUDE_PLUGIN_ROOT}` resolution token. Claude Code's plugin
+  loader substitutes that token at runtime to the absolute path where
+  the plugin is installed (typically `~/.claude/plugins/unifylabs-workflow/`
+  on the user's machine, or the local working tree when developing the
+  kit itself via `dev-symlink-skills.sh`).
+
+The 6 v1 hooks (`pre-commit-secrets`, `output-secrets-scanner`, `file-guard`,
+`dangerous-actions-blocker`, `claudemd-scanner`, `mcp-config-integrity`)
+all carry forward unchanged. A 7th hook ships in v2.0.0:
+`marketplace-drift-check.sh` (SessionStart, advisory) — detects when
+`~/.claude/skills/<name>` exists but the corresponding skill isn't in the
+plugin and isn't on `~/.claude/.personal-skills` allowlist. See
+[`specs/14-marketplace.md`](14-marketplace.md) for the marketplace + plugin
+shape that this hook enforces.
+
+### Install path (v2)
+
+Consumers run `/plugin install unifylabs-workflow` from a Claude session.
+Claude Code's plugin loader handles hook discovery + execution via the
+plugin's `hooks/hooks.json`. There is no longer a "settings-merge" step
+on the consumer side; Claude Code owns that responsibility.
+
+Kit authors maintaining the plugin's content on their own machine run
+`bash scripts/dev-symlink-skills.sh` once (see CHANGELOG `[2.0.0]`
+"Migration from v1.0.0"). The script backs up `~/.claude/hooks/*.sh`
++ surgically strips user-level hook entries from
+`~/.claude/settings.json` (the plugin now provides them via
+`${CLAUDE_PLUGIN_ROOT}`).
+
+### What this spec no longer specifies (after v2.0.0)
+
+- `~/.claude/settings.json` merge algorithm — moot under plugin install.
+- `hooks/settings-snippet.json` shape — deleted (superseded by
+  `plugins/unifylabs-workflow/hooks/hooks.json`).
+- `hooks/README.md` manual-test recipes — moot for the v2 install path;
+  hook content is unchanged, so the v1 recipes still apply if a contributor
+  wants to test in isolation.
+
+The acceptance test recipes themselves (per-hook bash snippets) remain
+valid black-box descriptions of each hook's behavior. They are not
+exercised by `plugin-install-fixture.yml` (which validates structure only,
+because the GH runner doesn't have the `claude` CLI). User-gated post-
+install verification per the v2 CHANGELOG migration block covers actual
+hook firing.
