@@ -1,6 +1,19 @@
 # Backlog
 
-Items that could ship in a future release but are explicitly out of scope for v0.1. Each entry is tracked here so contributors can see what is acknowledged-but-deferred (rather than forgotten or rejected). Permanently-rejected ideas do not belong here — they live in spec "Considered alternatives" tables.
+Items that could ship in a future release but are explicitly out of scope for the current version. Each entry is tracked here so contributors can see what is acknowledged-but-deferred (rather than forgotten or rejected). Permanently-rejected ideas do not belong here — they live in spec "Considered alternatives" tables.
+
+## v2.1+ candidates
+
+Items surfaced during v2.0.0 design + cutover; not in v2.0.0 scope.
+
+- **Compliance profiles beyond the initial 4** — GDPR (EU), CCPA (California), FERPA (US education), HIPAA-US, PCI-DSS. Add when a real Unifylabs project needs them. Each profile is ~8–10 files (`README.md`, 5–6 `docs/compliance/*`, 1–2 runbooks, `claude-md-addendum.md`) following the existing template structure under `templates/compliance/profiles/`.
+- **Migrate `unify-rolfing-app`, `optics-management/optics_boutique`, `wealth-portal` to consume v2** — per-project effort after v2 ships. Each project: install plugin, run `init-project.sh --compliance=<profile> --snippets=nextjs` to bring CLAUDE.md / docs/compliance / .mcp.json / .claude/settings.json in line with v2 standards.
+- **Statusline auto-install option in `dev-symlink-skills.sh`** — currently the statusline opt-in is documented; could become an interactive prompt during the migration ("install statusline now? [y/N]").
+- **Plugin marketplace listing on `claude.com`** (or whichever canonical Claude Code marketplace registry emerges) — submit `unifylabs-workflow` for discoverability beyond the `github.com/unifylabs-dev/unify-kit` path.
+- **Multi-language compliance translations** (e.g., French versions of breach-response / privacy-policy for Quebec) — pull when a Quebec client demands them.
+- **Hook-firing CI validation** in `plugin-install-fixture.yml` — currently the runner doesn't have the `claude` CLI available, so we structurally validate hook scripts (executable, shebang, `${CLAUDE_PLUGIN_ROOT}` resolution) but don't fire them end-to-end. If Claude Code ships a headless CLI invocation path, wire it into a new CI job that runs `git commit` with a fake `sk-ant-test...` in staged content and asserts the pre-commit-secrets hook blocks.
+
+## Pre-existing items (carried forward from v1.x)
 
 ## Stretch hooks
 
@@ -24,9 +37,16 @@ Three additional workflows were evaluated and deferred per [`specs/04-github-act
 
 Two scripts sketched in [`specs/05-scripts.md`](specs/05-scripts.md) and [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §4 are deferred from v0.1.
 
-- **`claude-md-validator.sh`** — lints a `<consumer>/CLAUDE.md` against the kit's `templates/core/claude.md.template` structure (required sections present, banned synonyms absent, MCP policy referenced, etc.). Deferred to v1.1 once `templates/core/claude.md.template` has been used in anger.
-- **`update-from-upstream.sh`** — automates "pull the new kit version → re-run bootstrap → diff against current install". Depends on the upgrade-flow contract sketched in [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §4. v0.1's upgrade story is "re-run the bootstrap script after pulling the new kit version"; automation lands in v1.1+.
-- **Entry-level `--force` for `settings.json` merge** — `scripts/bootstrap-claude-config.sh`'s `--force` is currently file-level only (overwrites tampered hook `.sh` files via SHA-256 manifest comparison). Spec 05 §"Conflict-on-manual-edit" implies entry-level support too: when a consumer edits a kit-shipped settings.json entry's `command` path, `--force` should restore the kit's intended value. The current merge algorithm is append-only-dedup-by-command-string and does not detect or remove the user's substitution. Adding this requires manifest-aware merge logic that reads the manifest's recorded command string, detects divergence, and (under `--force`) removes the user's entry before the dedup append. Deferred to v0.2.0+; surfaced in v0.1.2 CHANGELOG when the corresponding CI assertion was relaxed.
+- **`claude-md-validator.sh`** — lints a `<consumer>/CLAUDE.md` against the kit's `templates/core/claude.md.template` structure (required sections present, banned synonyms absent, MCP policy referenced, etc.). Deferred to v2.x once `templates/core/claude.md.template` has been used across more real projects.
+- **`update-from-upstream.sh`** — automates "pull the new kit version → re-run `init-project.sh` → diff against current install". Depends on the upgrade-flow contract sketched in [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §4. The current upgrade story is "re-run `init-project.sh` after pulling the new kit version"; automation lands in v2.x+.
+
+<!--
+v1.0.x item "Entry-level `--force` for `settings.json` merge" referred to
+the now-deleted `scripts/bootstrap-claude-config.sh`. With v2.0.0, that
+script's merge algorithm is gone — Claude Code's plugin loader owns
+hook discovery, so the entry-level merge concern is moot.
+-->
+
 
 ## `examples/` directory
 
@@ -40,16 +60,15 @@ The kit ships a stack-agnostic core `templates/core/claude.md.template` plus opt
 
 v0.1 hooks and scripts are Bash-only; Windows users use WSL per [`specs/03-hooks.md`](specs/03-hooks.md) and [`specs/05-scripts.md`](specs/05-scripts.md). A PowerShell port requires an ADR — the attack surface of duplicate implementations is non-trivial, and v0.1 CI does not have Windows fixtures. The port is welcome as a contribution from someone who runs Windows daily and can maintain the Windows test matrix.
 
-## v1.0.0 release prep
+<!--
+v1.0.0 release-prep section removed in v2.0.0:
+- Branch protection on `main` was enforced before v1.0.0 shipped (per v1.0.0
+  CHANGELOG entry).
+- `.github/ISSUE_TEMPLATE/` + `.github/PULL_REQUEST_TEMPLATE.md` shipped via
+  spec 11.
+- `CODE_OF_CONDUCT.md` + `SECURITY.md` shipped via PR #19 on 2026-05-11.
+-->
 
-The following artifacts are required at v1.0.0 release per [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §5 but are not v0.1 gates. They land in a follow-up phase or a v0.1.x patch run.
-
-- **Branch protection on `main`** — required reviews, required status checks, no force-push. Operational task (GitHub repo settings via `gh api` or UI), not a code PR. Tracked here so the v1.0.0 release-prep checklist stays complete until the protection rules are enabled.
-
-> Previously listed here:
->
-> - `.github/ISSUE_TEMPLATE/` (bug + feature) and `.github/PULL_REQUEST_TEMPLATE.md` — shipped via `specs/11-github-templates.md` with content that earns their keep (issue templates' "Spec sections affected" required field gates `/work-issue` Phase 0; PR template's `## Spec Changes` two-checkbox section forces the explicit "spec updated vs drift fix" decision). An ADR-proposal issue template was considered and rejected in spec 11 §"What does NOT land in this spec" — revisit if/when contributor volume warrants it.
-> - `CODE_OF_CONDUCT.md` (Contributor Covenant) and `SECURITY.md` (vulnerability disclosure process) — shipped via PR #19 on 2026-05-11.
 
 ## v1.0.1 follow-ups surfaced during v1.0.0 dogfood
 
@@ -63,6 +82,10 @@ Two integration issues surfaced during the v1.0.0 run's Phase 2 dogfood (commit 
 
 Optional at v1.0.0 release per [`specs/08-living-docs-and-decision-log.md`](specs/08-living-docs-and-decision-log.md) §7. Candidates include awesome-claude-code lists and Claude Code community indexes. Submission is the kit author's call at release time; not a release gate.
 
-## Bootstrap script's machine-state install on author's own `~/.claude/`
+<!--
+v1.0.0 item "Bootstrap script's machine-state install on author's own ~/.claude/"
+was absorbed in v2.0.0 by `scripts/dev-symlink-skills.sh`, which now ships as
+the kit-author migration tool (backs up `~/.claude/skills/*` + commands/hooks
++ statusline, then symlinks user-level paths into the plugin tree).
+-->
 
-The bootstrap script we ship targets `~/.claude/` on a consumer's machine. Installing it on the author's own machine is explicitly out of v0.1 implementation scope per the master plan — the implementation phases land the script artifact, not the side effect of running it on the author's box. Tracked here as a manual follow-up so it does not get lost.
