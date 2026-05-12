@@ -62,8 +62,8 @@ There is no Cucumber, no `.feature` files, no DSL. BDD-Lite is just a naming con
 ### Vocabulary
 
 - **Spec** — a markdown file in `<consumer>/docs/specs/` that documents *behavior*, not implementation. Specs link to source code; they don't quote it.
-- **Module spec** — `<consumer>/docs/specs/modules/<name>.md`. Documents one slice of the system. Aim 200–500 lines. Template: `templates/specs/module.md.template`.
-- **Journey spec** — `<consumer>/docs/specs/journeys/<slug>.md`. Documents one cross-module user flow. Aim 100–300 lines. Template: `templates/specs/journey.md.template`.
+- **Module spec** — `<consumer>/docs/specs/modules/<name>.md`. Documents one slice of the system. Aim 200–500 lines. Template: `templates/core/specs/module.md.template`.
+- **Journey spec** — `<consumer>/docs/specs/journeys/<slug>.md`. Documents one cross-module user flow. Aim 100–300 lines. Template: `templates/core/specs/journey.md.template`.
 - **Drift fix** — a bug fix where the *code* drifted away from the documented behavior. The spec is correct; the code is wrong. **No spec change needed.**
 - **Behavior change** — a fix or feature that intentionally changes documented behavior. **Spec update required in the same PR.**
 - **Lazy bootstrap** — when an issue touches code with no existing spec, `/work-issue` Phase 0 (Spec Sync) creates the initial spec from current code as its first step. No big-bang migration; specs accumulate on use.
@@ -75,7 +75,7 @@ There is no Cucumber, no `.feature` files, no DSL. BDD-Lite is just a naming con
 3. **The spec describes behavior, not implementation.** Don't quote schemas, don't copy function signatures, don't paste type definitions. Link to file paths via `code_anchors:` and describe what they do in prose. A future maintainer should be able to re-implement the module from the spec without reading the original code.
 4. **Module specs are 200–500 lines. Journey specs are 100–300 lines.** Longer = documenting implementation; start over. Shorter for substantial subjects = under-documenting; add behavior rules and edge cases.
 5. **Bug-fix-only PRs (drift fix, no behavior change) tick the "no spec changes needed" box** in the PR template. This forces an explicit decision: either the spec was updated, or the spec is confirmed still accurate.
-6. **New e2e tests use Given/When/Then naming under `Journey: <slug>` describe blocks.** At least one test per Tier-1 journey carries the `@daily` tag. See `templates/snippets/bdd-lite-test-naming.md` for the canonical example.
+6. **New e2e tests use Given/When/Then naming under `Journey: <slug>` describe blocks.** At least one test per Tier-1 journey carries the `@daily` tag. See `templates/snippets/testing/bdd-lite-test-naming.md` for the canonical example.
 7. **Review-driven spec changes ship in the same PR as the code they accompany — never a follow-up PR.** When PR review surfaces a behavior change (e.g., a missing edge case), update both spec and code in the same branch *before* merging. Same-branch follow-up commits are fine; a separate "fix spec" PR is not.
 
 ### Bug-fix flow: drift fix vs behavior change
@@ -118,7 +118,7 @@ The list of Tier-1 modules and journeys is per-project; the consumer maintains i
 
 ### BDD-Lite naming convention
 
-Top-level e2e describe = `Journey: <slug>`. Each `test()` is named with a Given/When/Then sentence and corresponds 1:1 to a numbered step in the matching journey spec. At least one test per Tier-1 journey is tagged `@daily`. Existing assertion-style tests stay — never rewrite a passing test to fit the convention. Full rules and a copy-paste example: `templates/snippets/bdd-lite-test-naming.md`.
+Top-level e2e describe = `Journey: <slug>`. Each `test()` is named with a Given/When/Then sentence and corresponds 1:1 to a numbered step in the matching journey spec. At least one test per Tier-1 journey is tagged `@daily`. Existing assertion-style tests stay — never rewrite a passing test to fit the convention. Full rules and a copy-paste example: `templates/snippets/testing/bdd-lite-test-naming.md`.
 
 ## C. Test-Driven Development
 
@@ -229,7 +229,7 @@ Plus: `/effort xhigh` for complex work; default to lower for routine work to con
 
 ## I. Multi-agent review
 
-The canonical "which reviewer when" mapping lives in `templates/cheatsheet.md.template` Appendix A. This methodology cites it; it does not restate it. The mapping is updated when the compound-engineering reviewer roster changes — that's a cheatsheet edit, not a methodology rewrite.
+The canonical "which reviewer when" mapping lives in `templates/core/cheatsheet.md.template` Appendix A. This methodology cites it; it does not restate it. The mapping is updated when the compound-engineering reviewer roster changes — that's a cheatsheet edit, not a methodology rewrite.
 
 In abstract: layered review for any non-trivial PR — author self-review → `/claude-review` GH Action → one or more specialized reviewer agents (chosen by change shape) → human reviewer signs off. The layering is the rule; the specific reviewer choices are tactical.
 
@@ -237,4 +237,4 @@ In abstract: layered review for any non-trivial PR — author self-review → `/
 
 ## J. MCP discipline
 
-The kit's MCP allowlist + 5-step vetting workflow live in `templates/mcp-policy.md.template` and the `mcp-config-integrity.sh` hook. This methodology does not restate them.
+The kit's MCP allowlist + 5-step vetting workflow live in `templates/core/mcp-policy.md.template` and the `mcp-config-integrity.sh` hook. This methodology does not restate them.

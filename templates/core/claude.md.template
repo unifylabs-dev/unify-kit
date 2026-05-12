@@ -8,44 +8,39 @@ Authored: 2026-05-04
 License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
 -->
 
-# unify-kit
+# {{PROJECT_NAME}}
 
-> Opinionated kickstarter for new Claude Code projects (templates, security hooks, GitHub Actions, scripts, onboarding docs).
+> {{ONE_LINE_DESCRIPTION}}
 
 This file is project memory for Claude Code. Keep it accurate; stale entries
 teach errors. Update in the same commit as the code change that invalidates a
-section. Stack-specific patterns live in `templates/snippets/<stack>/` and are
-appended here à la carte by consumers on Next.js (or skipped on other stacks).
+section. Stack-specific patterns live in `templates/snippets/<stack>/` (e.g.
+`templates/snippets/nextjs/`) and are appended here à la carte by consumers on
+that stack (or skipped on other stacks).
 
 ## 1. Project Overview
 
-- **Name**: unify-kit
-- **Description**: Opinionated kickstarter for new Claude Code projects (templates, security hooks, GitHub Actions, scripts, onboarding docs).
-- **Repository**: https://github.com/unifylabs-dev/unify-kit
-- **Stack**: Bash + Markdown + GitHub Actions
+- **Name**: {{PROJECT_NAME}}
+- **Description**: {{ONE_LINE_DESCRIPTION}}
+- **Repository**: {{REPO_URL}}
+- **Stack**: {{STACK}}
 
 ## 2. Architecture
 
-unify-kit is a template / docs / scripts repository — no runtime, no DB. Consumers
-adopt it via two scripts that mutate filesystem state.
+Replace this skeleton with the project-specific architecture summary; cross-link
+to `docs/architecture.md` if it exists.
 
-- **Entry points**: `scripts/bootstrap-claude-config.sh` (per-machine `~/.claude/`
-  hook + settings install) and `scripts/init-project.sh` (per-project template
-  install with placeholder substitution). `scripts/audit-scan.sh` is a read-only
-  consumer-side check.
-- **Data layer**: none. Per-project state lives in `<consumer>/.unify-kit-project-manifest.json`
-  (SHA-256 manifest written by `init-project.sh` for idempotent re-runs).
-- **External services**: GitHub Actions for kit-CI (`lint`, `scrub-check`,
-  `bootstrap-fixture`, `changelog-check` workflows under `.github/workflows/`).
-  No cloud services in the kit's own runtime.
+- **Entry points**: <describe the user-visible entry points — web, CLI, jobs>
+- **Data layer**: <describe persistence — database engine, schema-management approach, key tables>
+- **External services**: <list third-party integrations and their roles>
 
 ## 3. Conventions
 
-- **Commit convention**: Conventional Commits enforced (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
-- **File naming**: lowercase-dash for shell scripts (`bootstrap-claude-config.sh`); `.template` suffix on every consumer-facing template under `templates/`; UPPERCASE Markdown at root for canonical docs (`README.md`, `CHANGELOG.md`, `BACKLOG.md`).
-- **Bash version**: `init-project.sh` requires Bash 4+ (associative arrays). `bootstrap-claude-config.sh` is Bash 3.2-compatible (macOS default).
-- **Substitution invariant**: every `{{...}}` placeholder must resolve to a non-empty value OR be explicitly listed in `templates/README.md`'s vocabulary table as "may be empty". `scrub-check.yml` enforces this.
-- **Error handling**: scripts use `set -euo pipefail` + atomic-write via tmp-file-then-rename; never partial state on failure.
+- **Commit convention**: Conventional Commits encouraged (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- **File naming**: follow the canonical style for {{LANG}} (lowercase-dash for shell, kebab-case for routes, PascalCase for components — adapt per stack).
+- **Component patterns**: keep concerns local; lift state up only when two siblings need it.
+- **Imports**: project-specific path-aliases; avoid deep relative paths (`../../../`).
+- **Error handling**: never swallow errors silently — log, surface, or propagate.
 
 ### Branch Naming
 
@@ -98,10 +93,10 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), CI-fixture runs (`bootstrap-fixture` + `init-project-fixture` jobs), and the `scrub-check` workflow that enforces the substitution invariant + template-vocabulary contract.
-- **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `bootstrap-fixture`, `changelog-check`) run automatically on push + PR.
-- **Full local**: `gh workflow run bootstrap-fixture.yml` (runs both `bootstrap-fixture` and `init-project-fixture` jobs end-to-end against the fixture sets under `scripts/test-fixtures/`).
-- **Tier discipline**: fixtures are the kit's e2e layer (known-good outputs committed); shell-level checks are the unit layer (shellcheck). No traditional unit/integration tests — the scripts are too simple and the workflows ARE the integration.
+- **Pyramid**: unit / integration / e2e.
+- **CI command**: `{{TEST_CI_CMD}}` (the gate for PRs).
+- **Full local**: `{{TEST_FULL_CMD}}` (slower; run before merging anything load-bearing).
+- **Tier discipline**: keep unit tests fast and isolated; use integration tests for cross-module contracts; reserve e2e for user-visible flows.
 
 ## 7. Documentation Requirements
 
@@ -119,12 +114,11 @@ behavior changes require which file to update.
 
 Before merging any PR, complete this checklist:
 
-1. Run the full test suite (`gh workflow run bootstrap-fixture.yml`) — all tests pass (0 failures).
-2. Lint clean (`shellcheck scripts/*.sh hooks/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
+1. Run the full test suite (`{{TEST_FULL_CMD}}`) — all tests pass (0 failures).
+2. Run the production build (`{{BUILD_CMD}}`) — no errors.
 3. Feature verification: trace each test-plan item end-to-end; confirm
-   the relevant fixture set under `scripts/test-fixtures/` was regenerated +
-   committed if the script's output shape changed; confirm CHANGELOG `[Unreleased]`
-   has an entry covering the change.
+   authorization, session, and data-isolation checks are in place; confirm
+   test coverage exists for happy path + error paths.
 4. Merge: `gh pr merge <number> --merge` (or your team's policy).
 5. Pull updated default branch locally; confirm a clean working tree.
 6. Update the project's living-doc set per the §"Documentation Requirements"
@@ -152,5 +146,7 @@ README) for the universal Living Documents principle.
 
 ---
 
-Stack-specific patterns are NOT in this template. They live in `templates/snippets/<stack>/`.
-A consumer using Next.js patterns appends snippet content into their filled-in `CLAUDE.md`.
+Stack-specific patterns are NOT in this template. They live under
+`templates/snippets/<stack>/` (e.g. `templates/snippets/nextjs/`). A consumer
+on a given stack appends the relevant snippet content into their filled-in
+`CLAUDE.md`; consumers on other stacks skip them.

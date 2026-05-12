@@ -3,7 +3,7 @@ templates/core/pull-request-template.md.template
 Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
 Stack-agnostic PR template; structurally inspired by a real consumer
 project's pull_request_template.md, no expression lifted. Test/build
-commands parameterized via gh workflow run bootstrap-fixture.yml and .
+commands parameterized via {{TEST_FULL_CMD}} and {{BUILD_CMD}}.
 
 When you adopt this template, save it as `<consumer>/.github/pull_request_template.md`
 (strip the `.template` suffix; lowercase filename per GitHub's convention)
@@ -15,7 +15,8 @@ License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"Licen
 
 ## Summary
 
-<!-- 1-3 sentences: what this PR does and why. -->
+<!-- 1-3 sentences: what this PR does and why. Add non-obvious design
+decisions inline here if they matter to the reviewer. -->
 
 Closes #<!-- issue number -->
 
@@ -56,14 +57,10 @@ Spec files modified:
 
 ## Verification Checklist
 
-- [ ] `gh workflow run bootstrap-fixture.yml` — all tests pass.
-- [ ] `shellcheck scripts/*.sh hooks/*.sh` + `actionlint .github/workflows/*.yml` — no warnings.
-- [ ] Feature verification: scripts behave as documented; fixture sets regenerated + committed if output shape changed.
+- [ ] `{{TEST_FULL_CMD}}` — all tests pass.
+- [ ] `{{BUILD_CMD}}` — no errors.
+- [ ] Feature verification: code paths traced, auth checks confirmed.
 - [ ] Scope guard: all changed files map to acceptance criteria.
-
-## Design Decisions
-
-<!-- Non-obvious choices, or "None — straightforward implementation." -->
 
 ## Test Plan
 

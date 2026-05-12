@@ -6,11 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+v2 reshape — Phase 2 (template tier reorg). Phase 1 (plugin scaffolding) landed in PR #32. Phase 2 reorganizes `templates/` from a flat layout into the v2 tier structure (`core/`, `claude-runtime/`, `optional/`, `compliance/`, `snippets/{nextjs,ci,testing}/`), adds 5 new core/runtime templates, refines 3 existing ones, and adds 5 new Next.js snippets. `scripts/init-project.sh` is NOT modified in this phase; phase 4 refactors it to apply the new tree. Until then, the `init-project-fixture` job inside `bootstrap-fixture.yml` is expected to fail on this PR (the sibling `bootstrap-fixture` job still passes) — phase 4 replaces the workflow with `plugin-install-fixture.yml`.
+
 ### Added
+
+- Tier directory structure under `templates/`: `core/`, `claude-runtime/`, `optional/`, `compliance/profiles/{baseline-pipeda,healthcare-phipa,financial-canada,general-soc2}/`, and `snippets/{nextjs,testing,ci}/` subdirectories. Phase 2 of v2 reshape.
+- `templates/core/github/CODEOWNERS.template` — routes `.claude/`, `.mcp.json`, `CLAUDE.md`, `ONBOARDING.md`, and `docs/compliance/` to a configurable repo owner via the new `{{REPO_OWNER}}` placeholder.
+- `templates/claude-runtime/.mcp.json.template` — minimal `{ "mcpServers": {} }` skeleton consumers populate per project.
+- `templates/claude-runtime/.mcp.json.examples.md` — companion reference with worked examples for Supabase, Playwright, and context7 MCP servers (lives outside `.mcp.json` because JSON doesn't support comments).
+- `templates/claude-runtime/.claude-settings.json.template` — per-project Claude Code settings with `enableAllProjectMcpServers: true` + a permission allowlist for safe-default Bash commands (`npm test:*`, `npm run build`, `git push:*`, `gh pr create:*`, etc.).
+- `templates/compliance/README.md` — frames the per-project compliance profile system; lists the 4 initial profiles + matrix of regulators covered + the claude-md-addendum pattern (which uses the new `{{COMPLIANCE_PROFILE}}` placeholder). Profile content is filled in phase 3.
+- `templates/snippets/nextjs/prisma-7.md` — Prisma 7 + `prisma.config.ts` + `@prisma/adapter-pg` setup; dual-seed pattern (idempotent dev + deterministic e2e); ESM/Node 22.12+ workarounds. ~130 lines.
+- `templates/snippets/nextjs/drizzle.md` — Drizzle ORM in a monorepo `packages/db` workspace package; schema location convention; migration command names. Mirrors `unify-rolfing-app/packages/unify-db` shape. ~100 lines.
+- `templates/snippets/nextjs/custom-auth.md` — bcrypt password hashing + HMAC-SHA256 cookie session token; DAL `verifySession`/`verifyRole`/`requireSession`; middleware actor-stamp pattern (identification, not authorization). ~150 lines.
+- `templates/snippets/nextjs/forms.md` — `useActionState` + Server Action + Zod with a discriminated-union `ActionResult<T>` return shape; field-level vs form-level error rendering. ~120 lines.
+- `templates/snippets/nextjs/semantic-release.md` — semantic-release on push-to-main + husky/commitlint gate + Vercel `ignoreCommand` to prevent release-loop deploys. Mirrors `unify-rolfing-app/.github/workflows/release.yml`. ~90 lines.
+- 2 new placeholders in the kit's vocabulary: `{{REPO_OWNER}}` (used by CODEOWNERS) and `{{COMPLIANCE_PROFILE}}` (used by compliance addendums). Vocabulary count grows from 18 to 20.
+
 ### Changed
+
+- **Template tier reorganization** (breaking layout change, no content loss):
+  - `templates/core/`: `claude.md`, `cheatsheet`, `ai-usage-charter`, `mcp-policy`, `security-checklist`, `pull-request-template` moved from `templates/` root; `issue-templates/` and `specs/` moved as whole directories.
+  - `templates/optional/`: `team-onboarding`, `methodology-retro`, `llms.txt` moved from `templates/` root (genuinely situational).
+  - `templates/snippets/nextjs/`: 4 existing Next.js snippets moved here from `templates/snippets/` root; filenames lost their `-nextjs` suffix since the directory is now the namespace (`server-action-anatomy-nextjs.md` → `nextjs/server-action-anatomy.md`, etc.).
+  - `templates/snippets/testing/`: `bdd-lite-test-naming.md` moved here from `templates/snippets/` root (it was always stack-agnostic; misplaced in v1).
+  - `templates/snippets/ci/`: 3 CI snippets moved into a dedicated subdirectory.
+  - All moves used `git mv` so `git log --follow` works on every renamed file.
+  - HTML-comment headers updated in every moved file to reflect the new path.
+- `templates/core/claude.md.template` — comment paragraph updated to point at `templates/snippets/<stack>/` (new path).
+- `templates/core/cheatsheet.md.template` — Appendix A reviewer roster rewritten to be vendor-neutral (roles + how to invoke, no hard-coded `compound-engineering:` plugin entries); removed the "Plan mode + phasing trigger" mini-section (redundant with the `/phase` row in Daily slash-commands).
+- `templates/core/pull-request-template.md.template` — removed the `## Design Decisions` H2 section (low-adoption; decisions belong inline in Summary or in spec changes); slim from 73 to 70 lines.
+- `templates/README.md` — restructured to document the v2 tier layout; added Tier-flags section describing the `--include`, `--compliance`, `--snippets` contract; added rows for new `{{REPO_OWNER}}` and `{{COMPLIANCE_PROFILE}}` placeholders; rewrote the manual-install worked example to use new paths.
+- `.github/workflows/scrub-check.yml` — SUPPORTED placeholder list extended from 18 to 20 entries (`{{REPO_OWNER}}`, `{{COMPLIANCE_PROFILE}}`).
+
 ### Deprecated
 ### Removed
 ### Fixed
+
+- Stale cross-template path references inside renamed templates that the rename batch missed (e.g., `templates/core/ai-usage-charter.md.template` and `templates/core/security-checklist.md` pointing at `templates/mcp-policy.md.template` rather than the new `templates/core/` path; `templates/core/specs/journey.md.template` pointing at `templates/snippets/bdd-lite-test-naming.md` rather than `templates/snippets/testing/`).
+- Doc-on-ship gaps in root docs (`README.md` placeholder count, `BACKLOG.md` snippet path, `UPGRADING.md` example paths, `CLAUDE.md` snippet/cheatsheet/specs references) that the tier reorg invalidated.
+
 ### Security
 
 <!--

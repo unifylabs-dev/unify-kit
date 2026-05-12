@@ -77,14 +77,14 @@ The blocks below are stack-specific. Uncomment the ones that apply to this codeb
      input validation (zod or equivalent), business logic, audit log call, return
      value with explicit success/error shape. Flag deviations as 🟡 unless they
      remove auth or validation (then 🔴). Canonical pattern:
-     templates/snippets/server-action-anatomy-nextjs.md
+     templates/snippets/nextjs/server-action-anatomy.md
 -->
 
 <!-- Audit logging:
      Mutations that change user-visible state should call logAudit() (or the
      project's equivalent) fire-and-forget. Flag missing audit calls on mutating
      code paths as 🟡; flag silent suppression of audit failures as 🔴. Canonical
-     pattern: templates/snippets/audit-logging-nextjs.md
+     pattern: templates/snippets/nextjs/audit-logging.md
 -->
 
 <!-- Rate limiting:
@@ -92,14 +92,14 @@ The blocks below are stack-specific. Uncomment the ones that apply to this codeb
      equivalent) and apply timingSafeDelay() on failures to prevent timing
      side-channels. Flag missing rate limiting on public paths as 🟡; flag
      password/auth endpoints without timing-safe delays as 🔴. Canonical pattern:
-     templates/snippets/rate-limiting-nextjs.md
+     templates/snippets/nextjs/rate-limiting.md
 -->
 
 <!-- Middleware:
      Session handling should follow the dual-session + idle-timeout pattern (one
      active session, one refresh window, idle timeout enforced server-side).
      Flag deviations that drop idle-timeout enforcement as 🔴; missing dual-session
-     refresh as 🟡. Canonical pattern: templates/snippets/middleware-nextjs.md
+     refresh as 🟡. Canonical pattern: templates/snippets/nextjs/middleware.md
 -->
 
 <!-- <Stack name>: <link to convention doc>

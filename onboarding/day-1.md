@@ -59,8 +59,8 @@ In order:
 
 - The project's `<consumer>/CLAUDE.md` start-to-finish — this is the project's memory file; everything in it constrains how Claude Code behaves on this codebase.
 - The project's `docs/architecture.md` (or equivalent) — the system overview, so you know which subsystem you're in when you read code later.
-- The kit's `templates/cheatsheet.md.template` — the command vocabulary you'll use daily (8 commands), the daily skills, the context-discipline thresholds, and the reviewer mapping (Appendix A).
-- The kit's `templates/ai-usage-charter.md.template` — what's permitted, what isn't, and the hard rule that AI-generated code passes the same review as human code.
+- The kit's `templates/core/cheatsheet.md.template` — the command vocabulary you'll use daily (8 commands), the daily skills, the context-discipline thresholds, and the reviewer mapping (Appendix A).
+- The kit's `templates/core/ai-usage-charter.md.template` — what's permitted, what isn't, and the hard rule that AI-generated code passes the same review as human code.
 
 If you only have 30 minutes, read `<consumer>/CLAUDE.md` and the cheatsheet. Skim the rest. You'll re-read all four in week 1 anyway.
 
