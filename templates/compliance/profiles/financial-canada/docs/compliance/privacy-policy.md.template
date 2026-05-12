@@ -1,0 +1,181 @@
+<!--
+templates/compliance/profiles/financial-canada/docs/compliance/privacy-policy.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+
+When composed with baseline-pipeda, this file replaces baseline's
+privacy-policy.md. Financial-specific scaffolding.
+-->
+
+# {{PROJECT_NAME}} — Privacy Policy (Canadian financial draft)
+
+> **This is a starting-point template, not legal advice.** Financial-
+> services privacy policies must align with PIPEDA, FINTRAC client-
+> identification record-keeping, and any registration-category-
+> specific disclosure obligations. Counsel review is required.
+
+**Effective date**: `[fill in]` · **Version**: `[fill in]` ·
+**Last reviewed by counsel**: `[fill in: YYYY-MM-DD]`
+
+## 1. Who we are
+
+`[fill in: legal entity name, operating address, jurisdiction of
+incorporation, securities registration category and jurisdiction(s),
+FINTRAC reporting-entity sector if applicable]`. We operate
+{{PROJECT_NAME}}, which provides `[fill in: brief service
+description]`.
+
+## 2. The information we collect
+
+For financial-services clients, we collect more than a typical SaaS
+project. Categories include:
+
+- **Identification information** — name, date of birth, government-
+  issued identification details, address, occupation. Required by
+  PCMLTFA for client identification.
+- **Beneficial-ownership information** — for entity clients,
+  information about the natural persons who ultimately own or
+  control the entity (commonly 25% threshold; verify your sector's
+  requirement).
+- **PEP / HIO screening data** — politically exposed person and
+  head-of-international-organization status; family members and
+  close associates where applicable.
+- **Financial information** — assets, income, investment knowledge
+  and experience, financial goals, risk tolerance, source of
+  funds, employment information.
+- **Transaction information** — account activity, payments,
+  transfers, trades.
+- **Account information** — login credentials, account preferences,
+  communication preferences.
+- **Communications** — emails, secure messages, advisor notes.
+- **Technical information** — see baseline policy.
+
+## 3. Why we collect each category
+
+PIPEDA Principle 2 requires that we identify purposes at or before
+collection. Our purposes:
+
+- **Identification + KYC** — to comply with FINTRAC client-
+  identification obligations and our internal risk-assessment
+  controls.
+- **Account opening and servicing** — to set up your account, manage
+  your relationship with us, and provide the services you've
+  retained us for.
+- **Suitability and advice** — to provide investment recommendations
+  appropriate to your circumstances (where {{PROJECT_NAME}} provides
+  advice).
+- **Sanctions screening** — to screen against the consolidated
+  Canadian sanctions list and other applicable lists.
+- **Transaction monitoring** — to detect and report suspicious
+  activity per PCMLTFA + internal controls.
+- **Communication** — about your account, service updates, and
+  regulator-mandated disclosures.
+- **Compliance with law** — including responses to lawful authority
+  requests, subpoenas, and regulator inquiries.
+- **Optional uses** — marketing communications (separate CASL opt-in
+  required); analytics and product improvement (subject to consent
+  scope).
+
+## 4. Legal basis
+
+Most processing relies on consent (PIPEDA Principle 3). Some
+processing relies on statutory permissions or requirements (PIPEDA
+s. 7) — notably:
+
+- PCMLTFA client-identification, record-keeping, and reporting
+  requirements.
+- Securities-regulator filings and disclosures.
+- Sanctions-compliance obligations.
+
+You may withdraw consent for non-mandatory processing. Withdrawing
+consent for mandatory processing may make us unable to continue our
+relationship with you.
+
+## 5. How we share information
+
+We share information with:
+
+- **Subprocessors** — see [`subprocessors.md`](subprocessors.md).
+- **Custodian / clearing partner** — if your assets are held by a
+  third-party custodian or trades clear through a CIRO-regulated
+  dealer.
+- **Insurance / surety / professional liability insurers** —
+  limited circumstances, typically incident response.
+- **Government authorities** — FINTRAC for reportable transactions
+  and STRs; OSFI for sanctions-related reports; tax authorities
+  under the Income Tax Act and FATCA / CRS where applicable;
+  regulators conducting examinations.
+- **Lawful authority** — including law enforcement under proper
+  legal process.
+
+We do not sell personal information.
+
+## 6. International transfers
+
+Some subprocessors process information outside Canada (see
+[`subprocessors.md`](subprocessors.md)). Where information leaves
+Canada, contractual safeguards remain in place; however, that
+information is subject to the laws of the destination country,
+including potential government access requests.
+
+## 7. Retention
+
+Statutory minimums (and our practice) for financial-services records:
+
+- **PCMLTFA records** — at least 5 years from creation; some categories
+  longer. Records retrievable to FINTRAC within 30 days of request.
+- **Securities records** — per the applicable provincial regulator;
+  commonly 7 years.
+- **Tax records** — per CRA rules (commonly 6 years from end of last
+  tax year the records relate to).
+- **Account records after termination** — `[fill in: retention
+  windows]`.
+
+When records are no longer needed for any of the above, they are
+deleted or de-identified.
+
+## 8. Your rights
+
+Under PIPEDA you have the right to:
+
+- Access your personal information (30-day default response).
+- Request correction.
+- Withdraw consent (subject to statutory exceptions).
+- Make a complaint — first to us at `[fill in: privacy contact]`,
+  then to the OPC.
+
+## 9. Safeguards
+
+- TLS in transit; encryption at rest.
+- Role-based access, segregation of duties.
+- Sanctions screening pipeline.
+- Audit logging — see
+  [`audit-log-requirements.md`](audit-log-requirements.md).
+- Vendor due diligence (see [`subprocessors.md`](subprocessors.md)).
+- Breach response runbook — see
+  [`breach-response.md`](breach-response.md).
+
+## 10. Complaints
+
+- **Internal** — `[fill in: privacy contact]`.
+- **External** — OPC (privacy);
+  - your provincial securities commission (registrant conduct); or
+  - OBSI (banking + investment services), <https://www.obsi.ca/>.
+
+## 11. Contact
+
+- **Privacy contact**: `[fill in]`
+- **Accountable officer (PIPEDA Principle 1)**: `[fill in]`
+- **Compliance officer (PCMLTFA)**: `[fill in]`
+- **Mailing address**: `[fill in]`
+
+## Related
+
+- [`fintrac-readiness.md`](fintrac-readiness.md)
+- [`provincial-securities-overview.md`](provincial-securities-overview.md)
+- [`breach-response.md`](breach-response.md)
+- [`subprocessors.md`](subprocessors.md)
+- [`audit-log-requirements.md`](audit-log-requirements.md)
+- baseline:
+  [`../../baseline-pipeda/docs/compliance/pipeda-readiness.md`](../../baseline-pipeda/docs/compliance/pipeda-readiness.md).

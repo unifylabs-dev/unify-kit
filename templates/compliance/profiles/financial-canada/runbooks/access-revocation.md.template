@@ -1,0 +1,165 @@
+<!--
+templates/compliance/profiles/financial-canada/runbooks/access-revocation.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Access Revocation Runbook (Canadian financial)
+
+> **This is a starting-point template, not legal advice.** Financial-
+> services access revocation has fiduciary implications (open trades,
+> pending orders, advisor relationships) in addition to the
+> compliance considerations in the baseline runbook. Coordinate with
+> the AML compliance officer and (where applicable) the custodian /
+> clearing partner.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## When to invoke
+
+- A team member or contractor leaves.
+- A role change moves a person off a client portfolio or off the AML
+  pipeline.
+- An advisor's registration is suspended, surrendered, or restricted by
+  a securities regulator — access must be revoked or scoped
+  immediately.
+- A credential is suspected of compromise (see
+  [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md)).
+- A FINTRAC examination or securities-regulator review identifies a
+  control failure tied to a specific actor.
+
+## Tier classification
+
+| Tier | Examples | SLA target |
+|---|---|---|
+| **Critical (assets at risk)** | Advisor accounts with trade authority; ops accounts with payment-initiation authority; production secrets. | ≤ 1 hour from trigger. |
+| **Elevated (financial data)** | KYC system access, transaction monitoring tools, AML case management. | ≤ 4 hours from trigger. |
+| **Standard** | Internal tooling without financial-data access. | ≤ 24 hours from trigger. |
+| **Reference-only** | Public-facing docs. | ≤ 72 hours from trigger. |
+
+For suspected compromise involving client funds, all tiers compress
+to "immediate" + transactions are halted in the relevant scope per
+the breach-response runbook.
+
+## Steps
+
+### 1. Identify scope (≤ 30 minutes from trigger)
+
+- Identify the person + reason for revocation.
+- Enumerate the systems and roles to be revoked.
+- Enumerate the **active client relationships** the person held —
+  these clients need to be reassigned to a registered representative
+  with appropriate scope.
+- Enumerate **in-flight orders / trades / withdrawals** the person
+  initiated or approved that are not yet settled — these may need
+  re-approval, cancellation, or completion by another authorized
+  person.
+- Identify any vendor or integration credentials issued under the
+  person's name (KYC vendor, sanctions feed, market-data feed).
+
+### 2. Revoke credentials (per tier SLA)
+
+Order: highest tier first.
+
+- Identity provider / SSO.
+- Trade-execution systems (often a separate identity domain).
+- Custodian portals.
+- AML / KYC systems.
+- Direct vendor accounts.
+- API tokens.
+
+### 3. Invalidate active sessions
+
+- Standard session-revocation steps.
+- Special attention to mobile trading apps and remote-desktop
+  sessions that may persist independently of web-session
+  invalidation.
+
+### 4. Audit-log the action
+
+Per
+[`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md),
+log the standard fields plus:
+
+- Client relationships terminated.
+- In-flight orders / transactions reassigned, cancelled, or
+  completed.
+- Confirmation of AML-pipeline-role transfer (where applicable).
+
+### 5. AML pipeline check
+
+If the revoked role was in the AML pipeline (compliance officer
+backup, sanctions reviewer, STR drafter):
+
+- [ ] Pending STR queue assigned to a different reviewer.
+- [ ] Sanctions-alert queue reassigned.
+- [ ] AML-policy approval authorities updated.
+- [ ] If revocation is due to suspected misconduct in the AML
+      pipeline, escalate to legal counsel — possible parallel STR
+      drafting may be required.
+
+### 6. Client reassignment
+
+- Reassign client relationships to a registered representative
+  with appropriate scope.
+- Notify the client of the reassignment per the firm's
+  client-communication policy + applicable regulator expectations.
+- Update beneficiary / authorized-trader records if the revoked
+  person was named.
+- Coordinate with the custodian on any custodian-side authority
+  changes.
+
+### 7. Regulator notification (where applicable)
+
+- If the revocation is driven by a securities-regulator order, no
+  separate notification needed — the regulator already knows.
+- If the revocation is driven by internal misconduct that may be
+  reportable: confer with counsel. Some categories of registrant
+  conduct are reportable to the provincial securities commission
+  (UMIR / NI 31-103 internal-control reporting, where applicable).
+
+### 8. Notify internal stakeholders
+
+- Affected clients (per Step 6).
+- Operations / trading team.
+- Internal audit.
+- Insurance / professional-liability carrier (notification trigger
+  varies by policy).
+
+## Failure modes
+
+- Trade-execution session persists past SSO revocation → ensure the
+  trading platform supports forced-logout independent of the IdP.
+- Custodian access remains after revocation → maintain the custodian-
+  authorities matrix and audit it monthly.
+- AML-pipeline transfer leaves a gap (no one assigned to a queue) →
+  document the AML-pipeline assignment matrix as part of the
+  compliance program; audit on revocation.
+- Advisor leaves with open recommendations not yet acted on by the
+  client → the recommendations are "stale" — the receiving advisor
+  refreshes suitability before acting.
+
+## Verification (within 24 hours of completion)
+
+- [ ] Re-attempt login at SSO + trading platform + custodian portal.
+      Expectation: fail.
+- [ ] In-flight orders + pending transactions confirmed reassigned or
+      resolved.
+- [ ] Client reassignment notifications sent.
+- [ ] Audit log shows the revocation actions and the AML/client
+      reassignment outcomes.
+
+## Related
+
+- [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md) —
+  containment when compromise is suspected.
+- [`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md) —
+  evidence trail.
+- [`../docs/compliance/fintrac-readiness.md`](../docs/compliance/fintrac-readiness.md) —
+  AML pipeline.
+- [`../docs/compliance/provincial-securities-overview.md`](../docs/compliance/provincial-securities-overview.md) —
+  registrant context.
+- baseline:
+  [`../../baseline-pipeda/runbooks/access-revocation.md`](../../baseline-pipeda/runbooks/access-revocation.md).
