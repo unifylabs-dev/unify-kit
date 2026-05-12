@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Deprecated
 ### Removed
 ### Fixed
+
+- Fix `github-actions/claude-code-review.yml` missing `id-token: write` permission. The `anthropics/claude-code-action@v1` action requires OIDC for GitHub-side auth even when `ANTHROPIC_API_KEY` is provided as a secret; without this permission the action fails on `setupGitHubToken` with "Could not fetch an OIDC token". Discovered by Phase 2's live `/claude-review` test against the `unify-kit-example-nextjs` sandbox.
+- Fix `github-actions/claude-code-review.yml` `claude_args`: dropped the explicit `--allowed-tools` whitelist (`Read,Glob,Grep,Bash(gh pr diff:*),Bash(gh pr view:*)`) which excluded the MCP comment-posting tools that `anthropics/claude-code-action@v1` ships by default. With the whitelist in place Claude reviewed the diff but couldn't publish findings — the action's logs reported `No buffered inline comments`. New `claude_args` lets the action's defaults apply (defaults already restrict to read + MCP-comment tools per the action's own least-privilege design). Also raised `--max-turns` from 12 to 20 to give Claude headroom on larger diffs. Discovered by Phase 2's live `/claude-review` test.
+
 ### Security
 
 <!--

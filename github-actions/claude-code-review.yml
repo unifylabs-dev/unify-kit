@@ -28,6 +28,7 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  id-token: write   # required by anthropics/claude-code-action for OIDC auth
 
 env:
   CLAUDE_MD_PATH: ${{ vars.CLAUDE_MD_PATH || './CLAUDE.md' }}
@@ -64,7 +65,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: ${{ steps.load-prompt.outputs.PROMPT }}
-          claude_args: '--model ${{ env.CLAUDE_REVIEW_MODEL }} --allowed-tools Read,Glob,Grep,Bash(gh pr diff:*),Bash(gh pr view:*) --max-turns 12'
+          claude_args: '--model ${{ env.CLAUDE_REVIEW_MODEL }} --max-turns 20'
         env:
           CLAUDE_MD_PATH: ${{ env.CLAUDE_MD_PATH }}
           CLAUDE_REVIEW_PATHS_IGNORE: ${{ env.CLAUDE_REVIEW_PATHS_IGNORE }}
