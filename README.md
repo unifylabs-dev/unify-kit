@@ -38,7 +38,7 @@ syntax. Everything else is a default that you can change.
   snippets, spec templates (`module` / `journey` / `specs-README`), a PR
   template + 2 issue templates, 3 CI workflow templates, a methodology-retro
   template, and the
-  [`cheatsheet.md.template`](templates/cheatsheet.md.template) (the source of
+  [`cheatsheet.md.template`](templates/core/cheatsheet.md.template) (the source of
   truth for command vocabulary, daily skills, and reviewer-agent mapping).
 - [`hooks/`](hooks/) — 6 security hooks (lifted CC0) + a settings-snippet to
   register them + a README with manual-test recipes.
@@ -72,7 +72,7 @@ syntax. Everything else is a default that you can change.
 1. **Clone or fork** this repo locally.
 2. **Read the core docs** in this order: [`docs/philosophy.md`](docs/philosophy.md)
    → [`docs/methodology.md`](docs/methodology.md) →
-   [`templates/cheatsheet.md.template`](templates/cheatsheet.md.template).
+   [`templates/core/cheatsheet.md.template`](templates/core/cheatsheet.md.template).
 3. **Install the security hooks** by running
    [`scripts/bootstrap-claude-config.sh`](scripts/bootstrap-claude-config.sh)
    from this repo's root. The script is idempotent, takes `--dry-run` and

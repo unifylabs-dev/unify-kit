@@ -158,21 +158,21 @@ sketches the canonical shape; adapt to your codebase's helpers.
 - **HMAC session cookies**. Sign session cookies with an HMAC of the session
   payload + a server-side secret. Verify the signature on every read; treat a
   missing or invalid signature as anonymous, not as authenticated. (See
-  [middleware-nextjs.md](snippets/middleware-nextjs.md) for the dual-session
+  [middleware.md](../snippets/nextjs/middleware.md) for the dual-session
   middleware pattern that integrates with this.)
 - **Audit logging via `logAudit()`**. Every mutation worth replaying in an
   incident gets a `logAudit({ event, actor, target, metadata })` call. The
   helper is fire-and-forget and non-blocking; errors don't propagate. (See
-  [audit-logging-nextjs.md](snippets/audit-logging-nextjs.md).)
+  [audit-logging.md](../snippets/nextjs/audit-logging.md).)
 - **Public-endpoint rate limiting + `timingSafeDelay`**. Public endpoints
   (especially auth) wrap their handler in `checkRateLimit(...)` and pad slow
   paths with `timingSafeDelay(targetMs)` so timing alone doesn't leak whether
-  a username exists. (See [rate-limiting-nextjs.md](snippets/rate-limiting-nextjs.md).)
+  a username exists. (See [rate-limiting.md](../snippets/nextjs/rate-limiting.md).)
 - **Server Action auth-guard pattern**. Every Server Action begins with
   `requireAuth()` (or equivalent). The 6-step anatomy — auth → validate →
   audit-start → business → audit-success → return — is a discipline that makes
   the *absence* of any step show up in code review. (See
-  [server-action-anatomy-nextjs.md](snippets/server-action-anatomy-nextjs.md).)
+  [server-action-anatomy.md](../snippets/nextjs/server-action-anatomy.md).)
 
 If you're on a different stack, write the equivalent four-pattern block for
 your stack and link it here. The OWASP spine above is universal; the patterns
