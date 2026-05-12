@@ -1,0 +1,167 @@
+<!--
+templates/compliance/profiles/baseline-pipeda/docs/compliance/privacy-policy.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Privacy Policy (draft)
+
+> **This is a starting-point template, not legal advice.** A public-facing
+> privacy policy is a regulatory artifact and must be reviewed by qualified
+> Canadian privacy counsel before it is posted. Below is a structural
+> scaffold aligned to PIPEDA's 10 fair-information principles; the prose is
+> not adequate to ship as written.
+
+**Effective date**: `[fill in]` · **Version**: `[fill in]` ·
+**Last reviewed by counsel**: `[fill in: YYYY-MM-DD]`
+
+## 1. Who we are and what this policy covers
+
+`[fill in: legal entity name, operating address, jurisdiction of
+incorporation]` (we, us, our) operates {{PROJECT_NAME}}. This policy
+describes how we collect, use, disclose, and safeguard personal
+information in connection with the services we provide.
+
+This policy applies to the services available at `[fill in: URL]` and to
+data we receive directly from individuals using those services. It does
+not cover third-party services we link to; those have their own policies.
+
+## 2. What we collect and why
+
+We collect only what we need for identified purposes (PIPEDA Principle 4 —
+Limiting Collection). Categories include:
+
+- **Account information** — `[fill in: name, email, password hash,
+  authentication identifiers]`. Used for authentication, account
+  management, and security notifications.
+- **Service-use information** — `[fill in: features used, content
+  created, settings configured]`. Used to deliver the service and to
+  diagnose issues.
+- **Technical information** — IP address, user-agent, device-type,
+  request timestamps, error fingerprints. Used for security,
+  abuse-prevention, and quality monitoring.
+- **Communications** — emails or messages you send us. Used to respond
+  and to maintain a service-history record.
+- **Optional information** — `[fill in: any optional fields and why
+  someone might provide them]`. Marked as optional in the relevant flow.
+
+We do not sell personal information.
+
+## 3. Legal basis for processing
+
+We collect, use, and disclose personal information on the basis of consent
+(PIPEDA Principle 3) and limited statutory exceptions (PIPEDA s. 7), such
+as collection necessary for the performance of a contract you've entered
+with us, or use that is reasonably required for the purposes you provided
+your information.
+
+Specific consent flows:
+
+- Account creation — implied consent for processing necessary to deliver
+  the service.
+- Marketing email — separate opt-in (CASL — Canada's Anti-Spam Legislation
+  — requires express consent for commercial electronic messages).
+- Optional features that collect additional personal information — feature-
+  level consent at the point of activation.
+
+You can withdraw consent at any time by `[fill in: how — account
+settings, email, in-app control]`. Withdrawing consent may limit the
+service we can provide.
+
+## 4. How we share information (subprocessors)
+
+We use service providers to operate {{PROJECT_NAME}}. Each provider is
+bound by data-processing terms requiring them to use your information only
+to deliver service to us, and to protect it with appropriate safeguards.
+
+See [`subprocessors.md`](subprocessors.md) for the current list of
+subprocessors, the categories of data each one processes, and the regions
+those services operate in.
+
+We do not otherwise sell, rent, or trade personal information. We may
+disclose information when required by law, when responding to lawful
+requests from authorities, or to protect our rights and the safety of
+others — limited to what's necessary for the purpose.
+
+## 5. International transfers
+
+Some of our subprocessors process information outside of Canada (see
+[`subprocessors.md`](subprocessors.md) for regions). Where information
+leaves Canada, contractual safeguards remain in place; however, you should
+be aware that information processed in another country is subject to that
+country's laws, including potential government access requests under
+foreign legal regimes.
+
+## 6. How long we keep information
+
+We retain personal information only as long as necessary for the purposes
+described above, or as required by law. Specific retention rules:
+
+- **Account records** — `[fill in: e.g., for the life of the account
+  plus N days after deletion request]`.
+- **Audit logs** — `[fill in: e.g., 24 months for breach-record-keeping
+  purposes; longer where contractually required]`.
+- **Marketing-email subscription** — until you unsubscribe; we retain the
+  unsubscribe record as required by CASL.
+
+When information is no longer needed, we delete it or de-identify it.
+
+## 7. Your rights
+
+Under PIPEDA you have the right to:
+
+- **Access** the personal information we hold about you — request via
+  `[fill in: privacy contact]`. We will respond within 30 days (PIPEDA
+  s. 8(3)).
+- **Correct** information that is inaccurate or incomplete.
+- **Withdraw consent** (subject to legal or contractual constraints).
+- **Make a complaint** if you believe we have not complied with this
+  policy or with PIPEDA — first to us, then to the OPC at
+  <https://www.priv.gc.ca/en/report-a-concern/file-a-formal-privacy-complaint/file-a-complaint-against-a-business/>.
+
+Some provinces (e.g., Quebec under Law 25) provide additional rights such
+as data portability and the right not to be subject to certain automated
+decisions. Where you reside in a province with additional rights, those
+apply.
+
+## 8. Safeguards
+
+We use administrative, technical, and physical safeguards proportional to
+the sensitivity of the information. See `[fill in: link to public-facing
+safeguards summary or omit if confidential]`. Internally, the project
+maintains an OWASP-aligned security checklist and audit-log requirements
+(see [`audit-log-requirements.md`](audit-log-requirements.md)).
+
+No safeguard can guarantee perfect security; we maintain a breach response
+runbook ([`breach-response.md`](breach-response.md)) to act quickly when
+something goes wrong.
+
+## 9. Children
+
+`[fill in: project's stance — e.g., the service is not directed to
+individuals under 13 and we do not knowingly collect their personal
+information. Provincial regimes may impose stricter age thresholds.]`
+
+## 10. Changes to this policy
+
+We may update this policy. When we do, the "Effective date" at the top
+changes and we will notify active users `[fill in: how — email,
+in-app banner]` of material changes. Continued use after the effective
+date constitutes acknowledgement of the updated policy (where consent
+to the change isn't separately required).
+
+## 11. Contact
+
+- **Privacy contact**: `[fill in: privacy@yourdomain]`
+- **Mailing address**: `[fill in]`
+- **Accountable officer (PIPEDA Principle 1)**: `[fill in: name +
+  title]`
+
+## Related
+
+- [`pipeda-readiness.md`](pipeda-readiness.md) — internal-facing
+  principle-by-principle compliance map.
+- [`subprocessors.md`](subprocessors.md) — current subprocessor list.
+- [`breach-response.md`](breach-response.md) — what happens if our
+  safeguards fail.

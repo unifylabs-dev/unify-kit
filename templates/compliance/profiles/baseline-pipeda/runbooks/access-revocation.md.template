@@ -1,0 +1,132 @@
+<!--
+templates/compliance/profiles/baseline-pipeda/runbooks/access-revocation.md.template
+Sourcing mode: pattern-only (per specs/00-vision-and-license.md §"Sourcing modes")
+Authored: 2026-05-12
+License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"License")
+-->
+
+# {{PROJECT_NAME}} — Access Revocation Runbook
+
+> **This is a starting-point template, not legal advice.** Adapt the
+> systems, tier thresholds, and notification flow to your organization
+> before relying on this for an actual termination or role-change event.
+
+**Profile**: `{{COMPLIANCE_PROFILE}}` · **Owner**: `[fill in: role]` ·
+**Last updated**: `[fill in: YYYY-MM-DD]`
+
+## When to invoke
+
+- A team member or contractor leaves the organization (planned or
+  immediate).
+- A team member's role changes such that they should no longer have
+  access to a system they previously did.
+- A vendor or third-party integration is terminated.
+- A credential is suspected of compromise (also see
+  [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md)
+  Phase 3 — Contain).
+
+## Tier classification
+
+Access tiers determine SLA targets:
+
+| Tier | Examples | SLA target |
+|---|---|---|
+| **Critical** | Production secrets, root cloud accounts, database admin. | ≤ 1 hour from trigger. |
+| **Elevated** | Production application accounts, customer-data access, deployment pipelines. | ≤ 4 hours from trigger. |
+| **Standard** | Development environments, internal-tool accounts, document repositories. | ≤ 24 hours from trigger. |
+| **Reference-only** | Read-only docs, archived systems. | ≤ 72 hours from trigger. |
+
+For a suspected compromise, all tiers compress to "immediate."
+
+## Steps
+
+### 1. Identify scope (≤ 30 minutes from trigger)
+
+- Identify the person + reason for revocation.
+- Enumerate the systems and roles to be revoked (use the access
+  matrix at `[fill in: where your access matrix lives]`).
+- Identify any in-flight work that needs reassignment.
+- Identify any vendor credentials issued to or under control of the
+  person.
+
+### 2. Revoke credentials (per tier SLA)
+
+Order: highest tier first.
+
+- **Identity provider**: disable the account at the SSO / IdP layer
+  first — this cascades to most other systems.
+- **Direct vendor accounts** without SSO: revoke individually.
+- **API tokens / service accounts** owned by the person: rotate or
+  revoke. If shared with the team, rotate and redistribute.
+- **Local credentials**: where applicable, recover devices and
+  remove cached credentials.
+
+### 3. Invalidate active sessions
+
+- Force-logout active sessions in each system that supports it.
+- Revoke OAuth grants the person had authorized.
+- Revoke long-lived browser cookies / "remember me" tokens.
+
+### 4. Audit-log the action
+
+For each revocation, write an audit event capturing:
+
+- Actor performing the revocation.
+- Subject (person whose access is being revoked).
+- Trigger reason.
+- Tier + system + role.
+- Timestamp.
+- Confirmation that the action was successful (or the failure to
+  follow up on).
+
+This is the evidence trail required for PIPEDA Principle 1
+(Accountability) and Principle 7 (Safeguards) — see
+[`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md).
+
+### 5. Reassign and follow up
+
+- Reassign any in-flight work to a current team member.
+- Update CODEOWNERS / on-call schedules / paging rotations.
+- Update the access matrix (entries owned by the person are removed
+  or transferred).
+- Update subprocessor entries if the person was the named contact for
+  any vendor relationship.
+
+### 6. Notify (where applicable)
+
+- For role-changes: notify the affected person and their manager that
+  the change is complete.
+- For terminations: notify the team per your internal communications
+  policy.
+- For suspected compromise: do **not** notify the affected person until
+  legal counsel confirms — that's an active investigation in the
+  containment phase of breach response.
+
+## Failure modes
+
+- A system has no SSO and was missed in step 2 → maintain the access
+  matrix as a comprehensive list; audit it quarterly.
+- A vendor credential was on a personal device → recover the device
+  before separation; otherwise rotate the credential.
+- An OAuth grant cannot be revoked centrally → document this in the
+  access matrix as a "manual revocation required" entry so it gets
+  caught.
+
+## Verification (within 24 hours of completion)
+
+- [ ] Re-attempt login as the revoked identity at the SSO layer.
+      Expectation: fail.
+- [ ] Spot-check 3 critical-tier systems for any active session.
+      Expectation: none.
+- [ ] Spot-check any API token the person was known to own.
+      Expectation: rejected.
+- [ ] Audit log shows the revocation actions.
+
+## Related
+
+- [`../docs/compliance/breach-response.md`](../docs/compliance/breach-response.md)
+  Phase 3 — credential compromise containment.
+- [`../docs/compliance/audit-log-requirements.md`](../docs/compliance/audit-log-requirements.md) —
+  the audit-events written by this runbook.
+- [`vendor-escape-template.md`](vendor-escape-template.md) — analogous
+  runbook for a vendor relationship rather than a person.
