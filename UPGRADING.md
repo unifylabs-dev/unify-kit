@@ -19,7 +19,7 @@ The kit's artifacts fall into three classes per
 | Class | Examples | Update mechanism |
 | --- | --- | --- |
 | **Drop-in** | `hooks/*.sh`, `scripts/*.sh`, `github-actions/*.yml`, `~/.claude/settings.json` entries | Re-run [`scripts/bootstrap-claude-config.sh`](scripts/bootstrap-claude-config.sh) after `git pull`. Manifest + SHA-256 detects tampered files; `--force` restores kit content. |
-| **Fork-and-customize** | `templates/*.md.template`, `templates/snippets/*`, `templates/issue-templates/*`, `templates/specs/*` | Re-run [`scripts/init-project.sh`](scripts/init-project.sh) with `--dry-run`; classify each diverged file; merge by hand OR `--force` (with auto-backup) OR `--skip <basename>`. |
+| **Fork-and-customize** | `templates/core/*.md.template`, `templates/snippets/<stack>/*`, `templates/core/issue-templates/*`, `templates/core/specs/*` | Re-run [`scripts/init-project.sh`](scripts/init-project.sh) with `--dry-run`; classify each diverged file; merge by hand OR `--force` (with auto-backup) OR `--skip <basename>`. |
 | **Reference** | [`docs/philosophy.md`](docs/philosophy.md), [`docs/methodology.md`](docs/methodology.md), [`docs/decisions/`](docs/decisions/), the 14 specs under [`specs/`](specs/) | Cite by URL (auto-fetches latest) OR snapshot into `<consumer>/CLAUDE.md` (frozen at snapshot time). Kit updates don't auto-propagate. |
 
 If you're not sure which class an artifact falls into, check the relevant
@@ -160,7 +160,7 @@ filters out untouched files.
 
 ### Hand-customized templates
 
-If you've heavily edited a kit template (say, `templates/claude.md.template`
+If you've heavily edited a kit template (say, `templates/core/claude.md.template`
 became your `<project>/CLAUDE.md` and you've added 200 lines of project-specific
 sections), the upgrade flow is:
 
@@ -168,7 +168,7 @@ sections), the upgrade flow is:
 2. Diff the kit's old template against the new one yourself:
 
    ```bash
-   git -C /path/to/unify-kit diff v0.2.0..v1.0.0 -- templates/claude.md.template
+   git -C /path/to/unify-kit diff v0.2.0..v1.0.0 -- templates/core/claude.md.template
    ```
 
 3. Decide which of the kit's changes to port into your version. Merge by hand.

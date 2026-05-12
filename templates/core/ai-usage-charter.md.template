@@ -38,7 +38,7 @@ Direct merges of un-reviewed AI output are not permitted. Relax via ADR only.
 
 ## 3. MCP allowlist
 
-See `templates/mcp-policy.md.template`. The filled-in copy lives at the
+See `templates/core/mcp-policy.md.template`. The filled-in copy lives at the
 project's chosen path (typically alongside this charter). Adding an MCP requires
 a PR and the 5-step vetting workflow described there.
 
@@ -46,7 +46,7 @@ a PR and the 5-step vetting workflow described there.
 
 AI-assisted commits should be noted in the PR description. The review gate is
 the same as for human-authored code — there is no fast-track. Reviewers may
-invoke any of the agents in `templates/cheatsheet.md.template` Appendix A.
+invoke any of the agents in `templates/core/cheatsheet.md.template` Appendix A.
 
 ## 5. Prompt hygiene
 

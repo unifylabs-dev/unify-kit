@@ -22,7 +22,7 @@ four-tier pyramid + workflow templates), community files (`CODE_OF_CONDUCT.md`,
 `SECURITY.md`, PR + issue templates), and a short onboarding curriculum.
 
 A consumer-side installer ([`scripts/init-project.sh`](scripts/README.md#init-projectsh))
-substitutes the 18 `{{...}}` placeholders, writes a SHA-256 manifest for safe
+substitutes the 20 `{{...}}` placeholders, writes a SHA-256 manifest for safe
 re-runs, and handles existing-file conflicts via `--dry-run`, `--skip`, and
 `--force`.
 
@@ -34,19 +34,19 @@ syntax. Everything else is a default that you can change.
 
 ## What's in the box
 
-- [`templates/`](templates/) — 14 templates plus 5 Next.js / cross-stack
-  snippets, spec templates (`module` / `journey` / `specs-README`), a PR
-  template + 2 issue templates, 3 CI workflow templates, a methodology-retro
-  template, and the
-  [`cheatsheet.md.template`](templates/core/cheatsheet.md.template) (the source of
-  truth for command vocabulary, daily skills, and reviewer-agent mapping).
+- [`templates/`](templates/) — organized into the v2 tier structure (`core/`,
+  `claude-runtime/`, `optional/`, `compliance/`, `snippets/{nextjs,testing,ci}/`).
+  See [`templates/README.md`](templates/README.md) for the full inventory; the
+  [`cheatsheet.md.template`](templates/core/cheatsheet.md.template) under `core/`
+  is the source of truth for command vocabulary, daily skills, and reviewer-agent
+  mapping.
 - [`hooks/`](hooks/) — 6 security hooks (lifted CC0) + a settings-snippet to
   register them + a README with manual-test recipes.
 - [`scripts/`](scripts/) — three consumer-facing Bash scripts:
   [`bootstrap-claude-config.sh`](scripts/bootstrap-claude-config.sh) (idempotent
   `~/.claude/` installer with mandatory backups + manifest),
   [`init-project.sh`](scripts/init-project.sh) (consumer-side template installer
-  with 18-placeholder substitution + `--dry-run` + `--skip` + `--force` +
+  with 20-placeholder substitution + `--dry-run` + `--skip` + `--force` +
   `--snippets=<stack>` + `--with-ci-templates`, writes
   `<project>/.unify-kit-project-manifest.json` for safe re-runs), and
   [`audit-scan.sh`](scripts/audit-scan.sh) (config health check).

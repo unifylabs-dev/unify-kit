@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-v2 reshape — Phase 2 (template tier reorg). Phase 1 (plugin scaffolding) landed in PR #32. Phase 2 reorganizes `templates/` from a flat layout into the v2 tier structure (`core/`, `claude-runtime/`, `optional/`, `compliance/`, `snippets/{nextjs,ci,testing}/`), adds 5 new core/runtime templates, refines 3 existing ones, and adds 5 new Next.js snippets. `scripts/init-project.sh` is NOT modified in this phase; phase 4 refactors it to apply the new tree. Until then, `bootstrap-fixture` CI is expected to fail on this PR — phase 4 replaces it with `plugin-install-fixture.yml`.
+v2 reshape — Phase 2 (template tier reorg). Phase 1 (plugin scaffolding) landed in PR #32. Phase 2 reorganizes `templates/` from a flat layout into the v2 tier structure (`core/`, `claude-runtime/`, `optional/`, `compliance/`, `snippets/{nextjs,ci,testing}/`), adds 5 new core/runtime templates, refines 3 existing ones, and adds 5 new Next.js snippets. `scripts/init-project.sh` is NOT modified in this phase; phase 4 refactors it to apply the new tree. Until then, the `init-project-fixture` job inside `bootstrap-fixture.yml` is expected to fail on this PR (the sibling `bootstrap-fixture` job still passes) — phase 4 replaces the workflow with `plugin-install-fixture.yml`.
 
 ### Added
 
@@ -35,13 +35,17 @@ v2 reshape — Phase 2 (template tier reorg). Phase 1 (plugin scaffolding) lande
   - HTML-comment headers updated in every moved file to reflect the new path.
 - `templates/core/claude.md.template` — comment paragraph updated to point at `templates/snippets/<stack>/` (new path).
 - `templates/core/cheatsheet.md.template` — Appendix A reviewer roster rewritten to be vendor-neutral (roles + how to invoke, no hard-coded `compound-engineering:` plugin entries); removed the "Plan mode + phasing trigger" mini-section (redundant with the `/phase` row in Daily slash-commands).
-- `templates/core/pull-request-template.md.template` — removed the `## Design Decisions` H2 section (low-adoption; decisions belong inline in Summary or in spec changes); slim from 73 to 65 lines.
+- `templates/core/pull-request-template.md.template` — removed the `## Design Decisions` H2 section (low-adoption; decisions belong inline in Summary or in spec changes); slim from 73 to 70 lines.
 - `templates/README.md` — restructured to document the v2 tier layout; added Tier-flags section describing the `--include`, `--compliance`, `--snippets` contract; added rows for new `{{REPO_OWNER}}` and `{{COMPLIANCE_PROFILE}}` placeholders; rewrote the manual-install worked example to use new paths.
 - `.github/workflows/scrub-check.yml` — SUPPORTED placeholder list extended from 18 to 20 entries (`{{REPO_OWNER}}`, `{{COMPLIANCE_PROFILE}}`).
 
 ### Deprecated
 ### Removed
 ### Fixed
+
+- Stale cross-template path references inside renamed templates that the rename batch missed (e.g., `templates/core/ai-usage-charter.md.template` and `templates/core/security-checklist.md` pointing at `templates/mcp-policy.md.template` rather than the new `templates/core/` path; `templates/core/specs/journey.md.template` pointing at `templates/snippets/bdd-lite-test-naming.md` rather than `templates/snippets/testing/`).
+- Doc-on-ship gaps in root docs (`README.md` placeholder count, `BACKLOG.md` snippet path, `UPGRADING.md` example paths, `CLAUDE.md` snippet/cheatsheet/specs references) that the tier reorg invalidated.
+
 ### Security
 
 <!--

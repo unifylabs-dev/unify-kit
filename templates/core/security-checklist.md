@@ -118,7 +118,7 @@ unrestricted network, an MCP server that wasn't vetted.
 
 - [ ] CI runs only signed images / pinned action versions; `@main` is forbidden
       in workflow YAML.
-- [ ] MCP servers go through the policy in `templates/mcp-policy.md.template`
+- [ ] MCP servers go through the policy in `templates/core/mcp-policy.md.template`
       before they touch a contributor's `~/.claude`.
 - [ ] Auto-update behavior is opt-in for tools that touch the codebase.
 

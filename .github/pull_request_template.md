@@ -1,5 +1,5 @@
 <!--
-templates/pull-request-template.md.template
+templates/core/pull-request-template.md.template
 Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
 Stack-agnostic PR template; structurally inspired by a real consumer
 project's pull_request_template.md, no expression lifted. Test/build

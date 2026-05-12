@@ -42,8 +42,8 @@ e2e test counterpart.
 
 ## Adding a spec
 
-1. Copy [`templates/specs/module.md.template`](../../templates/specs/module.md.template)
-   or [`templates/specs/journey.md.template`](../../templates/specs/journey.md.template)
+1. Copy [`templates/core/specs/module.md.template`](../../templates/core/specs/module.md.template)
+   or [`templates/core/specs/journey.md.template`](../../templates/core/specs/journey.md.template)
    into `modules/` or `journeys/`. (Adjust the path to wherever the kit's
    templates live in your project.)
 2. Follow the duplicate-this-file checklist in the template's HTML comment header.

@@ -1,4 +1,4 @@
-# templates/issue-templates/feature-request.yml.template
+# templates/core/issue-templates/feature-request.yml.template
 # Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
 # Stack-agnostic GitHub issue-template (form-schema YAML); structurally
 # inspired by a real consumer project's feature_request.yml, no

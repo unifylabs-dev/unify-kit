@@ -1,5 +1,5 @@
 <!--
-templates/claude.md.template
+templates/core/claude.md.template
 Sourcing mode: customization (per specs/00-vision-and-license.md §"Sourcing modes")
 Distilled minimal stack-agnostic core. Structurally inspired by but not lifted
 from the Ultimate Guide CLAUDE.md example. Project-specific identifiers belong
@@ -14,8 +14,8 @@ License: CC0 1.0 (templates ship CC0 per specs/00-vision-and-license.md §"Licen
 
 This file is project memory for Claude Code. Keep it accurate; stale entries
 teach errors. Update in the same commit as the code change that invalidates a
-section. Stack-specific patterns live in `templates/snippets/` and are appended
-here à la carte by consumers on Next.js (or skipped on other stacks).
+section. Stack-specific patterns live in `templates/snippets/<stack>/` and are
+appended here à la carte by consumers on Next.js (or skipped on other stacks).
 
 ## 1. Project Overview
 
@@ -68,8 +68,8 @@ gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec
 Ships in the `superpowers` + `compound-engineering` plugins. Phase 0 reads
 `<consumer>/docs/specs/` before any code work; see `docs/methodology.md` §B
 (Specification-Driven Development) and §D (Issue-driven dev) for the contract.
-See `templates/cheatsheet.md.template` for the daily command list — this file
-does not restate it.
+See `templates/core/cheatsheet.md.template` for the daily command list — this
+file does not restate it.
 
 ### Specification Discipline
 
@@ -86,7 +86,7 @@ begins. Hard rules (full discipline in `docs/methodology.md` §B):
 - Bug-fix-only PRs (drift fix, no behavior change) tick the "no spec changes
   needed" box in the PR template.
 
-See `templates/specs/{module,journey,README}.md.template` for the spec
+See `templates/core/specs/{module,journey,README}.md.template` for the spec
 scaffolding.
 
 ## 5. TDD Enforcement
@@ -152,5 +152,5 @@ README) for the universal Living Documents principle.
 
 ---
 
-Stack-specific patterns are NOT in this template. They live in `templates/snippets/`.
+Stack-specific patterns are NOT in this template. They live in `templates/snippets/<stack>/`.
 A consumer using Next.js patterns appends snippet content into their filled-in `CLAUDE.md`.

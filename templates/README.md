@@ -52,8 +52,12 @@ templates/
 | `--compliance=<profile>` | Applies the named profile from `compliance/profiles/`. Each profile's docs land under `<consumer>/docs/compliance/` and `<consumer>/runbooks/`. The profile's claude-md addendum is appended to `<consumer>/CLAUDE.md`. |
 | `--snippets=<stack>` | Adds the named stack's snippets reference into `<consumer>/CLAUDE.md` (the snippet content itself stays under `templates/snippets/<stack>/` for reference). |
 
-The wiring of these flags is implemented by `scripts/init-project.sh`. The
-template tree above defines the contract the script applies.
+`--snippets=<stack>` ships today (v1 behavior, unchanged). `--include` and
+`--compliance` are the v2 contract that `scripts/init-project.sh`'s phase-4
+refactor will wire up; the template tree above defines what those flags will
+apply. Until phase 4 lands, the kit ships the tree but the script still
+operates on v1's flat-layout assumptions (`init-project-fixture` CI is red by
+design for the duration of this transition).
 
 ## Templates by tier
 

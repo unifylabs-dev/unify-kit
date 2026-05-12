@@ -30,10 +30,10 @@ Skim each in order; depth comes later.
 
 - `<consumer>/CLAUDE.md` — the project memory file. Read start-to-finish.
 - `docs/architecture.md` (or equivalent) — the system shape.
-- `templates/cheatsheet.md.template` — daily commands, daily skills, reviewer
-  mapping (Appendix A). The pocket reference.
-- `templates/ai-usage-charter.md.template` — what AI is and isn't permitted to do
-  in this codebase.
+- `templates/core/cheatsheet.md.template` — daily commands, daily skills,
+  reviewer mapping (Appendix A). The pocket reference.
+- `templates/core/ai-usage-charter.md.template` — what AI is and isn't permitted
+  to do in this codebase.
 
 ## 3. Day 1 / Week 1 / Day 30
 

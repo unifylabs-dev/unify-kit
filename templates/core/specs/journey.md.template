@@ -17,8 +17,8 @@ When you duplicate this file:
      journey crosses, e.g., `[orders, inventory, invoices]`).
   7. Set `verifying_e2e_test:` to the e2e file that covers this journey.
      The test file's top-level describe is `Journey: <journey-slug>`. See
-     `templates/snippets/bdd-lite-test-naming.md` for the BDD-Lite naming
-     convention.
+     `templates/snippets/testing/bdd-lite-test-naming.md` for the BDD-Lite
+     naming convention.
   8. Add a row to `<consumer>/docs/specs/README.md` under "Journey specs".
   9. Aim for 100–300 total lines.
 
@@ -76,7 +76,7 @@ code_anchors:
 
   At least one step in a Tier-1 journey carries the @daily tag in its e2e
   counterpart (so it runs in the daily CI workflow). See
-  `templates/snippets/bdd-lite-test-naming.md` for the convention.
+  `templates/snippets/testing/bdd-lite-test-naming.md` for the convention.
 -->
 
 1. **Given** <preconditions>, **When** <user action>, **Then** <expected outcome>.

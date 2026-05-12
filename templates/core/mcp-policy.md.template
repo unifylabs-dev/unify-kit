@@ -55,7 +55,7 @@ Every addition runs this five-step pattern. None of the steps are optional.
 2. Run the five-step vetting workflow above. Document each step's outcome in
    the issue.
 3. Request sign-off from a reviewer with security context (see
-   `templates/cheatsheet.md.template` Appendix A — `ce-security-reviewer`).
+   `templates/core/cheatsheet.md.template` Appendix A — Security reviewer row).
 4. Update the allowlist table in this file with the new row.
 5. Merge.
 
