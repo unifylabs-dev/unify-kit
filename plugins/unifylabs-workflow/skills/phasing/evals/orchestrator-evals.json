@@ -1,0 +1,173 @@
+{
+  "skill_name": "phasing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm planning a new authentication system for our app. Here's my plan:\n\n1. Set up Supabase project with a new schema\n2. Add a `users` table with RLS policies\n3. Add a `sessions` table for tracking active logins\n4. Create signup/login API endpoints in Next.js\n5. Add middleware for token validation on protected routes\n6. Build a sign-in form on the frontend with email/password\n7. Build a signup form\n8. Add a session-management dashboard for users to see active sessions\n9. Wire up email verification flow with Postmark\n10. Add password reset flow\n11. Write integration tests for the API endpoints\n12. Write E2E tests for the sign-in / signup flow\n\nWhat do you think? Should I just go execute this, or break it up?\n\nReply with your evaluation. If you'd recommend phasing, describe the menu of options the founder should see (use the AskUserQuestion shape from the skill). If not, explain why a single execution is fine.",
+      "expected_output": "The response identifies this as a candidate for phasing (touches multiple subsystems: DB, API, frontend, email, tests; has natural break points; 12 work items would benefit from re-grounding). It surfaces a 'Phase it?' option in the approval menu in the format described in §4.1 of SKILL.md. It does NOT silently start executing; it pauses for founder input.",
+      "expectations": [
+        "The response identifies that phasing is warranted by listing at least 2 of the 4 criteria from §4.1 (multiple subsystems, natural break points, context pressure, downstream grounding benefit).",
+        "The response mentions 'Phase it?' as an option in the approval menu (or equivalent phrasing).",
+        "The response does NOT propose immediately executing all 12 items in a single pass.",
+        "The response uses the AskUserQuestion menu structure (numbered options with descriptions) from §5.4 of SKILL.md, rather than free-text questions."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The user just ran `/phase build a small REST API for managing a todo list with auth` in a fresh project directory. There is no prior plan in conversation. The directory contains a CLAUDE.md file and a README.md file. There is no GitHub remote configured.\n\nWalk through what the orchestrator should do FIRST (before any artifact writing). List each step in order. Be specific about which docs to read, which questions to ask the founder, and how to handle the missing GitHub remote.\n\nDo NOT hardcode any project-specific paths in your response — the framework is cross-project.",
+      "expected_output": "The response describes the §5.1 doc-discovery flow generically (read CLAUDE.md, MEMORY.md, README.md, ask founder if other docs to include) and the §5.5 mode-pick flow (detect missing remote, ask via AskUserQuestion whether to create a GitHub repo or use file mode). No hardcoded project paths.",
+      "expectations": [
+        "The response identifies CLAUDE.md and MEMORY.md as the always-read files in §5.1.",
+        "The response includes asking the founder about additional project docs (per §5.1's 'Ask if non-trivial and nothing surfaced').",
+        "The response detects the missing GitHub remote and proposes asking the founder whether to create a repo or use file mode (§5.5).",
+        "The response does NOT hardcode any project-specific path (e.g., 'unify-rolfing-app', 'docs/superpowers/specs/2026-04-26-...'). It describes the discovery flow in general terms.",
+        "The response uses an AskUserQuestion-shaped prompt for the mode pick rather than free text."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "You are the orchestrator session for a phased run that was just approved by the founder. The run-id is `2026-05-12-todo-api` and the master plan has 4 phases: P1 'API skeleton', P2 'Auth middleware', P3 'CRUD endpoints', P4 'E2E tests'. Phase 1 just completed and the handoff was written to `.claude/phasing/2026-05-12-todo-api/phase-1-handoff.md`. The handoff contains:\n\n- Session: `phase-1-api-skeleton`\n- 'What I did' section listing 3 deliverables\n- 'Decisions made' section with one decision (Fastify over Express)\n- 'Open questions for you' section saying 'none'\n- 'Verification (results)' section showing pnpm test PASS (24 tests), package.json updated PASS, acceptance criteria PASS\n\nWhat should the orchestrator do next, BEFORE spawning phase 2? Be specific about the verification work, the rendered status block shape, and the approval gate.",
+      "expected_output": "The orchestrator runs §9.2 post-phase verification (re-runs key command steps, confirms files exist, cross-phase consistency). Renders the **post-phase status block** as a Unicode-box-drawing card per SKILL.md 'Status block', **wrapped in a triple-backtick code fence**. Header line shows `Phase 1 / 4` with a colored emoji COMPLETE badge (family ✅ / ✓). Phase-name line carries the ⚡ emoji prefix family. Progress bar uses ▰/▱ glyphs at 25% (1/4). Section markers `📦 Did` / `🔧 Decisions` / `❔ Open` / `▶ Up next` lift handoff content verbatim. The `▶ Up next` list uses status-circle glyphs per phase (family 🟢/🟡/⚪/🔴). Card precedes the approval AskUserQuestion (Approve / Adjust / Abort). Spawns phase 2 only on approval.",
+      "expectations": [
+        "The response describes the orchestrator running its OWN post-phase verification (§9.2), not just trusting the handoff.",
+        "The response includes re-running at least one key command step (e.g., `pnpm test`) to double-check.",
+        "The response wraps the card in a triple-backtick code fence (```...```). The fence is part of the emission, not the markdown source. NOT a plain markdown summary, NOT a prose paragraph.",
+        "The response uses Unicode box-drawing characters (`╭ ╮ ╰ ╯ ─ │`) for the card frame.",
+        "The response's card header includes `Phase 1 / 4` (phase number / total) plus a colored-emoji COMPLETE badge — any 'success' emoji glyph family (✅, ✓, 🟢, or equivalent). Exact code point is not required (family-match).",
+        "The response's card's session-name line begins with an emoji prefix indicating a phase session — `⚡` or any 'active work / lightning / action' emoji family. Exact code point is not required (family-match).",
+        "The response's card includes a progress bar using `▰` (filled) and `▱` (empty) glyphs, showing 25% (1/4 phases done).",
+        "The response's card includes section markers `📦 Did`, `🔧 Decisions`, `❔ Open`, `▶ Up next` (or near-equivalent emoji families with the same labels).",
+        "The response describes lifting `What I did`, `Decisions made`, `Open questions for you` from the handoff verbatim into the card sections (no re-summarization).",
+        "The response's `▶ Up next` entries prefix each phase with a status-circle glyph: completed phases get a 'green' family glyph (🟢, ✓), in-progress get a 'yellow/orange' family glyph (🟡, ⏳), pending get a 'white/empty' family glyph (⚪, ○), failed get a 'red' family glyph (🔴, ✗). Exact code points not required.",
+        "The response describes deriving each upcoming phase's 1-line goal from its spec's `## Goal` section (not from `run.json`, since briefs are not persisted there).",
+        "The response includes the shortcuts row at the bottom: `/phase-next  ·  /phase-status  ·  /phase-abort` (or near-equivalent separators).",
+        "The response gates on founder approval AFTER the card via AskUserQuestion (Approve / Adjust / Abort).",
+        "The response does NOT auto-spawn phase 2 without approval, even though phase 1 verification all PASSED.",
+        "The response keeps `run.json#phases[0].session_name` as plain text (`phase-1-<slug>`, no emoji) per the data/display rule. The emoji prefix appears in display only."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "You are the orchestrator session. The user just approved the master plan via the §5.4 approval menu. The master plan defines a 5-phase run with run-id `2026-05-12-tokens-storybook`: P1 'Token extraction', P2 'CSS variable generation', P3 'Storybook scaffold', P4 'Component stories', P5 'Visual regression CI'. Each phase spec has a populated `## Goal` section. The mode is `file` (no GitHub remote).\n\nDescribe what the orchestrator should emit to the chat AFTER writing the master plan artifacts but BEFORE spawning phase 1. Be specific about the rendered block shape and the approval gate.",
+      "expected_output": "The orchestrator renders the Run-start variant of the status block as a Unicode-box-drawing card per SKILL.md, **wrapped in a triple-backtick code fence**. Header: `Run start · 5 phases` plus a colored-emoji READY badge (family 🚀 / ▶). The orchestrator name line carries the `🎯` emoji prefix family. Progress bar is fully empty (▱▱▱▱▱▱  0%). Section `▶ Phase queue` lists all 5 phases each prefixed with the ⚪ pending-status circle family, with 1-line goals derived from each spec's `## Goal`. NO `📦 Did` / `🔧 Decisions` / `❔ Open` sections (nothing done yet). Card precedes the spawn-approval AskUserQuestion.",
+      "expectations": [
+        "The response wraps the card in a triple-backtick code fence (```...```).",
+        "The response uses Unicode box-drawing characters (`╭ ╮ ╰ ╯ ─ │`).",
+        "The card header contains `Run start · 5 phases` and a colored-emoji READY badge — any 'launch / ready / play' family glyph (🚀, ▶, ▷). Family-match.",
+        "The card identifies the orchestrator session with a name beginning with an 'orchestrator / target / strategic' emoji prefix family (🎯, 🧭, 👑) followed by `orchestrator-tokens-storybook`. Family-match.",
+        "The progress bar at run-start is fully empty: `▱▱▱▱▱▱  0%`.",
+        "The card section is labelled `▶ Phase queue` (not `▶ Up next`) since nothing has run yet.",
+        "The card lists all 5 phases under `▶ Phase queue`, each prefixed with a 'pending' status-circle family glyph (⚪, ○, empty-circle) with their 1-line goals derived from each phase spec's `## Goal` section.",
+        "The card does NOT contain `📦 Did`, `🔧 Decisions`, or `❔ Open` sections at run-start.",
+        "The card ends with a line like `Approve to spawn P1, or adjust the master plan.`",
+        "The response does NOT auto-spawn P1 without the spawn-approval AskUserQuestion firing AFTER the card.",
+        "`run.json#session_name` stays plain text (`orchestrator-tokens-storybook`, no emoji) per the data/display rule."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The user just ran `/phase-resume 2026-05-12-todo-api` after their orchestrator terminal crashed. The run's `run.json` shows:\n- `overall_status: in_progress`\n- 4 phases total\n- P1 (`API skeleton`) status `complete`, handoff present at `.claude/phasing/2026-05-12-todo-api/phase-1-handoff.md` with full content\n- P2 (`Auth middleware`) status `in_progress`, `started_at: 2026-05-12T09:00:00Z` (current time is 2026-05-12T09:14:00Z — so ~14m elapsed), no handoff file present\n- P3, P4 status `pending` with populated spec files\n- Top-level `session_name: \"orchestrator-todo-api\"` is set; P2's `session_name` field is missing in this synthetic run.json\n\nWhat should /phase-resume emit to the chat first, before any other action? Be specific about the variant rendered, the session name derivation, and the next-action wording.",
+      "expected_output": "The orchestrator renders the Resume variant of the status block as a Unicode-box-drawing card per SKILL.md, **wrapped in a triple-backtick code fence**. Header: `Resumed at Phase 2 / 4` plus a colored-emoji IN PROGRESS badge (family ⏳ / ⌛). The orchestrator name line begins with the `🎯` emoji prefix family. Progress bar shows 25% (1/4) using ▰/▱ glyphs, plus `P2 running ~14m · 3 left`. Sections `📦 Did (P1)` and `🔧 Decisions (P1)` lift P1's handoff verbatim. `▶ Phase status` shows all phases with status-circle glyphs (🟢 P1, 🟡 P2 with `⏳ ~14m elapsed`, ⚪ P3, ⚪ P4). Derives P2's missing session_name as `phase-2-auth-middleware`. Final line tells the user to wait or `/phase-retry 2` if dead.",
+      "expectations": [
+        "The response wraps the card in a triple-backtick code fence (```...```).",
+        "The response renders the Resume card with Unicode box-drawing characters (`╭ ╮ ╰ ╯ ─ │`).",
+        "The card header contains `Resumed at Phase 2 / 4` and a colored-emoji IN PROGRESS badge — any 'in-progress / hourglass / waiting' family glyph (⏳, ⌛, 🟡). Family-match.",
+        "The card identifies the orchestrator as `🎯 orchestrator-todo-api` (orchestrator emoji prefix family + plain slug). The plain slug `orchestrator-todo-api` is correct (no emoji in the data).",
+        "The card's progress bar shows 25% (1/4 complete, with P2 currently running) using `▰` filled and `▱` empty glyphs, and notes `P2 running ~14m` (or equivalent elapsed-time text).",
+        "The card derives P2's missing `session_name` as `phase-2-auth-middleware` per the Session naming derivation rule (does NOT crash, does NOT skip). The derived slug is plain text; the `⚡` display prefix is added at render time.",
+        "The card includes `📦 Did (P1)` and `🔧 Decisions (P1)` sections lifted verbatim from P1's handoff.",
+        "The card includes a `▶ Phase status` section listing all 4 phases each prefixed with a status-circle family glyph: P1 'green/complete' (🟢, ✓), P2 'yellow/in-progress' (🟡) with an elapsed-time marker (⏳ ~14m), P3 and P4 'white/pending' (⚪, ○). Family-match.",
+        "The card's final line tells the user to wait or `/phase-retry 2` if dead (not 'Approve to spawn P3'), because P2 is currently in_progress.",
+        "The response does NOT spawn any phase or mutate run.json before rendering the card."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "You are the orchestrator. Phase 3 of run `2026-05-12-tokens-storybook` was spawned at time T0. The background polling loop is waiting for `.claude/phasing/2026-05-12-tokens-storybook/phase-3-handoff.md` to appear. Phase 3's session_name is `phase-3-storybook-scaffold`. No handoff yet.\n\nDescribe what the orchestrator should emit:\n(a) At T0 + 6 minutes (one poll tick after the first 5-minute mark).\n(b) At T0 + 22 minutes (after 4 beats with no handoff).\n\nBe specific about format and content.",
+      "expected_output": "(a) At T0 + 6min: emit a single one-line beat per SKILL.md 'Status block' → Mid-phase beat variant, e.g., `⏱ P3 phase-3-storybook-scaffold · ~6m elapsed · still running`. NOT the full block. (b) At T0 + 22min: escalate to a one-paragraph long-running warning with an AskUserQuestion offering 'Keep waiting' / 'Open the phase terminal to check on it' / 'Assume dead and /phase-retry' / 'Abort run'.",
+      "expectations": [
+        "For (a): the response describes a single one-line beat in the exact shape `⏱ P<N> <session-name> · ~<M>m elapsed · still running` or near-equivalent (NOT the full markdown block).",
+        "For (a): the beat references phase 3, its session name `phase-3-storybook-scaffold`, and ~6m elapsed.",
+        "For (b): the response describes an escalation after 4 beats (~20m) — a one-paragraph long-running warning, not just another beat.",
+        "For (b): the escalation includes an `AskUserQuestion` with options that include 'Keep waiting', 'Open the phase terminal' (or equivalent), 'Retry via /phase-retry', and 'Abort run'.",
+        "The response does NOT auto-kill the phase, auto-retry, or auto-abort. The escalation prompts the user; no silent action."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "The user is in a terminal that is NOT the orchestrator session. They run `/phase-next` with no arguments. Local state: exactly one in-flight phasing run exists at `~/Projects/myapp/.claude/phasing/2026-05-12-myrun/run.json` with `overall_status: in_progress`. In that run, P1 is `complete` with handoff `.claude/phasing/2026-05-12-myrun/phase-1-handoff.md` present and populated. P2 is `pending` with a spec file at `.claude/phasing/2026-05-12-myrun/phase-2-spec.md` containing a `## Goal` section. There are no other in-flight runs anywhere on the machine.\n\nDescribe what /phase-next should do step by step. Be specific about run-id resolution, the status block rendered, the spawn invocation, the run.json mutation, and whether any AskUserQuestion fires.",
+      "expected_output": "Auto-detects the run-id (only one in-flight). Verifies P1's handoff is present. Renders the post-phase status block for P1 **inside a triple-backtick code fence**, with the ⚡ emoji prefix on the phase-name line, a colored-emoji COMPLETE badge, and status circles in the Up next list. Lifts What I did / Decisions / Open from the handoff verbatim. Spawns P2 via launch-terminal.sh with the plain slug derived from P2's name (no emoji in the slug). Updates run.json to set P2 status: in_progress, started_at: now. NO AskUserQuestion approval menu fires — the command itself is the approval. One-line confirmation in chat.",
+      "expectations": [
+        "The response auto-detects `2026-05-12-myrun` as the run-id (single in-flight match), per SKILL.md 'Run-id auto-detection'.",
+        "The response verifies P1's handoff file exists at the expected path before mutating anything.",
+        "The response renders the **post-phase status block** for P1 wrapped in a triple-backtick code fence. Card includes the ⚡ emoji prefix family on the phase-name line, a colored-emoji COMPLETE badge family (✅/✓/🟢), and the `▶ Up next` list uses status-circle family glyphs per phase.",
+        "The response lifts `What I did`, `Decisions made`, `Open questions for you` from the handoff verbatim.",
+        "The response spawns P2 either via `scripts/launch-terminal.sh <run-id> 2 <project-dir> <phase-2-name-slug>` OR by emitting a fenced manual-spawn command per §7.1. If manual: the command is fenced bash with ALL placeholders substituted (absolute path, run-id, phase number, plain slug — no `<...>` literals remain in the emitted command).",
+        "If manual spawn: the response fires an `AskUserQuestion` confirming the user has pasted-and-started the phase BEFORE marking run.json `in_progress`. No phantom in_progress state.",
+        "The response updates run.json#phases[1] (the P2 entry) to `status: in_progress` with `started_at` populated, atomic write — but ONLY after spawn confirmation (manual flow) or immediately (auto-spawn flow). `session_name` stays plain text.",
+        "The response does NOT do any phase-2 work itself in the orchestrator session (no editing files within P2's scope, no running P2's commands). Polls + emits post-phase card when handoff lands; that's it.",
+        "The response confirms that NO post-phase approval `AskUserQuestion` menu fires — the `/phase-next` command itself is the approval signal. (The spawn-confirmation `AskUserQuestion` in the manual-spawn flow is separate and required.)",
+        "The response emits a one-line confirmation, not the full block again."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The user runs `/phase-next` in three different scenarios. For each, describe what should happen.\n\n(a) All phases of the only in-flight run are `status: complete`. `overall_status` is still `in_progress` (run hasn't been archived).\n(b) The most recent phase has `status: in_progress` and there is NO handoff file present yet.\n(c) Two in-flight runs exist on the machine, and the user provided no run-id argument.\n\nFor each: what does /phase-next emit, and does it mutate run.json or spawn anything?",
+      "expected_output": "(a) Error: 'Run complete (<K>/<K> phases done). Use /phase-archive <run-id>.' No mutation, no spawn. (b) Error: 'Phase <N> still running. Wait for the handoff to land, or /phase-retry <run-id> <N> if you believe it's dead.' No mutation, no spawn. (c) Render the /phase-list table of in-flight runs and AskUserQuestion 'Which run?'. No mutation, no spawn.",
+      "expectations": [
+        "For (a): the response describes an error pointing the user to `/phase-archive`. State is NOT mutated and no phase is spawned.",
+        "For (b): the response describes an error pointing the user to `/phase-retry` (mentioning the dead-phase recovery path). State is NOT mutated.",
+        "For (c): the response renders a `/phase-list`-style table of the in-flight runs and uses `AskUserQuestion` to ask which run; it does NOT silently pick one.",
+        "In ALL three cases, the response explicitly states no `run.json` mutation and no spawn occurs before the error/disambiguation resolves."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The user runs `/phase-abort 2026-05-12-myrun \"requirements changed mid-flight\"`. The run has 5 phases, P1 and P2 are `complete`, P3 is `in_progress`, P4 and P5 are `pending`. Mode is `github`, tracking issue is #42, phase issues are #43-#47.\n\nWhat should /phase-abort do step by step? Be specific about the confirmation gate, the state mutations, the GitHub side effects, and the rendered final block.",
+      "expected_output": "Fires AskUserQuestion: 'Abort run 2026-05-12-myrun? 2 phases done, 3 remaining. This is irreversible.' Options: Abort (Recommended) / Adjust master plan / Keep going. On Abort confirmation: updates run.json with overall_status=aborted, aborted_at=now, abort_reason='requirements changed mid-flight'. GitHub mode: posts abort comment on issue #42, adds phasing:aborted label, closes it. For each of #45/#46/#47: posts short comment, adds phasing:aborted, closes. Renders the Aborted-variant card **inside a triple-backtick code fence**, with the 🎯 orchestrator emoji prefix, a colored-emoji ABORTED badge family (🛑/✗), and status circles in the phase-status list.",
+      "expectations": [
+        "The response fires an `AskUserQuestion` confirmation gate BEFORE any mutation, with options including 'Abort (Recommended)' / 'Adjust master plan' / 'Keep going' or equivalent.",
+        "On Abort confirmation, the response updates run.json: `overall_status: aborted`, `aborted_at` populated, `abort_reason: 'requirements changed mid-flight'`. Atomic write.",
+        "The response leaves individual phase statuses unchanged (preserves the audit trail of what got done).",
+        "The response posts an abort comment on the GitHub tracking issue #42, adds the `phasing:aborted` label, and closes it.",
+        "The response closes each non-complete phase issue (#45, #46, #47) with a brief comment and the `phasing:aborted` label. Phase issues #43 and #44 (already complete) are left alone.",
+        "The response renders the **Aborted variant card** wrapped in a triple-backtick code fence (```...```), with Unicode box-drawing characters.",
+        "The card header shows `Run aborted at Phase 3 / 5` plus a colored-emoji ABORTED badge family (🛑, ✗, ⛔ — any 'stop/red/no-entry' glyph). Family-match.",
+        "The card's orchestrator name line begins with the orchestrator emoji prefix family (🎯, 🧭, 👑).",
+        "The progress bar shows 40% (`▰▰▱▱▱▱  40%` or equivalent) and notes `2 done, 3 not started`.",
+        "The Aborted card includes a `📦 Did (2 phases)` section listing aggregated deliverables from P1 and P2's handoffs.",
+        "The Aborted card includes an `❔ Reason` section showing `requirements changed mid-flight`.",
+        "The Aborted card includes a `▶ Phase status` section listing all 5 phases with status-circle family glyphs: P1/P2 'green/complete' (🟢), P3/P4/P5 'white/pending or aborted' (⚪). Family-match.",
+        "The Aborted card ends with a `Next:` line mentioning `/phase-archive <run-id>` and the option to delete the run dir.",
+        "If the user picks 'Keep going' instead, the response describes cancelling the command with no state changes."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "You are the orchestrator session. The master plan has 4 phases. You just rendered the run-start status block and the user approved spawning Phase 1 via AskUserQuestion (picked 'manual spawn'). Phase 1 is 'Plugin scaffolding': create a marketplace.json file + a unifylabs-workflow plugin directory with hooks/skills/commands subdirs. Mode is GitHub; tracking issue is #31; phase issues #27-#30.\n\nThe user has now confirmed they pasted the spawn command and the phase session is starting. The phase session is loading context and entering plan mode in its own terminal.\n\nWhat MUST you do next in the orchestrator session, and what MUST you NOT do? Be specific about the boundary.",
+      "expected_output": "Orchestrator's only allowed activities while phase 1 is dispatched are (a) starting the background poll for issue #27 closure + handoff comment, (b) emitting mid-phase beats every ~5 min, (c) reading the handoff and rendering the post-phase card when it lands. Orchestrator MUST NOT execute any part of phase 1's scope — does NOT create marketplace.json, does NOT scaffold the plugin directory, does NOT touch any files within phase 1's deliverables. If asked or tempted to 'help out', the orchestrator declines and waits for the phase session's handoff.",
+      "expectations": [
+        "The response identifies the orchestrator's allowed activities while a phase is dispatched: polling, mid-phase beats, post-phase card on handoff. Nothing else.",
+        "The response explicitly states the orchestrator MUST NOT execute phase 1's scope itself — no creating marketplace.json, no scaffolding plugin dirs, no editing hook/skill/command files that are part of P1's deliverables.",
+        "The response references the 'NON-NEGOTIABLE: orchestrator NEVER executes phase work' rule from SKILL.md §5.6 (or equivalent phrasing).",
+        "The response distinguishes orchestrator-side post-phase verification (§9.2 — re-running key command steps, confirming file existence) from doing the phase work itself. Verification is allowed; redoing the phase is banned.",
+        "The response describes waiting for the handoff (via background poll + beats), not preemptively rendering the post-phase card or marking the phase complete.",
+        "The response does NOT suggest the orchestrator should 'pre-build' or 'sketch' the phase 1 deliverables to save time.",
+        "If the response notes the orchestrator might be tempted to do phase work, it identifies that temptation as a bug to resist, not a workflow to follow."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "The user runs `/phase-retry 2026-05-12-myrun 3`. The run's phase 3 has `status: failed`, an existing handoff at `.claude/phasing/2026-05-12-myrun/phase-3-handoff.md` showing 'Status: failed', and `retry_count` is absent from the run.json entry.\n\nWhat should /phase-retry do step by step?",
+      "expected_output": "Reads phase 3 status (failed) → no confirmation needed. Renames existing handoff to `phase-3-handoff.retry-<iso-timestamp>.bak.md` (never deletes). Updates run.json#phases[2]: status=pending, completed_at cleared, handoff_url cleared, retry_count: 1 (treating missing as 0 → 1). Spawns phase 3 via launch-terminal.sh with the slug. One-line confirmation: '↻ Retrying P3 phase-3-<slug> (retry #1).'",
+      "expectations": [
+        "The response reads phase 3's status (`failed`) and proceeds WITHOUT firing a confirmation `AskUserQuestion` (per SKILL.md '/phase-retry' — failed status needs no confirmation).",
+        "The response renames the existing handoff file to `phase-3-handoff.retry-<iso-timestamp>.bak.md` using a single atomic `mv` BEFORE mutating run.json. The old handoff is NEVER deleted.",
+        "The response updates run.json#phases[2] (the P3 entry, 0-indexed in JSON or 1-indexed by `n` field — accept either framing): `status: pending`, `completed_at` cleared, `handoff_url` cleared, `retry_count: 1` (treating missing field as 0, then incrementing). Atomic write.",
+        "The response spawns phase 3 via `scripts/launch-terminal.sh <run-id> 3 <project-dir> <phase-3-name-slug>` — same code path as a fresh spawn.",
+        "The response emits a one-line confirmation that includes the retry count (e.g., `↻ Retrying P3 phase-3-<slug> (retry #1)`).",
+        "If the user invokes `/phase-retry` on a `pending` phase, the response describes erroring with a pointer to `/phase-next` (per the error case in SKILL.md)."
+      ]
+    }
+  ]
+}

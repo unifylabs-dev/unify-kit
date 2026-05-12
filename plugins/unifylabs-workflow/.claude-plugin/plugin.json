@@ -1,0 +1,9 @@
+{
+  "name": "unifylabs-workflow",
+  "version": "2.0.0-pre.1",
+  "description": "Unifylabs team Claude Code workflow: skills (work-issue, ship, phasing, review-prototype, analyze-comms, promote-to-marketplace, compliance-research [stub]), 9 phase commands, 7 security/workflow hooks, opt-in statusline.",
+  "author": {
+    "name": "Tomer Kurman",
+    "url": "https://github.com/unifylabs-dev"
+  }
+}
