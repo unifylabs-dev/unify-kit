@@ -65,11 +65,11 @@ readonly KIT_ROOT
 readonly PLUGIN_ROOT="${KIT_ROOT}/plugins/unifylabs-workflow"
 readonly CLAUDE_HOME="${HOME}/.claude"
 
-# 11 skills: name → relative path under PLUGIN_ROOT (dir-typed).
+# 10 skills: name → relative path under PLUGIN_ROOT (dir-typed).
+# (extract-prototype-review is the rename of review-prototype, not net-new.)
 SKILLS=(
   "work-issue"
   "ship"
-  "review-prototype"
   "extract-prototype-review"
   "integrate-branch"
   "analyze-comms"
@@ -132,7 +132,7 @@ Default (no flags): perform the migration, creating a backup directory
 named ~/.claude/.v2-migration-backup-<UTC-timestamp>/.
 
 Scope:
-  Skills    (9): ${SKILLS[*]}
+  Skills   (10): ${SKILLS[*]}
   Commands (10): ${COMMANDS[*]}
   Hooks         : every ~/.claude/hooks/*.sh (backed up; user-level entries
                   removed from ~/.claude/settings.json hooks block — plugin

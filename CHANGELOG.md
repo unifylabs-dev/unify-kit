@@ -21,14 +21,18 @@ Patch release fixing a v2.0.0 plugin-load regression and vendoring 2 skills that
 
 ### Added
 
-- **`plugins/unifylabs-workflow/skills/extract-prototype-review/`** vendored. Skill emerged after phase-1's vendoring snapshot. Extracts acceptance criteria + visual specs from sanctioned `prototype/*` branches with Draft PR + screenshots, creates GitHub issue for `/work-issue` to implement. Pairs with `integrate-branch` (formerly `review-prototype` covered both cases; split for clarity in skill descriptions).
-- **`plugins/unifylabs-workflow/skills/integrate-branch/`** vendored. Skill emerged after phase-1's vendoring snapshot. Audits an external/untrusted branch (built outside the standard workflow — by a junior dev with GSD, a contractor, a quick spike) against project standards and routes to one of three paths: salvage (fix in place via `/work-issue`), rebuild (extract specs + rebuild), or discard. Distinct from `extract-prototype-review` which assumes the branch was intentionally informal.
-- **`scripts/dev-symlink-skills.sh` SKILLS array now lists 11 skills** (was 9). Adds `extract-prototype-review` + `integrate-branch`. Dev-machine migration handles both.
+- **`plugins/unifylabs-workflow/skills/integrate-branch/`** vendored. Net-new skill that emerged after phase-1's vendoring snapshot. Audits an external/untrusted branch (built outside the standard workflow — by a junior dev with GSD, a contractor, a quick spike) against project standards and routes to one of three paths: salvage (fix in place via `/work-issue`), rebuild (extract specs + rebuild), or discard. Pairs with `/extract-prototype-review` (the renamed prototype-spec-extractor).
 
 ### Changed
 
-- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`**: `version` `2.0.0` → `2.0.1`; `description` enumerates 11 skills (was 9), inserting `extract-prototype-review` and `integrate-branch` alongside the existing 9.
-- **`.claude-plugin/marketplace.json`**: description string mirrors plugin.json (11 skills).
+- **`plugins/unifylabs-workflow/skills/review-prototype/` renamed → `extract-prototype-review/`.** Same skill, clearer name: it *extracts specs from* a sanctioned prototype branch (now distinct from the new `/integrate-branch` skill, which is the true *review-and-integrate* tool). Frontmatter `description` cross-references both for discoverability. `/review-prototype` command no longer registered; consumers update slash invocations.
+- **`scripts/dev-symlink-skills.sh` SKILLS array lists 10 skills** (was 9). Replaces `review-prototype` with `extract-prototype-review`, adds `integrate-branch`. Dev-machine migration handles all 10.
+- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`**: `version` `2.0.0` → `2.0.1`; `description` enumerates 10 skills, swapping `review-prototype` → `extract-prototype-review` and adding `integrate-branch`.
+- **`.claude-plugin/marketplace.json`**: description mirrors plugin.json (10 skills).
+
+### Removed
+
+- **`plugins/unifylabs-workflow/skills/review-prototype/`** dir deleted. Superseded by the renamed `extract-prototype-review/`. If you have `~/.claude/skills/review-prototype` left over from a pre-2.0.1 dev-symlink run, `bash scripts/dev-symlink-skills.sh --rollback` first or remove the dangling symlink manually before re-running.
 
 ### Security (rolled in from post-v2.0.0 work that hadn't yet shipped)
 
