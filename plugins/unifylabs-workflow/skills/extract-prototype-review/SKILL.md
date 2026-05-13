@@ -1,6 +1,16 @@
 ---
-name: review-prototype
-description: Review a prototype branch, extract acceptance criteria, and create a GitHub issue for implementation. Use when the user says "/review-prototype <branch>" where branch is a prototype branch name.
+name: extract-prototype-review
+description: >
+  Extract acceptance criteria and visual specs from a *sanctioned* prototype
+  branch (under `prototype/*`, with a Draft PR + screenshots, where the junior
+  intentionally skipped auth/validation/tests per CLAUDE-PROTOTYPE.md) and
+  create a GitHub issue for `/work-issue` to implement. Use when the user says
+  "/extract-prototype-review <branch>" with a prototype branch name. For
+  non-prototype external branches that need standards-compliance auditing
+  and routing (salvage / rebuild / discard), use `/integrate-branch` instead.
+  (Formerly `/review-prototype` — renamed to clarify scope: this skill
+  *extracts specs from* a prototype; `/integrate-branch` is the true
+  *review-and-integrate* skill.)
 allowed-tools:
   - Bash
   - Read
@@ -9,23 +19,23 @@ allowed-tools:
   - Agent
 ---
 
-# /review-prototype
+# /extract-prototype-review
 
 You are reviewing a prototype branch to extract testable acceptance criteria and create a GitHub issue that `/work-issue` can pick up seamlessly.
 
 ## Input
 
-The user provides a branch name: `/review-prototype <branch>`
+The user provides a branch name: `/extract-prototype-review <branch>`
 
 Accepted formats:
 - `prototype/42-customer-search-modal` (full branch name)
 - `42-customer-search-modal` (without prefix — prepend `prototype/` automatically)
 - `customerdashboardredesign` (non-standard name — use as-is if it exists on remote)
 
-If the input looks like a bare number (e.g., `/review-prototype 42`), stop and tell the user:
+If the input looks like a bare number (e.g., `/extract-prototype-review 42`), stop and tell the user:
 ```
 This skill now takes a branch name, not an issue number.
-Usage: /review-prototype prototype/42-customer-search-modal
+Usage: /extract-prototype-review prototype/42-customer-search-modal
 ```
 
 ## Phase 1: Gather

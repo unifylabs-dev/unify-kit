@@ -49,17 +49,22 @@ jobs:
           jq -e '.plugins[] | select(.name == "unifylabs-workflow")' \
             .claude-plugin/marketplace.json > /dev/null
 
-      - name: plugin.json version is 2.0.0 with 9-skill description
+      - name: plugin.json version matches 2.0.x with required-skill description
         run: |
           set -euxo pipefail
           v=$(jq -r .version plugins/unifylabs-workflow/.claude-plugin/plugin.json)
-          test "$v" = "2.0.0" || { echo "expected version 2.0.0, got $v"; exit 1; }
+          echo "$v" | grep -qE '^2\.0\.[0-9]+$' \
+            || { echo "expected version 2.0.x, got $v"; exit 1; }
           desc=$(jq -r .description plugins/unifylabs-workflow/.claude-plugin/plugin.json)
-          for s in iterative-review humanizer compliance-research promote-to-marketplace phasing; do
+          for s in iterative-review humanizer compliance-research promote-to-marketplace phasing integrate-branch extract-prototype-review; do
             echo "$desc" | grep -q "$s" || { echo "description missing skill: $s"; exit 1; }
           done
           if echo "$desc" | grep -q '\[stub\]'; then
             echo "description still contains [stub] marker"
+            exit 1
+          fi
+          if echo "$desc" | grep -q 'review-prototype[^-]'; then
+            echo "description still references retired 'review-prototype' (renamed to extract-prototype-review in 2.0.1)"
             exit 1
           fi
 
@@ -73,11 +78,11 @@ jobs:
               || { echo "$f missing description: frontmatter"; exit 1; }
           done
 
-      - name: 9 skills + 10 commands present
+      - name: 10 skills + 10 commands present
         run: |
           set -euxo pipefail
           n_skills=$(find plugins/unifylabs-workflow/skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
-          test "$n_skills" = "9" || { echo "expected 9 skills, found $n_skills"; exit 1; }
+          test "$n_skills" = "10" || { echo "expected 10 skills, found $n_skills"; exit 1; }
           n_cmds=$(find plugins/unifylabs-workflow/commands -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')
           test "$n_cmds" = "10" || { echo "expected 10 commands, found $n_cmds"; exit 1; }
 

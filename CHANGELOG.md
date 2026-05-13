@@ -10,7 +10,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
-### Security
+## [2.0.1] - 2026-05-12
+
+Patch release fixing a v2.0.0 plugin-load regression and vendoring 2 skills that emerged after phase-1's scope was locked. Same-day shipped — minimal scope, high-urgency hook fix.
+
+### Fixed
+
+- **🔴 `plugins/unifylabs-workflow/hooks/hooks.json` schema match.** v2.0.0 shipped with hooks.json using the OLD flat schema (`{"SessionStart": [...], "PreToolUse": [...]}`); Claude Code's current plugin loader requires the NEW wrapped schema (`{"hooks": {"SessionStart": [...], "PreToolUse": [...]}}`). Plugin load failed with `Hook load failed: expected record, received undefined at path ["hooks"]` after install. Wrapped all event blocks under a top-level `"hooks"` key per the schema observed in working `superpowers` and `security-guidance` plugins. No semantic change — same 7 hooks, same matchers.
+- **`scripts/dev-symlink-skills.sh` settings.json strip now matches tilde paths.** The jq predicate compared command strings against `$HOME + "/.claude/hooks/"` (expanded), but `~/.claude/settings.json` stores commands as `~/.claude/hooks/foo.sh` (tilde shorthand — Claude Code expands at runtime). Strip never fired on real machines. Predicate now matches BOTH `~/.claude/hooks/` and `$HOME/.claude/hooks/` prefixes, and the resulting empty `.hooks` top-level key is dropped entirely.
+
+### Added
+
+- **`plugins/unifylabs-workflow/skills/integrate-branch/`** vendored. Net-new skill that emerged after phase-1's vendoring snapshot. Audits an external/untrusted branch (built outside the standard workflow — by a junior dev with GSD, a contractor, a quick spike) against project standards and routes to one of three paths: salvage (fix in place via `/work-issue`), rebuild (extract specs + rebuild), or discard. Pairs with `/extract-prototype-review` (the renamed prototype-spec-extractor).
+
+### Changed
+
+- **`plugins/unifylabs-workflow/skills/review-prototype/` renamed → `extract-prototype-review/`.** Same skill, clearer name: it *extracts specs from* a sanctioned prototype branch (now distinct from the new `/integrate-branch` skill, which is the true *review-and-integrate* tool). Frontmatter `description` cross-references both for discoverability. `/review-prototype` command no longer registered; consumers update slash invocations.
+- **`scripts/dev-symlink-skills.sh` SKILLS array lists 10 skills** (was 9). Replaces `review-prototype` with `extract-prototype-review`, adds `integrate-branch`. Dev-machine migration handles all 10.
+- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`**: `version` `2.0.0` → `2.0.1`; `description` enumerates 10 skills, swapping `review-prototype` → `extract-prototype-review` and adding `integrate-branch`.
+- **`.claude-plugin/marketplace.json`**: description mirrors plugin.json (10 skills).
+
+### Removed
+
+- **`plugins/unifylabs-workflow/skills/review-prototype/`** dir deleted. Superseded by the renamed `extract-prototype-review/`. If you have `~/.claude/skills/review-prototype` left over from a pre-2.0.1 dev-symlink run, `bash scripts/dev-symlink-skills.sh --rollback` first or remove the dangling symlink manually before re-running.
+
+### Security (rolled in from post-v2.0.0 work that hadn't yet shipped)
 
 - **Plugin security hooks fail closed instead of open.** `dangerous-actions-blocker.sh` and `file-guard.sh` now exit 2 (block) instead of exit 0 (allow) when (a) `python3` is missing from PATH, or (b) the tool-input JSON payload fails to parse. Previously a stripped-down environment without python3, or any Claude Code payload schema drift, silently disabled both hooks with only a stderr line that the user might miss. Diagnostic now names the hook and points at `CLAUDE_HOOKS_DISABLE=<name>` for explicit opt-out.
 - **`pre-commit-secrets.sh` fail-closed on missing git or git-diff failure.** Previously a `Bash(git commit:*)` matcher firing without `git` on PATH, or a `git diff --cached` that errored (corrupt index, `safe.directory` rejection), would silently allow the commit through. Both now block (exit 2) with the captured git stderr.

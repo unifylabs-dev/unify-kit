@@ -65,11 +65,13 @@ readonly KIT_ROOT
 readonly PLUGIN_ROOT="${KIT_ROOT}/plugins/unifylabs-workflow"
 readonly CLAUDE_HOME="${HOME}/.claude"
 
-# 9 skills: name → relative path under PLUGIN_ROOT (dir-typed).
+# 10 skills: name → relative path under PLUGIN_ROOT (dir-typed).
+# (extract-prototype-review is the rename of review-prototype, not net-new.)
 SKILLS=(
   "work-issue"
   "ship"
-  "review-prototype"
+  "extract-prototype-review"
+  "integrate-branch"
   "analyze-comms"
   "phasing"
   "promote-to-marketplace"
@@ -130,7 +132,7 @@ Default (no flags): perform the migration, creating a backup directory
 named ~/.claude/.v2-migration-backup-<UTC-timestamp>/.
 
 Scope:
-  Skills    (9): ${SKILLS[*]}
+  Skills   (10): ${SKILLS[*]}
   Commands (10): ${COMMANDS[*]}
   Hooks         : every ~/.claude/hooks/*.sh (backed up; user-level entries
                   removed from ~/.claude/settings.json hooks block — plugin
@@ -354,12 +356,15 @@ _migrate_hooks() {
   local home_safe="${HOME//\//\\/}"
 
   if [[ -f "${settings}" ]]; then
+    # Match BOTH `~/.claude/hooks/` (tilde shorthand) and `$HOME/.claude/hooks/`
+    # (expanded). Claude Code expands tildes at runtime; settings.json stores
+    # whichever the author wrote. We must catch either form.
     if [[ "${DRY_RUN}" == "true" ]]; then
       if jq -e --arg home "${HOME}" '
         (.hooks // {}) | to_entries
         | map(.value[]?.hooks[]?.command)
         | flatten | map(select(. != null))
-        | any(. as $c | $c | startswith($home + "/.claude/hooks/"))
+        | any(. as $c | ($c | startswith("~/.claude/hooks/")) or ($c | startswith($home + "/.claude/hooks/")))
       ' "${settings}" >/dev/null 2>&1; then
         _dry "would strip user-level hook command entries from ${settings}"
       fi
@@ -368,7 +373,7 @@ _migrate_hooks() {
       local settings_bak="${BACKUP_DIR}/settings.json"
       cp -p -- "${settings}" "${settings_bak}"
 
-      # Filter out hooks[].hooks[] entries whose command starts with ~/.claude/hooks/.
+      # Filter out hooks[].hooks[] entries whose command starts with ~/.claude/hooks/ or $HOME/.claude/hooks/.
       local tmp jq_err
       tmp="$(mktemp)"
       jq_err="$(mktemp)"
@@ -376,13 +381,18 @@ _migrate_hooks() {
         .hooks //= {}
         | .hooks |= with_entries(
             .value |= map(
-              .hooks |= map(select((.command // "" | startswith($home + "/.claude/hooks/")) | not))
+              .hooks |= map(select(
+                ((.command // "" | startswith("~/.claude/hooks/")) or
+                 (.command // "" | startswith($home + "/.claude/hooks/"))) | not
+              ))
             )
             # Drop event-entries whose inner hooks array is now empty.
             | .value |= map(select((.hooks // []) | length > 0))
           )
         # Drop event keys whose value array became empty.
         | .hooks |= with_entries(select((.value // []) | length > 0))
+        # Drop the top-level .hooks key entirely if it ended up empty.
+        | if (.hooks // {}) == {} then del(.hooks) else . end
       ' "${settings}" > "${tmp}" 2>"${jq_err}"; then
         local err_body
         err_body="$(cat "${jq_err}" 2>/dev/null || echo unknown)"

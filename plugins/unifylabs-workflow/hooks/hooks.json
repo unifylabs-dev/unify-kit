@@ -1,40 +1,42 @@
 {
-  "SessionStart": [
-    {
-      "matcher": "*",
-      "hooks": [
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/claudemd-scanner.sh" },
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-config-integrity.sh" },
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/marketplace-drift-check.sh" }
-      ]
-    }
-  ],
-  "PreToolUse": [
-    {
-      "matcher": "Bash",
-      "hooks": [
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/dangerous-actions-blocker.sh" }
-      ]
-    },
-    {
-      "matcher": "Bash(git commit:*)",
-      "hooks": [
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-secrets.sh" }
-      ]
-    },
-    {
-      "matcher": "Edit|Write",
-      "hooks": [
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/file-guard.sh" }
-      ]
-    }
-  ],
-  "PostToolUse": [
-    {
-      "matcher": "*",
-      "hooks": [
-        { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/output-secrets-scanner.sh" }
-      ]
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/claudemd-scanner.sh" },
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-config-integrity.sh" },
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/marketplace-drift-check.sh" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/dangerous-actions-blocker.sh" }
+        ]
+      },
+      {
+        "matcher": "Bash(git commit:*)",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-secrets.sh" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/file-guard.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/output-secrets-scanner.sh" }
+        ]
+      }
+    ]
+  }
 }
