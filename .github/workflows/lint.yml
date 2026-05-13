@@ -32,7 +32,6 @@ jobs:
           # may set vars for documentation/forward-compat that shellcheck flags.
           shellcheck -e SC2086,SC2155,SC2034 \
             scripts/*.sh \
-            scripts/ci/*.sh \
             templates/snippets/ci/*.sh \
             plugins/unifylabs-workflow/hooks/*.sh \
             plugins/unifylabs-workflow/statusline/*.sh

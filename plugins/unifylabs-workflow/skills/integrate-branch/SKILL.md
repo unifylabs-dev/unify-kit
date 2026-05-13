@@ -353,7 +353,7 @@ The user's choice locks in the route. Proceed to Phase 4.
 
 3. **Compute branch name + worktree path:**
    - Branch name: `feature/<issue#>-salvage-<orig-slug>` where `<orig-slug>` is the original branch name slugified to kebab-case (e.g., `customer-export-tool`).
-   - Worktree path: `.worktrees/feature-<issue#>-salvage-<orig-slug>` (relative to optics-management main repo).
+   - Worktree path: `.worktrees/feature-<issue#>-salvage-<orig-slug>` (relative to the main repo checkout).
 
 4. **Create the integration issue:**
 
@@ -401,8 +401,8 @@ ISSUE_BODY
 5. **Create the worktree from the external branch:**
 
 ```bash
-# Run from optics-management main repo (not inside any worktree)
-cd /Users/tomerkurman/optics-management/optics_boutique  # or wherever main repo is
+# Run from the main repo checkout (not inside any worktree)
+cd "$(git rev-parse --show-toplevel)"  # or `cd <path-to-main-repo>`
 
 NEW_BRANCH="feature/<issue#>-salvage-<orig-slug>"
 WORKTREE_PATH=".worktrees/feature-<issue#>-salvage-<orig-slug>"
