@@ -122,6 +122,18 @@ The 8-phase gated workflow for any issue with acceptance criteria. Phases:
 analysis → branch → planning → implementation (TDD) → verification → review prep
 → review → PR. Every issue must have ACs in checkbox format.
 
+**Front door (`/spec-it`).** Before `/work-issue` can run, an issue must exist
+with crisp ACs, a "Spec sections affected" field, and ideally an embedded draft
+spec. Authoring those manually is variance-prone. `/spec-it` is the recommended
+upstream skill: take a raw feature idea, run brainstorm + grounded research
+(repo + memory + external standards + prior art), shape the spec, decide
+decomposition, check kit-propagation impact, and produce a `/work-issue`-ready
+issue. The handoff is `▶ Next: /work-issue <N>`. `/spec-it` adapts to the
+target repo's spec conventions at runtime — optics-style modules+journeys,
+unify-kit-style numbered specs, ADR-style decision records, or bootstrap from
+templates when none exists. Both code and non-code (process / docs / decision)
+deliverables are first-class.
+
 ### D. Phasing (`/phase`)
 
 For cross-cutting work that touches >8 files, spans >2 subsystems, has >12 task

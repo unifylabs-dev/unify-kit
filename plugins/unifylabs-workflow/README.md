@@ -10,6 +10,7 @@ Lives in the [unify-kit](https://github.com/unifylabs-dev/unify-kit) marketplace
 
 | Skill | What it does |
 |---|---|
+| `spec-it` | Front-door to `/work-issue`: turns a raw feature idea into a `/work-issue`-ready GitHub issue with an embedded draft spec, grounded in repo + memory + external standards research. 11 gated phases. Adapts to the target repo's spec conventions (optics-style, unify-kit-style, ADR-style, or bootstrap). Both code and non-code deliverables. |
 | `work-issue` | Orchestrates GitHub issue-driven dev: 8 gated phases (analysis → branch → planning → strict TDD → verify → tests → review → PR) |
 | `ship` | Commits, pushes, opens PR in one command — for ad-hoc changes |
 | `phasing` | Decomposes a task into a master plan + per-phase specs; orchestrates execution across fresh sessions |

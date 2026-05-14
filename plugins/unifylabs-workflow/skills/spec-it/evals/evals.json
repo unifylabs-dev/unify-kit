@@ -1,0 +1,40 @@
+{
+  "skill_name": "spec-it",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "optics-style-customer-merge",
+      "prompt": "I'm in /Users/tomerkurman/optics-management/optics_boutique and I want to add a feature where staff can merge two duplicate customer records into one. The duplicates happen when someone calls in and we don't recognize them as a returning patient and create a new file. Should preserve all the order history, prescriptions, exams, notes — everything — from both customers under the surviving one. Audit-logged obviously since this is PHIPA territory.",
+      "expected_output": "A GitHub issue body file with: type=feature, ACs covering data-merge behavior + audit trail + PHIPA implications, Spec sections affected listing docs/specs/modules/customers.md (NEW) plus journey impact, embedded Proposed Spec Draft for the customers module, research notes from PHIPA/PIPEDA + memory hits about app-layer access control + Prisma 7 transaction patterns. Plus a handoff line pointing at /work-issue. Should propose ADMIN-only role.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "decomposition-orders-rebuild",
+      "prompt": "I'm in /Users/tomerkurman/optics-management/optics_boutique. We need to rebuild the entire orders module with a new state machine (adding QUOTE_REVIEW and POST_DELIVERY_FOLLOWUP stages), update all the dependent reports (revenue, conversion funnel, lab turnaround), and sync the changes back to the lab vendor's API so they see the new states too. This is going to be big.",
+      "expected_output": "Phase 4's decomposition heuristic should fire (L scope + >2 modules + cross-system language). Skill should propose a 3-issue split: (1) state machine + audit + tests, (2) dependent report updates, (3) lab vendor API sync. Optional tracking parent issue. Each child issue has its own ACs + spec impact + embedded draft spec.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "propagation-feature-flags",
+      "prompt": "I'm in /Users/tomerkurman/optics-management/optics_boutique and I want to add a feature-flag pattern so we can gate experimental features behind env vars. Looking at something like FEATURE_FLAGS=client_portal_v2,lens_match_quiz_v3 in .env, then a getFeatureFlag('x') helper.",
+      "expected_output": "Phase 5's kit-propagation heuristic should fire (new env-var category, generalizable pattern, worth absorbing into unify-kit). Skill should draft a kit-impact analysis and offer to file a parallel unifylabs-dev/unify-kit issue. Primary optics-management issue still gets filed normally. Both issues should be cross-referenced in their bodies.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "eval_name": "unify-kit-self-secret-scan-hook",
+      "prompt": "I'm in /Users/tomerkurman/Projects/unify-kit and I want to add a pre-commit secret-scan hook to the kit's hook bundle. Should use gitleaks (or trufflehog if simpler) and block commits that introduce new secrets. Needs to be one of the always-on security hooks.",
+      "expected_output": "Phase 0 detects is_kit_repo=true. Phase 9 uses the unify-kit spec-branch + PR lifecycle (NOT issue-body embedding). Creates spec/secret-scan-hook branch, writes specs/NN-pre-commit-secret-scan.md (next available NN — likely 10), commits, opens PR against main. PR body includes ACs + design notes + research notes covering gitleaks/trufflehog comparison.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "eval_name": "non-code-methodology-iterative-review-doc-prs",
+      "prompt": "Change our methodology to require iterative-review on every doc-only PR. Right now we skip review on doc PRs because they 'can't break anything', but we keep getting embarrassing typos and broken cross-references that should have been caught. Want to codify this as a methodology rule across all our projects.",
+      "expected_output": "Skill detects this as a process/docs change (no code). Type=process. ACs are doc-shaped: methodology.md updated, CHANGELOG entry, PR template checklist updated. Spec sections affected references methodology.md, not a module/journey spec. Embedded draft is the methodology delta text, not a spec frontmatter. Kit-propagation should fire (methodology rule worth absorbing). /work-issue Phase 4 (TDD) will be skipped — Phase 4 becomes 'apply doc edits + verify they render'.",
+      "files": []
+    }
+  ]
+}
