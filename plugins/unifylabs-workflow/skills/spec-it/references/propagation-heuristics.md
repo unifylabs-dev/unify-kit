@@ -132,12 +132,29 @@ Phase 5 drafts a **kit-impact analysis** that becomes the body of a parallel uni
 
 ## Source
 - Target repo: <repo>
-- Issue: #<N> — <title>
+- Primary issue: #<N> — <title>   <!-- filled in Phase 9 after primary issue is created -->
 - Trigger: <which trigger fired>
 
-## What to absorb
+## Description
 
 <1–3 sentences describing the pattern>
+
+## Acceptance criteria
+
+<!--
+  Standard /work-issue-parseable AC list. The kit-side /work-issue invocation
+  expects this to be a checkbox list, not a paragraph. Even for small kit
+  changes, frame each change as a testable AC.
+-->
+
+- [ ] Snippet exists at the proposed path
+- [ ] Spec entry mentions the new snippet
+- [ ] CHANGELOG `[Unreleased]` entry added
+- [ ] Cross-reference to primary issue preserved in `Source` section
+
+## Spec sections affected
+
+- `specs/<NN>-<topic>.md` § <Section>: <change summary>
 
 ## Proposed changes
 
@@ -150,18 +167,34 @@ Phase 5 drafts a **kit-impact analysis** that becomes the body of a parallel uni
 
 `<verbatim | verbatim-with-light-edit | customization | pattern-only>`
 
-## Acceptance criteria
-
-- [ ] Snippet exists at the proposed path
-- [ ] Spec entry mentions the new snippet
-- [ ] CHANGELOG `[Unreleased]` updated
-
 ## Source rationale
 
 <why this is worth absorbing — what's the cross-project value?>
 ```
 
-This shape lets the kit-side `/work-issue` invocation pick it up cleanly.
+This shape lets the kit-side `/work-issue` invocation pick it up cleanly. The `## Acceptance criteria` section is required — without it, `/work-issue` Phase 1 rejects the issue.
+
+---
+
+## Phase 9 — cross-reference wiring sequence
+
+When Phase 5 fires AND the user chose option 1 (file parallel unify-kit issue), the cross-reference wiring requires a specific sequence because GitHub doesn't let you reference an unfiled issue number:
+
+1. **File primary issue first** — in the target repo. Include a placeholder in the `## Kit impact` section:
+   ```markdown
+   ## Kit impact
+   - Linked: unifylabs-dev/unify-kit#TBD — (filing now)
+   ```
+   Capture the primary issue number (e.g. #247).
+
+2. **File kit issue second** — in `unifylabs-dev/unify-kit`. The `## Source` section already references the primary issue number (`#247`).
+   Capture the kit issue number (e.g. #42).
+
+3. **Edit primary issue third** — `gh issue edit 247 --body-file <updated-with-kit-number>`. Replace `#TBD` with `#42` in the `## Kit impact` section.
+
+This is a 3-step sequence (file primary → file kit → edit primary). Don't try to file them in parallel; the kit issue depends on knowing the primary issue's number, and the primary's `## Kit impact` link depends on knowing the kit issue's number.
+
+For the PR-against-unify-kit path (when user is a kit maintainer), substitute step 2 with a PR open: `gh pr create --repo unifylabs-dev/unify-kit ...`. Step 3 still happens — edit the primary issue with the PR URL.
 
 ---
 

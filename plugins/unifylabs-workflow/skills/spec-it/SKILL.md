@@ -85,6 +85,8 @@ To discard: rm -rf <repo>/.claude/spec-it/<run-id>/
 ### Steps
 
 1. **Confirm git repo.** If not in a repo, abort with: `"/spec-it must run inside a git repository. cd to the target repo and re-invoke."`
+
+1a. **Verify `.gitignore` covers run state.** The skill writes run state to `<repo>/.claude/spec-it/<run-id>/`. Check `git check-ignore -q .claude/spec-it/`. If not ignored, append `.claude/spec-it/` to `.gitignore` (or `.claude/` if the user's pattern is broader) BEFORE Phase 6 writes the first draft file. This avoids polluting `git status` with ephemeral working state and is cheap to do once.
 2. **Read project conventions.** Try in order: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` at repo root. Extract: compliance posture, role hierarchy, audit rules, branch naming, route group conventions, anything that constrains the eventual spec.
 3. **Detect spec layout.** Scan in priority order:
    - `docs/specs/modules/` + `docs/specs/journeys/` → `optics-style` (behavioral, dual-axis modules + journeys)
@@ -248,12 +250,16 @@ Draft a decomposition:
 
 Cross-reference markdown: child issues link to parent via `Parent: #N`; parent lists children as a checkbox list.
 
-**Gate 4.**
-- 1. Keep as one issue (Recommended if heuristic doesn't fire)
-- 1. Accept the proposed split (Recommended if heuristic fires)
-- 2. Different split — user proposes the decomposition
-- 3. Add a tracking parent issue
-- 4. Abort
+**Gate 4.** Present whichever Recommended option matches whether the heuristic fired:
+- If the heuristic did NOT fire — option 1 default is "Keep as one issue (Recommended)"
+- If the heuristic DID fire — option 1 default is "Accept the proposed split (Recommended)"
+
+Standard option set:
+- 1. **(Recommended)** — either "Keep as one issue" or "Accept the proposed split" depending on whether the heuristic fired
+- 2. Toggle — flip from one issue to split (or vice versa)
+- 3. Different split — user proposes the decomposition manually
+- 4. Add or remove a tracking parent issue from the current decomposition
+- 5. Abort
 
 ---
 
@@ -381,17 +387,27 @@ For each command: print → run → record URL.
    ```
    Inferred labels: type (`enhancement` / `bug` / `chore`), priority if non-default, `spec-it-authored`.
 
-2. **Decomposed issues** (if Phase 4 split) — file each child first, capture issue numbers, then file the parent (if chosen) with cross-reference links. Update each child's body to reference the parent: `gh issue edit <N> --body-file <updated>`.
+2. **Decomposed issues** (if Phase 4 split) — two-pass to wire cross-references:
+   - **Pass 1**: file each child with a placeholder for the parent reference (`> Parent: TBD`). Capture each child's issue number.
+   - **Pass 2 (parent)**: file the parent (if chosen) with the children's checkbox list using the captured numbers.
+   - **Pass 3 (children rewrite)**: re-render each child's body with the real parent number substituted in, then `gh issue edit <child-N> --body-file <updated>` to replace the body. This pass also fills sibling references (`> Siblings: #M, #O`).
+   - The two-pass shape is necessary because GitHub doesn't let you reference an unfiled issue number, and child issues need both parent + sibling references that aren't known until everyone is filed.
 
 3. **Unify-kit propagation** (if Phase 5 approved):
    - Issue path: `gh issue create --repo unifylabs-dev/unify-kit --title "<title>" --body-file <propagation-body> --label kit-propagation`
    - PR path (maintainer mode): create branch + PR in the unify-kit local checkout if present; otherwise fall back to issue path.
 
 4. **Special case — invoked inside unify-kit itself** (`repo_schema.is_kit_repo == true`):
-   - Create a `spec/<feature-slug>` branch from `origin/main` via worktree
-   - Write the spec file to `specs/NN-<topic>.md` (next available NN)
-   - Commit with a co-authored message
-   - Push and `gh pr create --base main --title "spec: <topic>" --body-file <pr-body>`
+   - Verify the main repo is on `main` (not in a worktree-spawn loop). If currently on a non-main branch, create the worktree from `origin/main` to isolate.
+   - Create a worktree at `.worktrees/spec-<feature-slug>` with branch `spec/<feature-slug>` from `origin/main`:
+     `git worktree add -b spec/<feature-slug> .worktrees/spec-<feature-slug> origin/main`
+   - **Re-run guard**: if the branch already exists locally OR the worktree path exists, surface the conflict and offer: (a) reuse the existing worktree (resume), (b) remove and recreate, (c) abort. Don't silently overwrite.
+   - **NN selection**: scan `specs/` for existing numbered files; pick the next available `NN` (zero-padded). Re-run this scan AT execution time — the user's mental model of "what NN is next" may be stale (e.g. they say "use 10" but the repo already has 14).
+   - Write the spec file to `specs/NN-<topic>.md` using `assets/spec-templates/unify-kit-numbered.md`.
+   - **CHANGELOG**: the kit's `changelog-check.yml` CI fails any PR touching `specs/`, `templates/`, `plugins/`, `scripts/`, `github-actions/`, or `docs/methodology.md|philosophy.md` without an `[Unreleased]` entry. The skill MUST add a one-line `[Unreleased]` entry naming the new spec, OR include `[skip-changelog]` in the PR title if the change is purely infrastructural.
+   - Commit with a co-authored message (`Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`).
+   - Push and `gh pr create --base main --title "spec: <topic>" --body-file <pr-body>`.
+   - **PR body self-identifier**: include a `> Kit-self lifecycle: this is a pre-implementation spec PR per /spec-it Phase 9 §4.` line at the top of the body so reviewers immediately understand the lifecycle (it's not the same as a feature PR — it lands the spec, not the implementation).
    - No issue is filed; the PR IS the deliverable for kit pre-implementation specs.
 
 Record every URL produced into `<repo>/.claude/spec-it/<run-id>/urls.json`.
@@ -404,7 +420,7 @@ Record every URL produced into `<repo>/.claude/spec-it/<run-id>/urls.json`.
 
 **Why.** GitHub rendering can mangle markdown that previewed fine locally — collapsed `<details>` blocks, fenced code blocks, nested checkbox indentation. Better to catch and fix now than to find out at `/work-issue` Phase 0.
 
-### Steps
+### Steps (standard lifecycle — issues filed)
 
 1. For each created issue: `gh issue view <N> --json body,labels,title` and verify:
    - Title matches the intended title
@@ -415,6 +431,19 @@ Record every URL produced into `<repo>/.claude/spec-it/<run-id>/urls.json`.
    - Cross-references between decomposed issues resolve
 2. Run `iterative-review` (doc mode) one more time against the **posted** issue body (not the local draft) — surface any rendering issues that only appeared after gh CLI submission.
 3. If any discrepancies surface, draft the fix and offer to apply via `gh issue edit --body-file <updated>`.
+
+### Steps (kit-self lifecycle — PR opened on spec branch)
+
+When `repo_schema.is_kit_repo == true`, Phase 10 verifies the PR, not an issue:
+
+1. `gh pr view <N> --json body,title,baseRefName,headRefName,files` and verify:
+   - PR base is `main` (or repo default branch), head is `spec/<slug>`
+   - Body contains ACs + design notes + research notes (PR-body shape, not issue-body shape)
+   - PR body includes a one-line self-identifier: `> Kit-self lifecycle: this is a pre-implementation spec PR per /spec-it Phase 9 §4.` (helps reviewers contextualize)
+   - The PR diff includes exactly the new `specs/NN-<topic>.md` file and any required CHANGELOG `[Unreleased]` entry (the kit's changelog-check CI requires this for spec/template/plugin changes)
+   - No accidental unrelated files in the diff
+2. Run `iterative-review` (doc mode) against the posted PR body.
+3. Fix discrepancies via `gh pr edit --body-file <updated>` or by force-pushing the spec branch.
 
 **Gate 10.**
 - 1. Confirm and proceed to handoff (Recommended)
@@ -540,3 +569,15 @@ This directory is gitignored (add `.claude/spec-it/` to the target repo's `.giti
 Manual issue authoring varies wildly in quality. Some issues have crisp ACs and clear spec impact; others have a one-line "add X" and no testable criteria. The downstream `/work-issue` Phase 0 spec-sync step depends on issue quality — a poorly-shaped issue blocks `/work-issue` until the user manually fills the gaps.
 
 `/spec-it` removes that variance. The cost is one front-loaded brainstorm + research session; the savings compound across every future `/work-issue` invocation that doesn't have to re-discover the spec impact, re-research the compliance posture, or re-draft the ACs. It also captures research grounding (URLs, dates, sources) inline so future reviewers — and future Claude sessions — can trace decisions instead of re-litigating them.
+
+---
+
+## Open improvements (post-iteration-1 backlog)
+
+Surfaced from the iteration-1 eval workflow as "Suggestion"-severity findings. Apply when next iterating on this skill:
+
+- **AC count discipline** — guidance on "how many ACs is right" for different scope sizes. Current eval data suggests S=3–6, M=6–12, L=12–18 (above L = decompose). Add to `references/issue-body-templates.md`.
+- **Borderline kit-propagation handling** — when a propagation trigger fires weakly (e.g. project-specific env var that COULD be generalized but doesn't have to be), guidance on whether to fire the gate or stay silent. Current default is "fire and let user decline" — possibly too eager.
+- **Multi-spec embedded drafts** — `references/issue-body-templates.md` now covers the multiple-`<details>`-blocks case for issues that bootstrap BOTH module + journey specs. Consider adding a Phase 6 rule about always producing both when introducing a NEW module.
+- **Run-state survival** — `<repo>/.claude/spec-it/<run-id>/` is gitignored, but if the user reboots between Phase 6 (draft) and Phase 9 (execution), the run state should be re-loadable. Add `--resume <run-id>` flag handling.
+- **Cost telemetry** — Phase 2 cost varies widely (eval data shows 38k–92k tokens per run). Consider emitting a Phase 2 cost summary at Gate 2 so users can see which streams cost what.

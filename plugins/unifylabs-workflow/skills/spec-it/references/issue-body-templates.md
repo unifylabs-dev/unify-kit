@@ -126,18 +126,18 @@ The full draft spec content embedded in a `<details>` block:
 
 ```markdown
 <details>
-<summary>📄 Proposed Spec Draft — &lt;target spec path&gt;</summary>
+<summary>📄 Proposed Spec Draft — `docs/specs/modules/customers.md`</summary>
 
 ```markdown
 <!-- The full spec content, ready for /work-issue Phase 0 to write to disk as the first commit. -->
 ---
-name: ...
+name: customers
 type: module
 last_reviewed: 2026-05-13
 ...
 ---
 
-# <Module Name>
+# Customers
 
 ## Purpose
 ...
@@ -151,7 +151,48 @@ last_reviewed: 2026-05-13
 **Format constraints:**
 - Use a `<details>` block so it doesn't clutter the issue view
 - Use a fenced code block (` ``` `) inside the details so markdown renders the spec as-is, including its frontmatter
-- The summary text MUST include the target path so `/work-issue` Phase 0 can extract it deterministically
+- **Use a backtick-quoted literal path in the summary** (`` `docs/specs/modules/customers.md` ``) — not HTML entities, not angle brackets. GitHub renders backtick-quoted paths as inline code and the literal path is easy for `/work-issue` Phase 0 to extract via regex. Backticks survive `<details>` summary rendering cleanly; `&lt;...&gt;` HTML-escaped paths require unescape logic in the parser.
+- The summary path MUST be the exact target path — including the `docs/specs/` (or equivalent) prefix — so `/work-issue` Phase 0 writes the file to the right location with no path arithmetic.
+
+### `NEW:` sentinel — full spec content embedded
+
+When the issue's "Spec sections affected" lists a path with the `NEW:` sentinel (a spec file that doesn't exist yet), the embedded "Proposed Spec Draft" `<details>` block must contain **full file content** — not just deltas. `/work-issue` Phase 0 expects to write the file to disk verbatim from the embedded content; deltas-only would leave the file half-written.
+
+If a single issue's "Spec sections affected" includes BOTH existing-file deltas (no `NEW:`) AND new-file bootstraps (with `NEW:`), include MULTIPLE `<details>` blocks — one per file. Each block's summary line names exactly one file path. Example:
+
+```markdown
+<details>
+<summary>📄 Spec deltas — `docs/specs/modules/customers.md`</summary>
+
+```markdown
+§ Behavior — add rule: "When a customer is merged into another, ..."
+§ Edge Cases — add rule: "When both candidates are the same record, abort with error..."
+```
+
+</details>
+
+<details>
+<summary>📄 Proposed Spec Draft (NEW) — `docs/specs/journeys/duplicate-resolution.md`</summary>
+
+```markdown
+---
+name: duplicate-resolution
+type: journey
+tier: 2
+last_reviewed: 2026-05-13
+...
+---
+
+# Duplicate Resolution
+
+## Purpose
+...
+```
+
+</details>
+```
+
+`/work-issue` Phase 0 distinguishes the two cases by the presence of `(NEW)` in the summary OR by checking whether the named file already exists on disk. Both signals are equivalent — Phase 0 should accept either.
 
 ---
 
