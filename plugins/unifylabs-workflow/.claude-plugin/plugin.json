@@ -1,6 +1,6 @@
 {
   "name": "unifylabs-workflow",
-  "version": "2.1.0",
+  "version": "2.0.2",
   "description": "Unifylabs team Claude Code workflow: 11 skills (spec-it, work-issue, ship, phasing, extract-prototype-review, integrate-branch, analyze-comms, promote-to-marketplace, compliance-research, iterative-review, humanizer), 10 phase + review commands, 7 security/workflow hooks, opt-in statusline.",
   "author": {
     "name": "Tomer Kurman",

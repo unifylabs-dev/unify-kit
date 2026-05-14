@@ -10,7 +10,7 @@ The skill prefers reading the repo's actual `_template.md` files over consulting
 
 **Signal:** `docs/specs/modules/` AND `docs/specs/journeys/` both exist as directories.
 
-**Origin:** `unifylabs-dev/optics-management` (Next.js + Postgres staff portal).
+**Typical stack:** Next.js + Postgres apps with a compliance posture (PHIPA / PIPEDA / HIPAA / GDPR) where behavior must be auditable and journey tests carry user-flow guarantees.
 
 **Structure:**
 - `docs/specs/README.md` — index of modules + journeys with last-reviewed dates

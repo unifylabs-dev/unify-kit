@@ -47,8 +47,8 @@ The orchestrator should announce which streams it's about to run BEFORE running 
 - Contradictions (if any) between Phase 1 brainstorm and saved memories
 
 **How to find the project slug:** the cwd path with `/` replaced by `-`, prefixed by `-`. For example:
-- `/Users/tomerkurman/optics-management` → `-Users-tomerkurman-optics-management`
-- Path: `~/.claude/projects/-Users-tomerkurman-optics-management/memory/MEMORY.md`
+- `/Users/jane/acme-clinic` → `-Users-jane-acme-clinic`
+- Path: `~/.claude/projects/-Users-jane-acme-clinic/memory/MEMORY.md`
 
 If MEMORY.md doesn't exist, the user hasn't built up project memory yet — skip cleanly.
 
@@ -70,7 +70,7 @@ If MEMORY.md doesn't exist, the user hasn't built up project memory yet — skip
 2. For each, use Explore agent with a focused query: "Find any implementation of <pattern> — server actions, components, DB tables"
 3. Surface hits with one-line summaries + file paths (not full content)
 
-**Skip when:** feature is unambiguously project-specific (e.g. "add Mint Vision logo to invoice header").
+**Skip when:** feature is unambiguously project-specific (e.g. "add our company logo to the invoice header").
 
 ---
 

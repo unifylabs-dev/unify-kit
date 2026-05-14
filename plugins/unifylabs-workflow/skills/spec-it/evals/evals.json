@@ -4,22 +4,22 @@
     {
       "id": 1,
       "eval_name": "optics-style-customer-merge",
-      "prompt": "I'm in /Users/tomerkurman/optics-management/optics_boutique and I want to add a feature where staff can merge two duplicate customer records into one. The duplicates happen when someone calls in and we don't recognize them as a returning patient and create a new file. Should preserve all the order history, prescriptions, exams, notes — everything — from both customers under the surviving one. Audit-logged obviously since this is PHIPA territory.",
+      "prompt": "I'm in ~/acme-clinic and I want to add a feature where staff can merge two duplicate customer records into one. The duplicates happen when someone calls in and we don't recognize them as a returning patient and create a new file. Should preserve all the order history, prescriptions, exams, notes — everything — from both customers under the surviving one. Audit-logged obviously since this is PHIPA territory.",
       "expected_output": "A GitHub issue body file with: type=feature, ACs covering data-merge behavior + audit trail + PHIPA implications, Spec sections affected listing docs/specs/modules/customers.md (NEW) plus journey impact, embedded Proposed Spec Draft for the customers module, research notes from PHIPA/PIPEDA + memory hits about app-layer access control + Prisma 7 transaction patterns. Plus a handoff line pointing at /work-issue. Should propose ADMIN-only role.",
       "files": []
     },
     {
       "id": 2,
       "eval_name": "decomposition-orders-rebuild",
-      "prompt": "I'm in /Users/tomerkurman/optics-management/optics_boutique. We need to rebuild the entire orders module with a new state machine (adding QUOTE_REVIEW and POST_DELIVERY_FOLLOWUP stages), update all the dependent reports (revenue, conversion funnel, lab turnaround), and sync the changes back to the lab vendor's API so they see the new states too. This is going to be big.",
+      "prompt": "I'm in ~/acme-clinic. We need to rebuild the entire orders module with a new state machine (adding QUOTE_REVIEW and POST_DELIVERY_FOLLOWUP stages), update all the dependent reports (revenue, conversion funnel, lab turnaround), and sync the changes back to the lab vendor's API so they see the new states too. This is going to be big.",
       "expected_output": "Phase 4's decomposition heuristic should fire (L scope + >2 modules + cross-system language). Skill should propose a 3-issue split: (1) state machine + audit + tests, (2) dependent report updates, (3) lab vendor API sync. Optional tracking parent issue. Each child issue has its own ACs + spec impact + embedded draft spec.",
       "files": []
     },
     {
       "id": 3,
       "eval_name": "propagation-feature-flags",
-      "prompt": "I'm in /Users/tomerkurman/optics-management/optics_boutique and I want to add a feature-flag pattern so we can gate experimental features behind env vars. Looking at something like FEATURE_FLAGS=client_portal_v2,lens_match_quiz_v3 in .env, then a getFeatureFlag('x') helper.",
-      "expected_output": "Phase 5's kit-propagation heuristic should fire (new env-var category, generalizable pattern, worth absorbing into unify-kit). Skill should draft a kit-impact analysis and offer to file a parallel unifylabs-dev/unify-kit issue. Primary optics-management issue still gets filed normally. Both issues should be cross-referenced in their bodies.",
+      "prompt": "I'm in ~/acme-clinic and I want to add a feature-flag pattern so we can gate experimental features behind env vars. Looking at something like FEATURE_FLAGS=client_portal_v2,lens_match_quiz_v3 in .env, then a getFeatureFlag('x') helper.",
+      "expected_output": "Phase 5's kit-propagation heuristic should fire (new env-var category, generalizable pattern, worth absorbing into unify-kit). Skill should draft a kit-impact analysis and offer to file a parallel unifylabs-dev/unify-kit issue. Primary consumer-repo issue still gets filed normally. Both issues should be cross-referenced in their bodies.",
       "files": []
     },
     {

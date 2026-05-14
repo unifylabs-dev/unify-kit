@@ -82,7 +82,7 @@ The grounded research from Phase 2. Format:
 
 **Prior art:**
 - `unify-rolfing-app` implements similar magic-link auth — see `src/lib/client-auth.ts`
-- `optics-management` had a similar feature in PR #234
+- A sibling consumer repo had a similar feature in PR #234
 
 **Memory hits:**
 - User feedback (2026-04): integration tests must hit real DB, not mocks

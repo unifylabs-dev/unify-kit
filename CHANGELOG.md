@@ -16,7 +16,7 @@ New entries land here per-PR. The kit's own CI (.github/workflows/changelog-chec
 
 ### Changed
 
-- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`**: `version` `2.0.1` → `2.1.0`; `description` enumerates 11 skills (adds `spec-it` as the first entry to reflect its role as the front-door to the rest of the workflow).
+- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`**: `version` `2.0.1` → `2.0.2` (patch bump per the kit's CI-enforced `^2\.0\.[0-9]+$` constraint until a major release is cut); `description` enumerates 11 skills (adds `spec-it` as the first entry to reflect its role as the front-door to the rest of the workflow).
 - **`.claude-plugin/marketplace.json`**: description mirrors plugin.json (11 skills, `spec-it` listed first).
 - **`specs/07-philosophy-and-methodology.md`**: methodology canon updated to add `/spec-it` as the recommended idea-to-issue entry point preceding `/work-issue`. Documents the front-door pattern: `/spec-it` produces issues, `/work-issue` implements them, `/phase` decomposes implementation when needed.
 
