@@ -1,0 +1,52 @@
+---
+name: 2026-05-24-fatal-fixture
+description: Fatal freshness-check fixture
+metadata:
+  type: session-handoff
+  mode: phasing-orchestrator
+  tier: full
+  status: pending
+  created: 2026-05-24T00:00:00Z
+  consumed_by_session: null
+  origin_session: test-session
+  origin_session_name: test-fatal
+  project_root: {{REPO}}
+  context_pct_at_write: 50
+  related_artifacts: []
+  run_id: test-fatal-run
+---
+
+# Session Handoff — fatal fixture (2026-05-24)
+
+> **Purpose:** Test fixture for freshness-check.sh fatal case.
+> **Mode:** phasing-orchestrator  ·  **Tier:** full  ·  **Context at write:** 50%
+> **Project:** {{REPO}}  ·  **Origin session:** test-fatal
+
+## §4 World state
+
+### 4.1 Git state
+
+- **Branch:** {{BRANCH}}
+- **HEAD SHA:** {{HEAD}}
+- **Working tree:** clean
+- **Upstream:** —
+- **Last commit subject:** initial commit
+
+### 4.2 Files load-bearing for resume
+
+- `{{REPO}}/this-file-does-not-exist-anywhere.txt` — should be missing
+- `{{REPO}}/load-bearing.txt` — should exist
+
+### 4.3 Run state
+
+- **run_id:** test-fatal-run
+- **run.json path:** {{REPO}}/.claude/phasing/test-fatal-run/run.json
+- **Phase array snapshot:**
+
+  | N | Name | Status | Notes |
+  |---|---|---|---|
+  | 0 | Foundation | complete | — |
+  | 1 | Build | complete | — |
+
+---
+**Status:** pending  ·  **Created:** 2026-05-24T00:00:00Z  ·  **Mode:** phasing-orchestrator  ·  **Tier:** full
