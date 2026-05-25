@@ -10,6 +10,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+## [2.0.3] - 2026-05-25
+
+Minor release adding three coordinated, additive artifacts that turn ad-hoc session→session knowledge transfer into a first-class primitive: a universal `handoff` skill, a `context-awareness` hook, and a checkpoint extension to the existing `phasing` skill. All changes are additive — no consumer migration required.
+
+### Added
+
+- **`handoff` skill** at `plugins/unifylabs-workflow/skills/handoff/`. Universal session-handoff machinery with a fixed 7-section core (Trajectory, Locked decisions, Open items, World state, TaskList snapshot, Do-not-re-litigate, Resume instructions), auto-detected mode addenda (phasing-orchestrator, phasing-executor, brainstorm, plan-exec, work-issue), tiered FULL/LEAN/EMERGENCY writes keyed to context %, and a strict natural-break gate. Discretion table teaches Claude when to surface `/handoff` proactively. See `plugins/unifylabs-workflow/skills/handoff/SKILL.md`.
+- **5 slash commands** at `plugins/unifylabs-workflow/commands/`: `/handoff`, `/handoff-resume`, `/handoff-list`, `/handoff-done`, `/handoff-revive`. Flat command surface mirroring `/phase-execute` convention.
+- **`context-awareness` hook** at `plugins/unifylabs-workflow/hooks/context-awareness.sh`. Fires on `UserPromptSubmit` (new event for this plugin) and `SessionStart` (added alongside existing 3 entries). Computes context % from transcript char-count÷4 against model-specific window; injects threshold-tier reminders (silent <40%; 40s/50s/60s/70+ tiers); scans MEMORY.md for `Pending handoff` pointers on SessionStart and injects ask-to-resume guidance; idempotent consumed-cleanup. Awareness only — never forces AskUserQuestion. Per-session suppression (no re-surfacing within 5 turns unless threshold escalates).
+- **`phasing` skill extension** at `plugins/unifylabs-workflow/skills/phasing/SKILL.md`. Mid-phase checkpoint flow: phase-executor invokes `/handoff` mid-flight → writes `phase-N-checkpoint.md` per `references/checkpoint-shape.md` → orchestrator detects via extended polling (§7.5) → renders ⏸ CHECKPOINT status card (6th variant alongside ✅/🚀/⏳/🏁/🛑) → fires 4-option menu (Re-spawn / Split / View detail / Abort) with dynamic Recommended tag based on Reason enum (`context-pressure` / `scope-creep-detected` / `blocker-out-of-scope` / `other`). New `run.json` status `"checkpoint"` + optional `checkpoint_count` field (default 0); 8 documented state transitions. `checkpoint_count` thresholds: `=2` adds WARNING, `≥3` removes Re-spawn from menu.
+- **`/phase-continue` command** at `plugins/unifylabs-workflow/commands/phase-continue.md`. 12-step playbook to continue a paused phase from its checkpoint in a fresh executor session. Mandatory `EnterPlanMode`; plan body excludes DONE work-steps; on completion writes canonical `phase-N-handoff.md` with carried-from-checkpoint verification annotations; checkpoint renamed `.superseded-<ts>.bak`.
+- **`launch-terminal.sh` 5th arg.** Optional command-name parameter (defaults `phase-execute`) enabling `/phase-continue` spawn. Backward-compatible — all existing 4-arg callers unchanged. Also exports `CLAUDE_PHASE_SESSION=1` before spawn so `detect-mode.sh` reliably identifies executor sessions.
+- **`references/founder-card-checkpoint.md`** at `plugins/unifylabs-workflow/skills/handoff/references/`. Self-contained reference card explaining the 4 checkpoint menu options + consequences + when each is recommended.
+
+### Changed
+
+- **`phasing/SKILL.md`** extended additively (no deletions in §1–§7 except a surgical `until`-loop OR'd extension in §7.3). All 5 prior status block variants intact (`🚀 READY`, `✅ COMPLETE`, `⏳ IN PROGRESS`, `🏁 DONE`, `🛑 ABORTED`); new `⏸ CHECKPOINT` is the 6th.
+- **`phasing/scripts/launch-terminal.sh`** — 5th arg + `LAUNCH_TERMINAL_DRY_RUN` short-circuit + `CLAUDE_PHASE_SESSION=1` export.
+- **`phasing/references/phase-spec-shape.md`** — appended optional Checkpoint policy section (most phases won't use it).
+- **`hooks/hooks.json`** — added `context-awareness.sh` to existing `SessionStart` array (now 4 entries); added new `UserPromptSubmit` block. All prior PreToolUse/PostToolUse blocks untouched.
+- **`README.md` "What's inside" bullet** — count + names synced with the bumped `plugin.json`/`marketplace.json` description (incidentally fixes pre-existing v2.0.1 drift where the README still listed `review-prototype` and was missing `extract-prototype-review` + `integrate-branch`).
+
+### Migration from 2.0.2
+
+No migration required for consumers. The build is fully additive. In-flight phasing runs in other projects continue running under their starting skill version; per-orchestrator cutover follows the documented procedure in `docs/cutover-handoff-v2.0.3.md` (manual, at natural breaks; lands in P10 of run `2026-05-24-handoff-skill-build`).
+
+## [2.0.2] - 2026-05-14
+
+Patch release adding the `/spec-it` skill — front-door to `/work-issue` — and updating methodology to document the idea-to-issue → implementation → phasing chain.
+
 ### Added
 
 - **`plugins/unifylabs-workflow/skills/spec-it/`** — net-new skill. Front-door to `/work-issue`: turns a raw feature idea into a properly-shaped GitHub issue with an embedded draft spec, grounded in repo + memory + external standards research. 11 gated phases (pre-flight → brainstorm → grounded research → clarifications → decomposition → kit-propagation check → plan draft → iterative review → approval → execution → deliverable verification → handoff). Adapts to the target repo's spec conventions at runtime (optics-style modules+journeys, unify-kit-style numbered specs, ADR-style decision records, or bootstrap-from-templates for repos with no spec convention). Both code and non-code deliverables supported. Bundles 5 reference docs (repo-schemas, propagation-heuristics, issue-body-templates, decomposition-heuristics, research-triggers) and 7 asset templates (4 spec, 3 issue body). Invokes `superpowers:brainstorming` (intercepting before its `writing-plans` hand-off) for divergent exploration, and `iterative-review` (doc mode) for self-critique in Phases 7 + 10.

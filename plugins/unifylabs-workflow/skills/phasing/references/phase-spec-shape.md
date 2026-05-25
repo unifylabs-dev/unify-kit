@@ -90,3 +90,21 @@ Anti-pattern: padding to look thorough. Every paragraph should preempt a questio
 - Empty `Decisions already baked in` when the master plan has decisions → copy them in; don't make the phase re-derive.
 - Empty `Out of scope` → force articulation; otherwise scope creep.
 - Verification with only `check` and no `command` for code phases → add a `command` step (test runner, build, etc.).
+
+## Checkpoint policy (optional)
+
+For phases that may benefit from explicit checkpoint guidance. Most phases will not need
+this section; the defaults (any reason allowed, no max checkpoints, no-preference between
+respawn and split) work for the vast majority of phase scopes.
+
+Triggers for writing a checkpoint mid-execute:
+- Context pressure: <yes/no, default yes>
+- Scope creep: <yes/no, default yes>
+- Blocker out of scope: <yes/no, default yes>
+
+Natural break points (good times to checkpoint if pressure detected):
+- After Step <N>
+- After verification batch <N>
+
+Re-spawn vs split bias: <prefer-respawn | prefer-split | no-preference>
+Maximum checkpoints before forced split: <integer, default 2>

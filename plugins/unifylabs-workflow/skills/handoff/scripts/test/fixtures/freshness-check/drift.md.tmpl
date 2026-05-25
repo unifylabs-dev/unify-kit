@@ -1,0 +1,39 @@
+---
+name: 2026-05-24-drift-fixture
+description: Drift-detected freshness-check fixture
+metadata:
+  type: session-handoff
+  mode: generic
+  tier: full
+  status: pending
+  created: 2026-05-24T00:00:00Z
+  consumed_by_session: null
+  origin_session: test-session
+  origin_session_name: test-drift
+  project_root: {{REPO}}
+  context_pct_at_write: 50
+  related_artifacts: []
+---
+
+# Session Handoff — drift fixture (2026-05-24)
+
+> **Purpose:** Test fixture for freshness-check.sh drift case.
+> **Mode:** generic  ·  **Tier:** full  ·  **Context at write:** 50%
+> **Project:** {{REPO}}  ·  **Origin session:** test-drift
+
+## §4 World state
+
+### 4.1 Git state
+
+- **Branch:** {{BRANCH}}
+- **HEAD SHA:** {{OLD_HEAD}}
+- **Working tree:** clean
+- **Upstream:** —
+- **Last commit subject:** initial commit
+
+### 4.2 Files load-bearing for resume
+
+- `{{REPO}}/load-bearing.txt` — exists in test repo
+
+---
+**Status:** pending  ·  **Created:** 2026-05-24T00:00:00Z  ·  **Mode:** generic  ·  **Tier:** full

@@ -325,6 +325,63 @@ Emit inside a code fence:
 
 Badge is `🛑 ABORTED`. Phase queue uses `🟢` for completed, `⚪` for not started / aborted-mid-flight. Done phases keep their `🟢` (audit trail of what got finished).
 
+### ⏸ CHECKPOINT variant (emitted when `phase-N-checkpoint.md` lands)
+
+Emit this card **inside a code fence**, then fire the 4-option decision `AskUserQuestion` (§9.5):
+
+````
+```
+╭─ Phase <N> / <total> ────────────── ⏸ CHECKPOINT ──╮
+│ ⚡ phase-<N>-<phase-name-slug>                      │
+│ <progress-bar>  <pct>% · paused at checkpoint      │
+╰────────────────────────────────────────────────────╯
+
+  📦 Work done so far
+     • <DONE work-step from checkpoint §Work-step progress>
+     • <DONE work-step from checkpoint §Work-step progress>
+
+  ⏳ Work still pending
+     • <PENDING work-step from checkpoint §Work-step progress>
+     • <IN-FLIGHT work-step from checkpoint §Work-step progress>
+
+  📋 Verification status
+     • <step>: PASS / NOT RUN
+
+  🔧 World-state delta
+     • <file created/modified entry from checkpoint §World-state delta>
+     • <commands run, etc.>
+
+  💬 Reason
+     <verbatim from checkpoint §Reason for checkpoint>
+
+  ❔ Open questions for you
+     <verbatim from checkpoint §Open questions for orchestrator, or "none">
+
+  ▶ Phase status
+     🟢 P<m>  <name>                                       (completed phases)
+     🟡 P<N>  <name>                ⏸ paused at checkpoint  (this phase)
+     ⚪ P<n+1>  <name> — <1-line goal>                     (pending)
+     ⚪ P<n+2>  <name> — <1-line goal>
+
+  /phase-continue <run-id> <N>  ·  /phase-status  ·  /phase-abort
+```
+````
+
+**Field rules:**
+- `<N>` / `<total>`: integers from `run.json`.
+- `<phase-name-slug>`: plain-text value of `run.json#phases[N-1].session_name` or derived per "Session naming". `⚡ ` prefix added by renderer (data/display rule).
+- `<progress-bar>`: 6-segment bar, same formula as post-phase variant (`floor((complete / total) * 6)` filled).
+- `<pct>`: integer percent of phases complete.
+- `📦 Work done so far` / `⏳ Work still pending`: lifted **verbatim** from checkpoint's `## Work-step progress` section. DONE markers (`[✓ DONE]`) → "done so far" bullets; IN-FLIGHT (`[⏳ IN-FLIGHT]`) + PENDING (`[○ PENDING]`) → "still pending" bullets. NEVER trimmed — `checkpoint-shape.md` enforces this on the writer side.
+- `📋 Verification status`: lifted verbatim from checkpoint's `## Verification-step progress`. Each line: `<step description>: PASS` or `<step description>: NOT RUN`.
+- `🔧 World-state delta`: lifted verbatim from checkpoint's `## World-state delta during this executor session`. NEVER trimmed.
+- `💬 Reason`: lifted verbatim from checkpoint's `## Reason for checkpoint` (the single-line reason enum value + the 2–4 sentences of detail below it).
+- `❔ Open questions for you`: lifted verbatim from checkpoint's `## Open questions for orchestrator`. If section is empty in the checkpoint, render `none`.
+- `▶ Phase status`: one line per phase in `run.json#phases[]`, status-circle prefix. The paused phase uses `🟡` with `⏸ paused at checkpoint` suffix (not the `⏳ ~Xm elapsed` from post-phase variant). Completed phases `🟢`, pending `⚪`, failed `🔴`. For pending phases, the 1-line goal is derived from each spec's `## Goal` (see "Phase briefs come from each spec's `## Goal`").
+- Final shortcuts line rendered verbatim.
+
+The orchestrator's polling loop (§7.3) detects `phase-N-checkpoint.md`, applies the race tiebreaker (§7.5), then renders this card as the **first** chat output. The §9.5 menu fires immediately after.
+
 ### Mid-phase beat (NOT a card — a single line)
 
 Emitted every ~5 minutes by the polling loop in §7.3 while a phase is `in_progress`. **Not** fenced — it's a chat one-liner:
@@ -511,6 +568,45 @@ If any step fails: write a `failed` handoff with the failing step. Do NOT loop. 
 
 One-line completion to chat. Orchestrator's poll picks it up.
 
+### §6.9 Mid-phase checkpoint flow (executor side)
+
+A phase-executor session that recognizes mid-flight context pressure (or another reason from the Reason enum below) BEFORE completing the spec's work can pause cleanly by writing a `phase-N-checkpoint.md` artifact instead of carrying on into degraded-quality territory.
+
+Trigger: the executor invokes `/handoff` directly (the same universal command used elsewhere). The handoff skill's `scripts/detect-mode.sh` returns `mode: phasing-executor`. The skill then asks via `AskUserQuestion` whether the executor is (a) pausing mid-phase → writes `phase-N-checkpoint.md` per `references/checkpoint-shape.md`; or (b) finishing normally → prints the canonical `phase-N-handoff.md` template path and exits without writing.
+
+On checkpoint write:
+- Skill writes `<run-dir>/phase-N-checkpoint.md` per the canonical structure in `references/checkpoint-shape.md`.
+- Phase session updates `run.json#phases[N]`: `status: "checkpoint"`; increments `checkpoint_count` (absent / 0 → 1, 1 → 2, …). Atomic write (temp-file-then-rename).
+- Phase session exits cleanly with a one-line completion note in chat.
+
+Reason enum (verbatim — the orchestrator's menu pattern-matches these exact strings, see §9.5):
+- `context-pressure` — executor's context % crossed a tier; quality risk forces stop.
+- `blocker-out-of-scope` — discovered a blocker outside the phase's scope.
+- `scope-creep-detected` — work is genuinely larger than specced; would not finish cleanly.
+- `other` — anything else; executor explains in the `Reason for checkpoint` body.
+
+The orchestrator's polling loop (§7.3) sees `phase-N-checkpoint.md` land, then routes to the ⏸ CHECKPOINT card variant + §9.5 decision menu.
+
+References: [`references/checkpoint-shape.md`](references/checkpoint-shape.md) (writer + reader contract); [`../handoff/references/addendum-phase-exec.md`](../handoff/references/addendum-phase-exec.md) (writer-side divergences from generic handoff mode).
+
+### §6.9.1 Executor decision fork
+
+The handoff skill, when invoked in phasing-executor mode, asks the executor session:
+
+```
+AskUserQuestion(
+  question: "Are you pausing this phase mid-flight (write checkpoint), or finishing the phase normally (continue + write canonical handoff at end)?",
+  options: [
+    { label: "Pausing mid-flight — write checkpoint (Recommended if context pressure)",
+      description: "Writes <run-dir>/phase-N-checkpoint.md per references/checkpoint-shape.md; updates run.json#phases[N].status = checkpoint; increments checkpoint_count; exits the session." },
+    { label: "Finishing normally — keep working; canonical handoff will land at completion",
+      description: "No-op. Prints the canonical phase-N-handoff.md template path for executor reference; exits without writing." }
+  ]
+)
+```
+
+Option 2 is the no-op fork — the executor keeps working and writes the standard handoff (§6.7) when the phase actually completes.
+
 ## §7. Spawning model
 
 ### §7.1 Default: manual spawn
@@ -566,8 +662,9 @@ This four-step order matters: a phantom `in_progress` state with no actual phase
 ### §7.3 Polling + mid-phase beats
 
 `Bash` with `run_in_background: true`. Doesn't block the chat — the user can keep talking to you while a phase runs.
-- File mode: `until [ -f <run-dir>/phase-N-handoff.md ]; do sleep 5; done`
-- GitHub mode: poll `gh issue view <issue-N> --json state,comments` for `state: CLOSED` plus a handoff comment.
+- File mode: `until [ -f <run-dir>/phase-N-handoff.md ] || [ -f <run-dir>/phase-N-checkpoint.md ]; do sleep 5; done`
+  <!-- The OR clause picks up phase-N-checkpoint.md too (per §6.9). The race-tiebreaker in §7.5 governs what happens when both files exist on the same tick. -->
+- GitHub mode: poll `gh issue view <issue-N> --json state,comments` for `state: CLOSED` plus a handoff comment. Checkpoint detection still uses the file-system poll above — checkpoints land in `<run-dir>/` regardless of mode; only canonical handoffs round-trip through GitHub.
 
 **Mid-phase beats.** While the poll waits, the orchestrator emits a one-line status beat every ~5 min so the user knows the phase is still alive (the `⚡` emoji prefix is consistent with the title pill and card body — display rule):
 ```
@@ -578,6 +675,16 @@ After 4 consecutive beats (~20 min) without a handoff, the orchestrator escalate
 ### §7.4 Manual nudge
 
 `/phase-resume <run-id>` re-checks state if the background poll dropped (terminal crashed, context reset). Idempotent. On invocation, the orchestrator renders the **Resume variant** of the status block (see "Status block") as the FIRST chat output before doing anything else, so the user re-grounds on current state.
+
+### §7.5 Checkpoint race tiebreaker
+
+When the polling loop (§7.3) ticks, it may observe one of three states in the run-dir:
+
+- **Only `phase-N-handoff.md` exists** → orchestrator proceeds normally to the post-phase card (✅ COMPLETE) + Approve/Adjust/Abort menu. Phase completed cleanly; no checkpoint was needed.
+- **Only `phase-N-checkpoint.md` exists** → orchestrator proceeds to the ⏸ CHECKPOINT card variant (see "Status block" → ⏸ CHECKPOINT) + 4-option decision menu (§9.5). Phase paused mid-flight.
+- **Both files exist** → **handoff wins**. The checkpoint is renamed `phase-N-checkpoint.superseded-<UTC-iso>.bak` for audit, and the orchestrator proceeds as if only the handoff existed. Rationale: a handoff means the phase actually finished normally despite a partial checkpoint that was being prepared (e.g., executor wrote checkpoint then kept working and finished after all). The handoff is authoritative.
+
+This rule is mirrored verbatim in [`references/checkpoint-shape.md`](references/checkpoint-shape.md) and [`../handoff/references/addendum-phase-exec.md`](../handoff/references/addendum-phase-exec.md). Paraphrasing in any of the three locations would create drift between writer (handoff skill) and reader (phasing orchestrator) — keep them lockstep.
 
 ## §9. Verification
 
@@ -620,6 +727,50 @@ Master plan generation includes a checklist (in tracking issue body / `master-pl
 
 Same self-healing protocol applies.
 
+### §9.5 Checkpoint decision menu
+
+After the orchestrator renders the ⏸ CHECKPOINT card (see "Status block" → ⏸ CHECKPOINT variant), it fires this `AskUserQuestion` for the user to pick a recovery path.
+
+**Base menu** (4 options; `<reason>` is the reason-enum value from the checkpoint's `## Reason for checkpoint` section):
+
+```
+AskUserQuestion(
+  question: "Phase <N> paused at checkpoint. Reason: <reason>. How to proceed?",
+  options: [
+    { label: "Re-spawn from checkpoint (Recommended if reason=context-pressure)",
+      description: "Spawn a fresh executor session via /phase-continue <run-id> <N>; the new session loads the checkpoint and continues the remaining work-steps. Phase status: checkpoint → in_progress." },
+    { label: "Split phase (Recommended if reason=scope-creep-detected)",
+      description: "Mark this phase complete with partial deliverables; open a new phase auto-derived from checkpoint's 'Work still pending' at position N+1; renumber later phases. Phase status: checkpoint → complete (partial)." },
+    { label: "View checkpoint detail (Recommended if reason=other OR no reason)",
+      description: "Display the full phase-N-checkpoint.md contents in chat for inspection. After viewing, the menu re-renders." },
+    { label: "Abort phase (Recommended if reason=blocker-out-of-scope)",
+      description: "Mark this phase failed. Surface the founder-card guidance (handoff/references/founder-card-checkpoint.md) for abort recovery. Phase status: checkpoint → failed." }
+  ]
+)
+```
+
+**Recommended-tag dynamic mapping** (the `(Recommended if reason=...)` tag attaches to exactly one option based on the checkpoint's reason value):
+- `context-pressure` → option 1 (Re-spawn)
+- `scope-creep-detected` → option 2 (Split)
+- `blocker-out-of-scope` → option 4 (Abort)
+- `other` → option 3 (View detail)
+
+**Downstream actions per option:**
+- **Re-spawn from checkpoint** — orchestrator invokes `scripts/launch-terminal.sh <run-id> <N> <project-dir> <phase-name-slug> phase-continue` (the 5th arg, `phase-continue`, tells the script to launch `/phase-continue` instead of `/phase-execute`; the 5th arg is added in P7 with backward-compat for the 4-arg form). Phase status transitions: `checkpoint → in_progress`. The `/phase-continue` command body (P7, `commands/phase-continue.md`) handles loading the checkpoint, re-entering plan mode, and continuing the remaining work-steps.
+- **Split phase** — orchestrator marks this phase `complete` with a partial-deliverables note in the handoff comment; immediately opens a new phase (spec auto-derived from the checkpoint's `## Work-step progress` IN-FLIGHT + PENDING entries) inserted at position N+1; renumbers later phases in `run.json` and (GitHub mode) updates phase issue titles. Phase status: `checkpoint → complete (partial)`.
+- **View checkpoint detail** — orchestrator reads the full `phase-N-checkpoint.md` body and displays it in chat (no state mutation). After viewing, the menu re-renders so the user can pick a real action.
+- **Abort phase** — orchestrator marks this phase `failed`. Surfaces the [founder-card-checkpoint.md](../handoff/references/founder-card-checkpoint.md) abort guidance. Phase status: `checkpoint → failed`.
+
+**`checkpoint_count` thresholds** (modify the menu based on `run.json#phases[N].checkpoint_count`):
+
+| count | Menu treatment |
+|---|---|
+| `=1` (first checkpoint) | Render base menu as above. Recommended tag per reason mapping. |
+| `=2` (second checkpoint) | Prepend WARNING line to the question: `"⚠ Phase has hit checkpoint twice — may be over-scoped. Recommend Split."` Force Recommended tag onto option 2 (Split) regardless of reason. |
+| `≥3` (third+ checkpoint) | **Remove option 1 (Re-spawn) from the menu**. Only Split / View detail / Abort remain. Rationale: three checkpoints means the phase scope is genuinely wrong, not a context issue — re-spawning will just hit a fourth checkpoint. |
+
+See [`../handoff/references/founder-card-checkpoint.md`](../handoff/references/founder-card-checkpoint.md) for a self-contained founder-facing explanation of all 4 options (consequences, when each is the right pick, when each is wrong).
+
 ## State model (`run.json`)
 
 Atomic write (temp-file-then-rename) on every transition. Lives at `.claude/phasing/<run-id>/run.json`.
@@ -652,9 +803,28 @@ Atomic write (temp-file-then-rename) on every transition. Lives at `.claude/phas
 
 `retry_count` (per phase, optional, default 0) — incremented by `/phase-retry`. Absent on phases that have never been retried; renderers treat missing as 0.
 
+`checkpoint_count` (per phase, optional, default 0) — incremented by each `phase-N-checkpoint.md` write in phasing-executor mode (§6.9). Absent on phases that have never checkpointed; readers MUST treat missing as 0. Drives §9.5's menu thresholds (`=1` normal / `=2` WARNING+Split-recommended / `≥3` Re-spawn removed).
+
 `aborted_at` / `abort_reason` (top-level, optional) — set by `/phase-abort`. Null/absent on healthy runs; populated when a run is stopped mid-flight (distinct from `archived_at`, which is set by `/phase-archive` after a run completes or is aborted).
 
-States: `pending` / `in_progress` / `complete` / `failed`. No `BLOCKED`, `NEEDS_INPUT`, `DEFERRED`, `awaiting_*`. The simplicity is the win — fewer states = fewer ambiguities.
+States: `pending` / `in_progress` / `complete` / `failed` / `checkpoint`. The `checkpoint` value (added in v2.0.3) marks a phase that was paused mid-flight via `/handoff` in phasing-executor mode (§6.9); the orchestrator's poll picks up the corresponding `phase-N-checkpoint.md` and routes to the §9.5 decision menu. No `BLOCKED`, `NEEDS_INPUT`, `DEFERRED`, `awaiting_*`. The simplicity is the win — fewer states = fewer ambiguities.
+
+### State transitions
+
+All 8 valid `phases[N].status` transitions:
+
+```
+pending      → in_progress  (on phase spawn)
+in_progress  → complete     (on phase-N-handoff.md write with Status: complete)
+in_progress  → failed       (on phase-N-handoff.md write with Status: failed)
+in_progress  → checkpoint   (on phase-N-checkpoint.md write — added in v2.0.3)
+checkpoint   → in_progress  (on /phase-continue spawn — added in v2.0.3)
+checkpoint   → failed       (on §9.5 "Abort phase" menu pick — added in v2.0.3)
+checkpoint   → complete     (on §9.5 "Split phase" menu pick; partial deliverables — added in v2.0.3)
+any-status   → pending      (on /phase-retry; clears completed_at/handoff_url; increments retry_count)
+```
+
+**Backward-compat guarantee.** Old `run.json` files written before v2.0.3 lack the `checkpoint_count` field; readers MUST treat missing as 0. Readers that don't recognize the `checkpoint` enum value (e.g., a pre-v2.0.3 `/phase-resume` running against a post-v2.0.3 run.json) SHOULD treat it as `in_progress` for status-rendering purposes — graceful degrade. The orchestrator from v2.0.3+ recognizes the value natively; legacy readers will simply not surface the §9.5 menu and will fall back to standard polling.
 
 ## File mode layout
 
@@ -722,6 +892,13 @@ The scan is cheap (single pass, no GitHub round-trip). GitHub-mode runs are stil
   3. Back up any existing handoff: rename `phase-<N>-handoff.md` → `phase-<N>-handoff.retry-<timestamp>.bak.md`. GitHub mode: leave the comment on the issue but post a retry marker.
   4. Reset `run.json#phases[N]`: `status: pending`, clear `completed_at`, clear `handoff_url`, increment `retry_count` (new optional field; absent = 0).
   5. Spawn via `scripts/launch-terminal.sh <run-id> <N> <project-dir> <phase-name-slug>`.
+
+- `/phase-continue <run-id> <N>` — continue a paused phase from its `phase-N-checkpoint.md`.
+  Invoked by the orchestrator's "Re-spawn from checkpoint" menu pick (§9.5) OR manually by the user.
+  Loads the checkpoint, re-enters plan mode for the remaining work-steps, executes after approval,
+  writes the canonical `phase-N-handoff.md` on completion. See
+  [`~/Projects/unify-kit/plugins/unifylabs-workflow/commands/phase-continue.md`](../../commands/phase-continue.md)
+  for the full 12-step playbook (lands in P7).
 
 ## Cutover when editing this skill
 

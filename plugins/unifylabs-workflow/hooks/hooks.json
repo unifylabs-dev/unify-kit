@@ -4,9 +4,22 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/claudemd-scanner.sh" },
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-config-integrity.sh" },
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/marketplace-drift-check.sh" }
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/claudemd-scanner.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-config-integrity.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/marketplace-drift-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/context-awareness.sh"
+          }
         ]
       }
     ],
@@ -14,19 +27,28 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/dangerous-actions-blocker.sh" }
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/dangerous-actions-blocker.sh"
+          }
         ]
       },
       {
         "matcher": "Bash(git commit:*)",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-secrets.sh" }
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-secrets.sh"
+          }
         ]
       },
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/file-guard.sh" }
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/file-guard.sh"
+          }
         ]
       }
     ],
@@ -34,7 +56,21 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/output-secrets-scanner.sh" }
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/output-secrets-scanner.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/context-awareness.sh"
+          }
         ]
       }
     ]

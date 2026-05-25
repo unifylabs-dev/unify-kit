@@ -1,0 +1,180 @@
+{
+  "skill_name": "handoff",
+  "shape_note": "Each scenario describes a single end-to-end handoff or resume flow. A reader runs the scenario manually (or via a future eval harness) and compares observed behavior against expected_observations. The schema mirrors phasing/evals/orchestrator-evals.json's intent (a 'skill' + an array of cases) but uses the spec-mandated field set (id, summary, setup_prerequisites, invocation, expected_observations, tier_evidence) per phase-4 spec, since handoff scenarios are stateful workflows rather than single-prompt LLM evaluations.",
+  "spec_source": "specs/2026-05-23-handoff-skill-design.md §3, §6, §7.4–7.6, §8.1–8.8",
+  "scenarios": [
+    {
+      "id": "generic-FULL-happy",
+      "summary": "User in a non-phasing/non-brainstorm project at ~30% context invokes /handoff and writes a FULL-tier generic-mode handoff with a clean MEMORY.md pointer; no live re-entry yet.",
+      "setup_prerequisites": [
+        "cwd is a project root WITHOUT .claude/phasing/<run>/run.json carrying overall_status=in_progress",
+        "cwd is a project root WITHOUT .superpowers/brainstorm/<id>/ directory",
+        "Current branch is not linked to any open gh issue (so detect-mode does not return work-issue)",
+        "claude session active; chat has built context to ~30% (verify via tail -f $CLAUDE_HOOKS_LOG — context-awareness hook should remain silent at <40%)",
+        "plugins/unifylabs-workflow installed; SKILL.md, scripts/detect-mode.sh, hooks/context-awareness.sh, commands/handoff.md all reachable",
+        "MEMORY.md may or may not exist; if absent, /handoff creates it with index header on first write"
+      ],
+      "invocation": "/handoff (no args, no tier override; user types this in chat at ~30%)",
+      "expected_observations": [
+        "scripts/detect-mode.sh emits JSON with mode=generic, paths.run_json=null, paths.brainstorm_dir=null, paths.gh_issue_number=null",
+        "Skill picks tier=FULL per spec §7.5 (<50% → FULL)",
+        "Natural-break gate (§7.6) fires IF a TaskList in_progress task exists; user picks option 1 (finish first) OR option 2 (write now)",
+        "Doc lands at <project-root>/.claude/handoffs/<YYYY-MM-DD>-<topic-slug>.md (relative path stored in MEMORY.md pointer)",
+        "Frontmatter contains: name=<date>-<slug>, metadata.type=session-handoff, metadata.mode=generic, metadata.tier=full, metadata.status=pending, metadata.context_pct_at_write≈30, metadata.project_root=<abs-path>, metadata.created=<ISO-8601>",
+        "Body present in order: §1 Trajectory, §2 Locked decisions, §3 Open items, §4 World state (git+files+run-state subblocks), §5 TaskList snapshot, §6 Do-not-re-litigate, §7 Resume instructions",
+        "§1 is 3–8 paragraphs of prose (NOT a 10-bullet timeline) per FULL-tier core-shape.md",
+        "§2 bullets carry a rationale per bullet (FULL-only field; LEAN/EMERGENCY drop the rationales)",
+        "§4 git sub-block populated with expected_head=<actual-sha>, expected_branch=<actual-branch>, working_tree=clean|dirty:<files>",
+        "§4 load_bearing_files lists at least the canonical project entrypoint files",
+        "§5 TaskList block carries every current task with status and a 1-line description; in_progress task marked",
+        "§6 contains BOTH halves: (a) explicit 'don't reopen' framing of §2 decisions, (b) surveyed-and-rejected list (FULL only)",
+        "§7 Resume instructions is the full 5-step list ending with 'Read this handoff's §2/§4/§6 before mutating anything; then resume from §5 in-progress task or §7 step 5'",
+        "MEMORY.md pointer prepended (newest-first) with exact format from spec §8.2: `- [Pending handoff — <topic>](.claude/handoffs/<YYYY-MM-DD>-<slug>.md) — created <ISO>, mode generic, tier full. RESUME FIRST in fresh session if continuing <topic>.`",
+        "Confirmation message printed: terse, single block, includes path + tier + MEMORY.md pointer evidence + suggestion to exit + open fresh session",
+        "Total body length 200–400 lines (FULL range per spec §7.5)"
+      ],
+      "tier_evidence": [
+        "§1 is prose paragraphs not a bullet timeline (proves FULL not LEAN)",
+        "§2 bullets each carry a 'rationale:' or '— because …' clause (proves FULL not LEAN/EMERGENCY)",
+        "§6 surveyed-and-rejected sub-list is present and uncompressed (proves FULL not LEAN/EMERGENCY)",
+        "wc -l on the handoff body (excluding frontmatter) returns a number in [200, 400]",
+        "Frontmatter metadata.tier field literally reads 'full' (case-sensitive)"
+      ]
+    },
+    {
+      "id": "brainstorm-LEAN-natural-break",
+      "summary": "User mid-brainstorm at ~55% context invokes /handoff; expects LEAN-tier handoff at the brainstorm path with §8.C addendum, after the natural-break gate fires.",
+      "setup_prerequisites": [
+        "cwd contains .superpowers/brainstorm/<id>/ with a recent-mtime notes.md inside it (e.g., id=2026-05-24-storage-options)",
+        "superpowers:brainstorming skill was invoked earlier this session",
+        "claude session active; chat built context to ~55% (the context-awareness hook should fire a 50s-tier reminder at the next prompt unless suppressed)",
+        "At least one TaskList task with status=in_progress (e.g., 'Survey storage options A/B/C') so the natural-break gate has something to gate on",
+        "Skill + hook + scripts installed as in scenario A"
+      ],
+      "invocation": "/handoff (no args; LEAN selected automatically since 55% falls in 50–64% per spec §7.5)",
+      "expected_observations": [
+        "scripts/detect-mode.sh emits JSON with mode=brainstorm, paths.brainstorm_dir=<abs path to .superpowers/brainstorm/<id>/>, paths.run_json=null",
+        "Skill picks tier=LEAN per spec §7.5",
+        "Natural-break gate (§7.6) fires with AskUserQuestion: 'Currently mid-task: <one-line summary>. How to proceed?' carrying options: 1=Finish current task first then /handoff (Recommended), 2=Write handoff now and abandon current task (in-progress captured in §5), 3=Cancel handoff",
+        "If user picks option 1: handoff write defers; skill prints a one-liner ack + exits",
+        "If user picks option 2: handoff writes immediately; §5 carries the in_progress task with status=in_progress for the resume session to pick up",
+        "Doc lands at <project-root>/.superpowers/brainstorm/<id>/HANDOFF.md (NOT .claude/handoffs/)",
+        "Frontmatter metadata.mode=brainstorm, metadata.tier=lean, metadata.status=pending, metadata.context_pct_at_write≈55",
+        "Body present in order: §1 Trajectory, §2 Locked decisions, §3 Open items, §4 World state, §5 TaskList, §6 Do-not-re-litigate, §7 Resume instructions",
+        "§1 is approximately a 10-bullet timeline (NOT 3-8 paragraphs prose) per LEAN-tier core-shape.md",
+        "§2 bullets are present in full WITHOUT per-bullet rationales (LEAN drops rationales; NEVER trimmed at section level)",
+        "§3 is bullets only — no per-bullet context lines (LEAN trim)",
+        "§4 all three sub-blocks populated but prose trimmed (NEVER trimmed at section level — freshness-check parses §4)",
+        "§5 full bullets with descriptions (NEVER trimmed; recreate-tasklist parses §5)",
+        "§6 carries decisions half ONLY; surveyed-and-rejected list compressed (single line per option, no per-option rationale)",
+        "§7 is the same 5-step list as FULL but terser (each step ≤1 line)",
+        "§8.C brainstorm addendum appended after §7 with sub-sections: §8.C.1 Topic + framing, §8.C.2 Options-surveyed table (NEVER trimmed — table form with columns 'Option' / 'Status' / 'Why ranked'), §8.C.3 Direction-taken, §8.C.4 Checklist state if applicable (NEVER trimmed), §8.C.5 Next-action",
+        "MEMORY.md pointer: `- [Pending handoff — <topic>](.superpowers/brainstorm/<id>/HANDOFF.md) — created <ISO>, mode brainstorm, tier lean. RESUME FIRST in fresh session if continuing <topic>.`",
+        "Total body length 100–150 lines (LEAN range per spec §7.5)"
+      ],
+      "tier_evidence": [
+        "§1 is bullet-form (e.g., `- 09:14 — surveyed A`) NOT paragraph prose (proves LEAN not FULL)",
+        "§3 bullets have no follow-on context lines (LEAN trim signature)",
+        "§6 surveyed-and-rejected list is single-line-per-option (compressed) — proves LEAN not FULL",
+        "§8.C.2 Options-surveyed sub-section is present AND uncompressed (NEVER trimmed at this tier per spec)",
+        "wc -l on body in [100, 150]",
+        "Frontmatter metadata.tier reads 'lean'"
+      ]
+    },
+    {
+      "id": "phasing-orch-EMERGENCY",
+      "summary": "User in a phasing-orchestrator session at ~68% context invokes /handoff; expects EMERGENCY-tier handoff at the phasing-orchestrator path with §8.A addendum populated.",
+      "setup_prerequisites": [
+        "cwd is a project with .claude/phasing/<run-id>/run.json having overall_status=in_progress and at least one phase status=in_progress",
+        "Current claude session name matches `orchestrator-<topic-slug>` (env var CLAUDE_PHASE_SESSION unset; detection comes from cwd run.json + session-name heuristic in detect-mode.sh)",
+        "Chat built context to ~68% (the hook should have fired a 60s-tier reminder earlier; Claude consults SKILL.md §7.4 and likely surfaced /handoff already, but final invocation is user-initiated for this scenario)",
+        "There exist 'mid-conversation locks' to capture — recent in-chat decisions the orchestrator session committed to that are NOT yet reflected in master-plan / phase-spec / run.json. If none, §8.A.4 reads 'none'",
+        "There exist 'direction changes pending' — open questions / pivots the founder raised that have not yet been answered. If none, §8.A.5 reads 'none'"
+      ],
+      "invocation": "/handoff (no args; 68% selects EMERGENCY automatically per spec §7.5 — ≥65% → EMERGENCY)",
+      "expected_observations": [
+        "scripts/detect-mode.sh emits JSON with mode=phasing-orchestrator, paths.run_json=<abs path>, paths.master_plan=<abs path or null if GitHub mode>, paths.gh_issue_number=<tracking-issue-number-or-null>",
+        "Skill picks tier=EMERGENCY",
+        "Natural-break gate (§7.6) fires; even at EMERGENCY tier the gate does not bypass — user picks 1/2/3 as in other scenarios",
+        "Doc lands at <project-root>/.claude/phasing/<run-id>/session-handoff-<YYYY-MM-DD>.md (NOT .claude/handoffs/ — orchestrator mid-flight handoffs live alongside the run state; NOT phase-N-checkpoint.md which is reserved for phasing-executor mode and ships in P5)",
+        "Frontmatter metadata.mode=phasing-orchestrator, metadata.tier=emergency, metadata.status=pending, metadata.context_pct_at_write≈68, metadata.run_id=<run-id>",
+        "§1 Trajectory SKIPPED (EMERGENCY tier per core-shape.md; section header may still appear with a single line 'Skipped per EMERGENCY tier — see §8.A.2 for phase-status context')",
+        "§2 Locked decisions: full bullets, NEVER trimmed regardless of tier",
+        "§4 World state: all three sub-blocks fully populated, NEVER trimmed",
+        "§5 TaskList: full bullets with descriptions, NEVER trimmed",
+        "§6 decisions half only; surveyed-and-rejected list absent (EMERGENCY trim)",
+        "§7 Resume instructions: same 5 steps, terser",
+        "§8.A phasing-orchestrator addendum appended with: §8.A.1 Run-id + tracking issue (#<N>), §8.A.2 Phase status snapshot (every phase with status + handoff_url if complete), §8.A.3 Last in-progress phase's spec excerpt (links into phase-N-spec.md), §8.A.4 Mid-conversation locks (NEVER trimmed; populated with bullet list OR literally 'none'), §8.A.5 Direction changes pending (NEVER trimmed; populated OR 'none'), §8.A.6 Spawn-resume command line (the exact shell command to resume the orchestrator: `claude /phase-resume <run-id>`)",
+        "MEMORY.md pointer: `- [Pending handoff — <run-id> mid-flight](.claude/phasing/<run-id>/session-handoff-<YYYY-MM-DD>.md) — created <ISO>, mode phasing-orchestrator, tier emergency. RESUME FIRST in fresh session if continuing <run-id>.`",
+        "Total body length 40–70 lines (EMERGENCY range per spec §7.5)"
+      ],
+      "tier_evidence": [
+        "§1 is absent or single-line 'Skipped' marker (proves EMERGENCY)",
+        "§6 surveyed-and-rejected list is absent (proves EMERGENCY)",
+        "§8.A.4 Mid-conversation locks sub-section is present even if body is 'none' (NEVER trimmed; absence would indicate a bug)",
+        "§8.A.5 Direction changes pending sub-section is present even if body is 'none'",
+        "wc -l on body in [40, 70]",
+        "Frontmatter metadata.tier reads 'emergency' and metadata.run_id is populated"
+      ]
+    },
+    {
+      "id": "resume-clean",
+      "summary": "Fresh claude session starts in a project with a pending handoff in MEMORY.md whose §4 World state matches current git HEAD; expects clean freshness-check, recreate-tasklist execution, and frontmatter pending→consumed flip.",
+      "setup_prerequisites": [
+        "A previously-written handoff at <project-root>/.claude/handoffs/<YYYY-MM-DD>-<slug>.md exists with frontmatter status=pending",
+        "Its §4 World state captures git_check.expected_head=<sha-X> AND expected_branch=<branch-Y>",
+        "Current git HEAD at session start === <sha-X> AND current branch === <branch-Y> AND working tree is clean (no uncommitted changes that affect load_bearing_files)",
+        "Every path in the handoff's §4 load_bearing_files array exists on disk",
+        "If the handoff's §4 carries a run_json_check, that block evaluates to status=match against the current run.json (or n/a for generic-mode handoffs)",
+        "MEMORY.md at ~/.claude/projects/<project-hash>/memory/MEMORY.md carries a `- [Pending handoff — <topic>](<rel-path-to-handoff>)` line that resolves to the handoff doc",
+        "Fresh claude session opened in <project-root> (SessionStart hook will fire context-awareness.sh)"
+      ],
+      "invocation": "starting claude (no slash command; SessionStart hook drives the flow)",
+      "expected_observations": [
+        "context-awareness.sh fires on SessionStart; the hook's pending-handoff scan in <project-hash>/memory/MEMORY.md finds the pointer and injects the EXACT block from spec §7.2: `Pending handoff detected: <path>\\n Topic: <description>\\n Created: <relative-time>\\n ASK the user via AskUserQuestion whether this session resumes <topic> before doing other work. Apply freshness check BEFORE loading handoff content. Do not load handoff content until user confirms resume.`",
+        "Claude reads the injection + calls AskUserQuestion with question containing 'Pending handoff for <topic>: resume now or not?' and options: 'Resume now (Recommended)' / 'Not this session' / 'Mark consumed and start fresh'",
+        "User picks 'Resume now'",
+        "Claude runs `bash plugins/unifylabs-workflow/skills/handoff/scripts/freshness-check.sh <path-to-handoff>` and parses JSON output",
+        "freshness-check JSON output: overall=clean, git_check.status=match, git_check.actual_head===expected_head, every load_bearing_files[*].status=exists, run_json_check.status=match-or-n/a",
+        "Claude proceeds silently (no drift surfacing); reads the handoff body",
+        "Claude runs `bash plugins/unifylabs-workflow/skills/handoff/scripts/recreate-tasklist.sh <path-to-handoff>` and captures stdout",
+        "recreate-tasklist.sh stdout: shell-quoted TaskCreate lines for every task in §5, plus TaskUpdate <n> in_progress for any task marked in_progress, plus TaskUpdate <n> completed for any task marked completed",
+        "Claude executes each emitted line as a tool call (TaskCreate / TaskUpdate)",
+        "Claude flips frontmatter atomically: metadata.status: pending → consumed AND metadata.consumed_by_session: <new-session-id> (single file rewrite via temp-file-then-rename)",
+        "On the NEXT SessionStart in this project, the consume-cleanup scan removes the corresponding MEMORY.md pointer line (idempotent, silent)",
+        "Claude reads §7 Resume instructions from the handoff and continues work from the in_progress task"
+      ],
+      "tier_evidence": [
+        "Not applicable — tier is decided at write time, not resume time",
+        "However, the resume path itself MUST work identically for all tiers (FULL/LEAN/EMERGENCY) since §4 + §5 are NEVER trimmed regardless of tier"
+      ]
+    },
+    {
+      "id": "resume-fatal",
+      "summary": "Same setup as resume-clean but the handoff's §4 expected_head points to a sha that doesn't exist locally; expects freshness-check fatal verdict, Claude refuses auto-resume, surfaces 3 options.",
+      "setup_prerequisites": [
+        "Same as resume-clean BUT the handoff's §4 git_check.expected_head is set to a 40-char sha that no `git cat-file -e` can resolve (e.g., a sha from a deleted branch tip or a fabricated value). DO NOT git reset --hard the active workspace to create this — edit the handoff doc's §4 block directly.",
+        "MEMORY.md pointer line still present"
+      ],
+      "invocation": "starting claude (no slash command; SessionStart hook drives the flow)",
+      "expected_observations": [
+        "context-awareness.sh fires on SessionStart and injects the same pending-handoff reminder as in resume-clean",
+        "Claude calls AskUserQuestion 'Resume now / Not this session / Mark consumed'",
+        "User picks 'Resume now'",
+        "Claude runs freshness-check.sh <path-to-handoff>",
+        "freshness-check JSON output: overall=fatal (because git_check.status=drift AND actual_head does not match AND expected_head cannot be resolved by `git cat-file -e expected_head`)",
+        "Claude does NOT load the handoff body into working context (per SKILL.md hard rule: 'Never load handoff content into Claude's working context before freshness-check.sh passes')",
+        "Claude surfaces a plain-prose summary of WHAT is missing: 'Expected head <sha-X> not in current repo; actual head is <sha-Y> on branch <name>. Cannot safely auto-resume.'",
+        "Claude calls a second AskUserQuestion with the 3 spec §8.8 options: 'Investigate first (look at git reflog, fetch origin, etc.)' / 'Open empty session — don't resume this handoff' / 'Mark handoff consumed and start fresh'",
+        "Whichever option user picks, NO automatic frontmatter mutation OR tasklist rebuild happens UNTIL user confirms 'Mark consumed'",
+        "If user picks 'Mark consumed': frontmatter status flips to consumed (same atomic edit as resume-clean); MEMORY.md pointer removed on next SessionStart scan",
+        "If user picks 'Investigate first': Claude exits the resume flow; handoff doc stays pending; pointer stays in MEMORY.md so a future fresh session can retry",
+        "If user picks 'Open empty session': same as Investigate first — no mutations"
+      ],
+      "tier_evidence": [
+        "Not applicable — resume-side scenario",
+        "Verifying the freshness-check verdict ladder (clean/drift/fatal) — the script's contract is locked by P2's fixture tests (3 cases × 9 assertions all PASS); see scripts/test/test-freshness-check.sh"
+      ]
+    }
+  ]
+}
