@@ -1,16 +1,26 @@
 ---
 name: handoff
 description: >
-  Write a structured session-handoff doc so a fresh Claude session can continue your work with
-  zero context rot. Triggers on /handoff, /handoff-resume, /handoff-list, /handoff-done,
-  /handoff-revive — or when the context-awareness hook injects a threshold reminder
-  (40/50/60/70%) and the discretion table says surface. Auto-detects mode (phasing-orchestrator,
-  phasing-executor, brainstorm, plan-exec, work-issue, generic) and stacks mode-addenda on the
-  7-section universal core. Tiered (FULL <50% / LEAN 50–64% / EMERGENCY ≥65%) to trade output
-  detail against context %. Also handles the resume side: SessionStart hook detects pending
-  handoff, AskUserQuestion confirms, freshness-check passes, recreate-tasklist rebuilds state.
-  Use proactively when "context rescue", "session transfer", "save state for fresh session",
-  "write a handoff", or similar phrases come up.
+  Write a structured session-handoff doc so a fresh Claude session can resume the current work
+  cold — same decisions, same task state, same world state, same do-not-re-litigate guardrails.
+  The canonical response when conversational context gets full and quality starts degrading. Use
+  proactively when the user says or clearly implies any of: explicit slash commands (/handoff,
+  /handoff-resume, /handoff-list, /handoff-done, /handoff-revive, /handoff lean, /handoff
+  emergency); context-pressure framings ("getting close to context limits", "this convo is
+  getting long", "save the session state", "dump what I've got so a fresh session can pick up",
+  "context rescue", "session transfer"); mid-mode framings ("im in the middle of orchestrating",
+  "about to checkpoint this phase mid-flight", "this brainstorm is getting deep, wanna save it",
+  "i need to bail out of this session"); or resume-side language ("yesterday i left off
+  mid-something, can you pick up", "what was i working on", "there's a pending handoff
+  somewhere", "pick up where i left off"). Auto-detects mode (phasing-orchestrator,
+  phasing-executor, brainstorm, plan-exec, work-issue, generic) and stacks the right
+  mode-addendum on a 7-section universal core. Tiered FULL <50% / LEAN 50–64% / EMERGENCY ≥65% to
+  trade output detail against context %. Handles the resume side too: SessionStart hook flags
+  pending handoffs, AskUserQuestion confirms, freshness-check + recreate-tasklist rebuild state.
+  Do NOT trigger for: plain summarization ("summarize what we discussed"), file-system saves
+  ("save this file"), the phasing checkpoint flow (/phase-continue), semantic delegation
+  ("/handoff this task to engineering"), or vague continuation requests when no handoff exists
+  ("continue what you were doing").
 tags: [handoff, context-rescue, session-transfer, plan-mode, multi-session]
 ---
 
