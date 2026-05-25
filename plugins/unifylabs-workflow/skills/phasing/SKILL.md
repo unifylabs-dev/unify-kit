@@ -807,7 +807,7 @@ Atomic write (temp-file-then-rename) on every transition. Lives at `.claude/phas
 
 `aborted_at` / `abort_reason` (top-level, optional) — set by `/phase-abort`. Null/absent on healthy runs; populated when a run is stopped mid-flight (distinct from `archived_at`, which is set by `/phase-archive` after a run completes or is aborted).
 
-States: `pending` / `in_progress` / `complete` / `failed` / `checkpoint`. The `checkpoint` value (added in v2.1.0) marks a phase that was paused mid-flight via `/handoff` in phasing-executor mode (§6.9); the orchestrator's poll picks up the corresponding `phase-N-checkpoint.md` and routes to the §9.5 decision menu. No `BLOCKED`, `NEEDS_INPUT`, `DEFERRED`, `awaiting_*`. The simplicity is the win — fewer states = fewer ambiguities.
+States: `pending` / `in_progress` / `complete` / `failed` / `checkpoint`. The `checkpoint` value (added in v2.0.3) marks a phase that was paused mid-flight via `/handoff` in phasing-executor mode (§6.9); the orchestrator's poll picks up the corresponding `phase-N-checkpoint.md` and routes to the §9.5 decision menu. No `BLOCKED`, `NEEDS_INPUT`, `DEFERRED`, `awaiting_*`. The simplicity is the win — fewer states = fewer ambiguities.
 
 ### State transitions
 
@@ -817,14 +817,14 @@ All 8 valid `phases[N].status` transitions:
 pending      → in_progress  (on phase spawn)
 in_progress  → complete     (on phase-N-handoff.md write with Status: complete)
 in_progress  → failed       (on phase-N-handoff.md write with Status: failed)
-in_progress  → checkpoint   (on phase-N-checkpoint.md write — added in v2.1.0)
-checkpoint   → in_progress  (on /phase-continue spawn — added in v2.1.0)
-checkpoint   → failed       (on §9.5 "Abort phase" menu pick — added in v2.1.0)
-checkpoint   → complete     (on §9.5 "Split phase" menu pick; partial deliverables — added in v2.1.0)
+in_progress  → checkpoint   (on phase-N-checkpoint.md write — added in v2.0.3)
+checkpoint   → in_progress  (on /phase-continue spawn — added in v2.0.3)
+checkpoint   → failed       (on §9.5 "Abort phase" menu pick — added in v2.0.3)
+checkpoint   → complete     (on §9.5 "Split phase" menu pick; partial deliverables — added in v2.0.3)
 any-status   → pending      (on /phase-retry; clears completed_at/handoff_url; increments retry_count)
 ```
 
-**Backward-compat guarantee.** Old `run.json` files written before v2.1.0 lack the `checkpoint_count` field; readers MUST treat missing as 0. Readers that don't recognize the `checkpoint` enum value (e.g., a pre-v2.1.0 `/phase-resume` running against a post-v2.1.0 run.json) SHOULD treat it as `in_progress` for status-rendering purposes — graceful degrade. The orchestrator from v2.1.0+ recognizes the value natively; legacy readers will simply not surface the §9.5 menu and will fall back to standard polling.
+**Backward-compat guarantee.** Old `run.json` files written before v2.0.3 lack the `checkpoint_count` field; readers MUST treat missing as 0. Readers that don't recognize the `checkpoint` enum value (e.g., a pre-v2.0.3 `/phase-resume` running against a post-v2.0.3 run.json) SHOULD treat it as `in_progress` for status-rendering purposes — graceful degrade. The orchestrator from v2.0.3+ recognizes the value natively; legacy readers will simply not surface the §9.5 menu and will fall back to standard polling.
 
 ## File mode layout
 

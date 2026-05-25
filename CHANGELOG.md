@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
-## [2.1.0] - 2026-05-25
+## [2.0.3] - 2026-05-25
 
 Minor release adding three coordinated, additive artifacts that turn ad-hoc session→session knowledge transfer into a first-class primitive: a universal `handoff` skill, a `context-awareness` hook, and a checkpoint extension to the existing `phasing` skill. All changes are additive — no consumer migration required.
 
@@ -32,9 +32,9 @@ Minor release adding three coordinated, additive artifacts that turn ad-hoc sess
 - **`hooks/hooks.json`** — added `context-awareness.sh` to existing `SessionStart` array (now 4 entries); added new `UserPromptSubmit` block. All prior PreToolUse/PostToolUse blocks untouched.
 - **`README.md` "What's inside" bullet** — count + names synced with the bumped `plugin.json`/`marketplace.json` description (incidentally fixes pre-existing v2.0.1 drift where the README still listed `review-prototype` and was missing `extract-prototype-review` + `integrate-branch`).
 
-### Migration from 2.0.1
+### Migration from 2.0.2
 
-No migration required for consumers. The build is fully additive. In-flight phasing runs in other projects continue running under their starting skill version; per-orchestrator cutover follows the documented procedure in `docs/cutover-handoff-v2.1.md` (manual, at natural breaks; lands in P10 of run `2026-05-24-handoff-skill-build`).
+No migration required for consumers. The build is fully additive. In-flight phasing runs in other projects continue running under their starting skill version; per-orchestrator cutover follows the documented procedure in `docs/cutover-handoff-v2.0.3.md` (manual, at natural breaks; lands in P10 of run `2026-05-24-handoff-skill-build`).
 
 ## [2.0.2] - 2026-05-14
 
