@@ -36,6 +36,20 @@ Minor release adding three coordinated, additive artifacts that turn ad-hoc sess
 
 No migration required for consumers. The build is fully additive. In-flight phasing runs in other projects continue running under their starting skill version; per-orchestrator cutover follows the documented procedure in `docs/cutover-handoff-v2.1.md` (manual, at natural breaks; lands in P10 of run `2026-05-24-handoff-skill-build`).
 
+## [2.0.2] - 2026-05-14
+
+Patch release adding the `/spec-it` skill — front-door to `/work-issue` — and updating methodology to document the idea-to-issue → implementation → phasing chain.
+
+### Added
+
+- **`plugins/unifylabs-workflow/skills/spec-it/`** — net-new skill. Front-door to `/work-issue`: turns a raw feature idea into a properly-shaped GitHub issue with an embedded draft spec, grounded in repo + memory + external standards research. 11 gated phases (pre-flight → brainstorm → grounded research → clarifications → decomposition → kit-propagation check → plan draft → iterative review → approval → execution → deliverable verification → handoff). Adapts to the target repo's spec conventions at runtime (optics-style modules+journeys, unify-kit-style numbered specs, ADR-style decision records, or bootstrap-from-templates for repos with no spec convention). Both code and non-code deliverables supported. Bundles 5 reference docs (repo-schemas, propagation-heuristics, issue-body-templates, decomposition-heuristics, research-triggers) and 7 asset templates (4 spec, 3 issue body). Invokes `superpowers:brainstorming` (intercepting before its `writing-plans` hand-off) for divergent exploration, and `iterative-review` (doc mode) for self-critique in Phases 7 + 10.
+
+### Changed
+
+- **`plugins/unifylabs-workflow/.claude-plugin/plugin.json`**: `version` `2.0.1` → `2.0.2` (patch bump per the kit's CI-enforced `^2\.0\.[0-9]+$` constraint until a major release is cut); `description` enumerates 11 skills (adds `spec-it` as the first entry to reflect its role as the front-door to the rest of the workflow).
+- **`.claude-plugin/marketplace.json`**: description mirrors plugin.json (11 skills, `spec-it` listed first).
+- **`specs/07-philosophy-and-methodology.md`**: methodology canon updated to add `/spec-it` as the recommended idea-to-issue entry point preceding `/work-issue`. Documents the front-door pattern: `/spec-it` produces issues, `/work-issue` implements them, `/phase` decomposes implementation when needed.
+
 ## [2.0.1] - 2026-05-12
 
 Patch release fixing a v2.0.0 plugin-load regression and vendoring 2 skills that emerged after phase-1's scope was locked. Same-day shipped — minimal scope, high-urgency hook fix.
