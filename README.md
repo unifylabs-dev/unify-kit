@@ -16,8 +16,8 @@ A Claude Code kit that ships:
 
 - A **marketplace** (`.claude-plugin/marketplace.json`) curating the
   `unifylabs-workflow` plugin.
-- A **plugin** (`plugins/unifylabs-workflow/`) bundling 11 skills
-  (`work-issue`, `ship`, `phasing`, `extract-prototype-review`,
+- A **plugin** (`plugins/unifylabs-workflow/`) bundling 12 skills
+  (`work-issue`, `spec-it`, `ship`, `phasing`, `extract-prototype-review`,
   `integrate-branch`, `analyze-comms`, `promote-to-marketplace`,
   `compliance-research`, `iterative-review`, `humanizer`, `handoff`),
   16 commands (the 9 `phase*` set plus `iterative-review`, the 5
