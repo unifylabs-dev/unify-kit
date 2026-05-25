@@ -16,12 +16,14 @@ A Claude Code kit that ships:
 
 - A **marketplace** (`.claude-plugin/marketplace.json`) curating the
   `unifylabs-workflow` plugin.
-- A **plugin** (`plugins/unifylabs-workflow/`) bundling 9 skills
-  (`work-issue`, `ship`, `review-prototype`, `analyze-comms`, `phasing`,
-  `promote-to-marketplace`, `compliance-research`, `iterative-review`,
-  `humanizer`), 10 commands (the 9 `phase*` set plus `iterative-review`),
-  7 security hooks (resolved via `${CLAUDE_PLUGIN_ROOT}`), and an opt-in
-  statusline.
+- A **plugin** (`plugins/unifylabs-workflow/`) bundling 11 skills
+  (`work-issue`, `ship`, `phasing`, `extract-prototype-review`,
+  `integrate-branch`, `analyze-comms`, `promote-to-marketplace`,
+  `compliance-research`, `iterative-review`, `humanizer`, `handoff`),
+  16 commands (the 9 `phase*` set plus `iterative-review`, the 5
+  `handoff*` commands, and `/phase-continue`), 8 security/workflow hooks
+  (including `context-awareness`; resolved via `${CLAUDE_PLUGIN_ROOT}`),
+  and an opt-in statusline.
 - A **template tree** (`templates/`) organized into tiers — `core/`,
   `claude-runtime/`, `optional/`, `compliance/profiles/{baseline-pipeda,
   healthcare-phipa, financial-canada, general-soc2}/`, and
