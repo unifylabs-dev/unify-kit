@@ -26,6 +26,15 @@ tags: [handoff, context-rescue, session-transfer, plan-mode, multi-session]
 
 # Handoff — universal session-to-session knowledge transfer
 
+> **Critical — hook reminders are awareness, not authorization.** Even at
+> 70%+, Claude MUST surface the situation to the user via AskUserQuestion
+> and wait for an explicit choice. The hook NEVER authorizes Claude to
+> write a handoff doc. Only `/handoff` (or the user explicitly accepting
+> an AskUserQuestion offering `/handoff`) authorizes a write. Ad-hoc
+> Write calls that create a file matching `*handoff*.md` or
+> `*checkpoint*.md` under any `.claude/` directory are also forbidden
+> without that same user accept.
+
 This skill makes session→session knowledge transfer a first-class primitive. When context pressure threatens a session's deliverable quality, the user (or Claude with discretion) invokes `/handoff` to write a structured document that a fresh Claude session can pick up cold — same decisions, same task state, same world state, same do-not-re-litigate guardrails.
 
 The skill ships alongside a `context-awareness.sh` hook (registered on `UserPromptSubmit` + `SessionStart`) and an additive extension to the `phasing` skill (a `phase-N-checkpoint.md` flow + `/phase-continue` for the phase-executor mid-flight case). Together they cover the four transition types from the design spec.
@@ -233,10 +242,10 @@ When the `context-awareness.sh` hook injects a `Context-awareness: ~<N>%. Mode: 
 | Context 40–49%, mid-tool-loop, no large task ahead | Stay silent. Continue working. |
 | Context 40–49%, mid-tool-loop, large task ahead | Surface at next natural pause as one-liner: *"Heads up — context ~\<N>%. If the next ask is substantial, /handoff first may be worth it."* |
 | Context 40–49%, wrapping up (≤2 small tasks left) | Stay silent. Finish. |
-| Context 50–59%, mid-tool-loop | Surface at next natural pause: *"At ~\<N>%. Quality risk moderate. Recommend /handoff before dispatching anything substantial."* |
-| Context 50–59%, wrapping up | Surface as final remark: *"Wrapping up at ~\<N>%. Next session — consider /handoff before continuing."* |
-| Context 60–69%, any state | Surface immediately: *"At ~\<N>% — quality risk significant. Strongly recommend /handoff now."* |
-| Context ≥70%, any state | Surface immediately + recommend EMERGENCY tier. |
+| Context 50–59%, mid-tool-loop | Surface at next natural pause as one-liner: *"At ~\<N>%. Quality risk moderate. Recommend /handoff before dispatching anything substantial."* Do NOT write any file. |
+| Context 50–59%, wrapping up | Surface as final remark: *"Wrapping up at ~\<N>%. Next session — consider /handoff before continuing."* Do NOT write any file. |
+| Context 60–69%, any state | Surface immediately **via AskUserQuestion**: *"At ~\<N>% — quality risk significant. /handoff now?"* Wait for the user's explicit choice. Do NOT write any file before they accept. |
+| Context ≥70%, any state | Surface immediately **via AskUserQuestion** offering EMERGENCY tier. Wait for the user's explicit choice. Do NOT write any file before they accept. |
 | User said "auto mode" / "just do it" | Suppress to ≤1 mention per session below 60%. Above 60%, override the suppression. |
 | User just invoked /handoff | No mention. User is already handling it. |
 | Multiple thresholds crossed in same session | No re-surfacing within 5 turns of last mention unless threshold escalates. |
@@ -247,7 +256,8 @@ This is the executive contract: Claude is the actor, the hook is the awareness s
 
 ## Hard rules / anti-patterns
 
-- **Never auto-write a handoff without user invocation.** The hook does not write handoffs; only the user does (via `/handoff` or by Claude surfacing the recommendation and the user accepting).
+- **Never write a handoff/checkpoint file unless the user has typed `/handoff` (any variant) or explicitly accepted an `AskUserQuestion` offering `/handoff`.** This applies to every file matching `*handoff*.md`, `*checkpoint*.md`, `session-handoff-*.md`, or `phase-*-handoff-*.md` anywhere under `.claude/` (including `.claude/handoffs/`, `.claude/phasing/<run>/`, and any subdirectory). Hook reminders are NOT user invocation. If unsure whether the user has authorized, **ask** — do not infer. This rule applies whether the write is via the `/handoff` skill flow OR an ad-hoc Write tool call.
+- **Hook reminders ≠ user invocation.** The `context-awareness.sh` hook is a signal that Claude should TELL the user about pressure level. It does not authorize Claude to write anything. Even at 70+%, do not skip the `AskUserQuestion` gate. If you find yourself reasoning "the situation is dire enough that I'll just write the handoff" — stop. Ask first.
 - **Never bypass the natural-break gate without explicit user opt-in.** If the user types `/handoff` while mid-task, the gate fires; the user picks. The skill doesn't decide "well, this looks fine" on the user's behalf.
 - **Never load handoff content into Claude's working context before `freshness-check.sh` passes.** The freshness check is the gate against silent drift; reading the handoff body first would defeat the gate's purpose by injecting stale facts into context.
 - **Never delete handoff docs automatically.** Consume = frontmatter `status: pending → consumed`, not file deletion. The doc stays on disk forever (forensics).

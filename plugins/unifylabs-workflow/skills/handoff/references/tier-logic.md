@@ -14,6 +14,8 @@ The tier controls section *depth*, never section *presence*. The 7-section core 
 | LEAN | 50–64% | 1.5–2.5% | 100–150 lines |
 | EMERGENCY | ≥65% | 0.5–1% | 40–70 lines |
 
+**Note on the % values.** They are relative to the **pressure baseline** that `context-awareness.sh` uses (the absolute token count at which quality degradation is felt — typically 500k for Opus 4.7 1M and 150k for 200k-window models, env-overridable via `UNIFYLABS_PRESSURE_BASELINE_TOKENS`). They are NOT a fraction of the model's physical context window. This keeps the tier semantics calibrated to user-felt pressure regardless of which model is in use.
+
 The tier is computed from the context-percentage value the hook last injected (per `context-awareness.sh`'s `Context-awareness: ~<N>%` reminder). When the skill is invoked without recent hook injection (e.g., user typed `/handoff` cold), the skill computes context % itself by reading the transcript per the same logic the hook uses.
 
 Mapping:
@@ -32,10 +34,10 @@ Before committing to a tier, the skill estimates the output size and checks whet
 
 1. Compute (section depths × tier multiplier) → estimated output line count.
 2. Convert to tokens via line-to-token heuristic (~10 tokens per markdown line average; conservative).
-3. Add to current context tokens. Divide by context window. → post-write context %.
+3. Add to current context tokens. Divide by **pressure baseline** (the same denominator the hook uses — see `context-awareness.sh` header for the value). → post-write context %.
 4. If post-write % > 75, surface a warning to the user with an AskUserQuestion offering downgrade tier.
 
-The check matters most at the FULL/LEAN boundary: a 48%-context session asking for FULL might land at 53% post-write — fine. A 49%-context session asking for FULL on a complex addendum-stacking handoff might land at 78% — dangerous (the write itself just created a context-pressure problem worse than the one it solved).
+The check matters most at the FULL/LEAN boundary: a 48%-context session asking for FULL might land at 53% post-write — fine. A 49%-context session asking for FULL on a complex addendum-stacking handoff might land at 78% — dangerous (the write itself just created a context-pressure problem worse than the one it solved). Using the same pressure-baseline denominator as the hook keeps the user's mental model consistent across the two systems.
 
 **75% safety warning (verbatim):**
 

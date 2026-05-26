@@ -8,17 +8,36 @@
 #
 # Behavior (per handoff design spec §7):
 #   - UserPromptSubmit: compute effective context % from transcript_path's last
-#     assistant record (.message.usage sum). Silent <40%. Tier-matched reminder
-#     ≥40% per spec §7.2 table. Suppress within 5-turn window unless tier escalates.
+#     main-thread assistant record (.message.usage sum). Silent <40%. Tier-matched
+#     reminder ≥40% per spec §7.2 table. Suppress within 5-turn window unless
+#     tier escalates.
 #   - SessionStart: scan project MEMORY.md for pending handoff pointers. Emit
 #     pending-handoff reminder for each non-consumed pointer; idempotently strip
 #     pointers whose linked doc carries `status: consumed` in its frontmatter.
 #
-# The hook is awareness, not instruction. It never forces AskUserQuestion;
-# Claude consults the discretion table in skills/handoff/SKILL.md §7.4.
+# Calibration (revised 2026-05-26): the percentage is computed against a
+# **pressure baseline** — the absolute token count at which quality
+# degradation is felt — NOT against the model's context window. This is
+# decoupled because feedback shows users (and Claude) experience pressure
+# against absolute tokens, not against a stretched 1M-window denominator.
+# Defaults: 500,000 for claude-opus-4-7 (assumes 1M mode); 150,000 otherwise.
+# Override with UNIFYLABS_PRESSURE_BASELINE_TOKENS=<int>. The model window
+# is still reported in the diagnostic message for transparency.
+#
+# Known limitation: the transcript's `.message.model` field strips the
+# `[1m]` window-variant suffix, so the hook cannot tell 200k Opus apart
+# from 1M Opus from the transcript alone. The default baseline for
+# claude-opus-4-7 assumes 1M. If running 200k Opus, set
+# UNIFYLABS_PRESSURE_BASELINE_TOKENS=150000.
+#
+# Discipline: the hook is awareness, not authorization. It NEVER instructs
+# Claude to write a handoff file; the tier copy explicitly says to ASK the
+# user via AskUserQuestion and wait for an explicit accept. See
+# skills/handoff/SKILL.md hard rules.
 #
 # CLAUDE_HOOKS_DISABLE: comma-separated list of hook names to disable; this hook is "context-awareness".
 # CLAUDE_HOOKS_LOG: writable path; if set, append one-line JSON records {ts, hook, decision, matcher, brief}.
+# UNIFYLABS_PRESSURE_BASELINE_TOKENS: integer; overrides the per-model pressure-baseline default.
 # MEMORY_MD_OVERRIDE: test-only — overrides the resolved MEMORY.md path (used by test harness).
 
 set -euo pipefail
@@ -62,13 +81,17 @@ transcript_path=$(printf '%s' "$STDIN_RAW" | jq -r '.transcript_path // ""' 2>/d
 cwd=$(printf '%s' "$STDIN_RAW" | jq -r '.cwd // ""' 2>/dev/null || echo "")
 input_model=$(printf '%s' "$STDIN_RAW" | jq -r '.model // ""' 2>/dev/null || echo "")
 
-# ---------- Locate last assistant record (for tokens + model on UserPromptSubmit) ----------
+# ---------- Locate last main-thread assistant record (for tokens + model on UserPromptSubmit) ----------
+# Exclude subagent records (`"isSidechain":true`) — their usage reflects the
+# subagent's small context, not the parent session's accumulated context.
+# Be permissive: if the field is absent entirely (older transcript formats),
+# include the record.
 last_assistant=""
 if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
-  # Reverse the file, find the first assistant record. Use awk for portability
-  # (BSD `tac` is absent on macOS; tail -r exists but jq -c piping reversed lines is awkward).
   last_assistant=$(awk '
-    /"type":"assistant"/ || /"role":"assistant"/ { lines[NR] = $0; idx[++n] = NR }
+    (/"type":"assistant"/ || /"role":"assistant"/) && !/"isSidechain":true/ {
+      lines[NR] = $0; idx[++n] = NR
+    }
     END { if (n > 0) print lines[idx[n]] }
   ' "$transcript_path" 2>/dev/null || echo "")
 fi
@@ -106,11 +129,37 @@ case "$model_norm" in
   *)                       window=200000 ;;
 esac
 
-# Compute percentage; guard against window=0 just in case.
-if [ "$window" -gt 0 ]; then
-  pct=$(( tokens * 100 / window ))
+# ---------- Resolve pressure baseline ----------
+# The pressure baseline is the absolute token count at which quality
+# degradation is felt — independent of the model's physical window. We
+# divide tokens by this baseline (not by the window) to produce the tier %.
+# Env var wins if set; else per-model lookup; else 150k conservative default.
+if [ -n "${UNIFYLABS_PRESSURE_BASELINE_TOKENS:-}" ]; then
+  pressure_baseline="$UNIFYLABS_PRESSURE_BASELINE_TOKENS"
 else
-  pct=0
+  case "$model_norm" in
+    claude-opus-4-7)         pressure_baseline=500000 ;;
+    claude-sonnet-4-6)       pressure_baseline=150000 ;;
+    claude-haiku-4-5-*)      pressure_baseline=150000 ;;
+    *)                       pressure_baseline=150000 ;;
+  esac
+fi
+# Guard against non-numeric / zero baseline (e.g. mistyped env var).
+case "$pressure_baseline" in
+  ''|*[!0-9]*|0) pressure_baseline=150000 ;;
+esac
+
+# Compute percentage against the pressure baseline; cap at 999 for sane formatting.
+pct=$(( tokens * 100 / pressure_baseline ))
+[ "$pct" -gt 999 ] && pct=999
+
+# Human-readable absolutes for diagnostic messages.
+tokens_k=$(( tokens / 1000 ))
+baseline_k=$(( pressure_baseline / 1000 ))
+if [ "$window" -ge 1000000 ]; then
+  window_label="$(( window / 1000000 ))M"
+else
+  window_label="$(( window / 1000 ))k"
 fi
 
 # ---------- Resolve tier ----------
@@ -188,16 +237,16 @@ if [ "$event" = "UserPromptSubmit" ]; then
 
   case "$tier" in
     40s)
-      printf 'Context-awareness: ~%d%%. Mode: %s. Apply discretion rules from handoff skill — surface to user only if situation warrants per rules table.\n' "$pct" "$mode"
+      printf 'Context-awareness: ~%d%% (%dk tokens, baseline %dk; model %s, window %s). Mode: %s. Stay silent unless next ask is substantial. If you do mention it, surface as a one-liner to the user. Do NOT prepare a handoff. Hook reminders are awareness, not authorization.\n' "$pct" "$tokens_k" "$baseline_k" "$model_norm" "$window_label" "$mode"
       ;;
     50s)
-      printf 'Context-awareness: ~%d%%. Mode: %s. Quality risk moderate. Default to surfacing at next natural pause unless work is clearly wrapping up.\n' "$pct" "$mode"
+      printf 'Context-awareness: ~%d%% (%dk tokens, baseline %dk; model %s, window %s). Mode: %s. Quality risk moderate. At the next natural pause, ASK the user via AskUserQuestion whether to /handoff. Do NOT write any handoff/checkpoint file without their explicit accept. Hook reminders are awareness, not authorization.\n' "$pct" "$tokens_k" "$baseline_k" "$model_norm" "$window_label" "$mode"
       ;;
     60s)
-      printf 'Context-awareness: ~%d%%. Mode: %s. Quality risk significant. Strongly recommend surfacing /handoff option at next natural pause. EMERGENCY tier will apply if invoked.\n' "$pct" "$mode"
+      printf 'Context-awareness: ~%d%% (%dk tokens, baseline %dk; model %s, window %s). Mode: %s. Quality risk significant. ASK the user via AskUserQuestion now whether to /handoff. Hook reminders are awareness — they do NOT authorize file writes. No file writes until the user explicitly accepts.\n' "$pct" "$tokens_k" "$baseline_k" "$model_norm" "$window_label" "$mode"
       ;;
     70+)
-      printf "Context-awareness: ~%d%%. Mode: %s. Quality risk HIGH. Surface /handoff immediately unless user explicitly said 'just finish this'. EMERGENCY tier mandatory.\n" "$pct" "$mode"
+      printf 'Context-awareness: ~%d%% (%dk tokens, baseline %dk; model %s, window %s). Mode: %s. Quality risk HIGH. ASK the user via AskUserQuestion immediately, offering EMERGENCY tier. Do NOT write any handoff/checkpoint file until the user explicitly accepts. The hook does not authorize file writes.\n' "$pct" "$tokens_k" "$baseline_k" "$model_norm" "$window_label" "$mode"
       ;;
   esac
 
