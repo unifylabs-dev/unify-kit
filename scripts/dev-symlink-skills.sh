@@ -65,8 +65,10 @@ readonly KIT_ROOT
 readonly PLUGIN_ROOT="${KIT_ROOT}/plugins/unifylabs-workflow"
 readonly CLAUDE_HOME="${HOME}/.claude"
 
-# 10 skills: name → relative path under PLUGIN_ROOT (dir-typed).
+# 12 skills: name → relative path under PLUGIN_ROOT (dir-typed).
 # (extract-prototype-review is the rename of review-prototype, not net-new.)
+# Added in v2.0.x: spec-it (front-door to /work-issue), handoff (session-
+# to-session knowledge transfer).
 SKILLS=(
   "work-issue"
   "ship"
@@ -78,13 +80,17 @@ SKILLS=(
   "compliance-research"
   "iterative-review"
   "humanizer"
+  "spec-it"
+  "handoff"
 )
 
-# 10 commands: filename (with .md) → file under PLUGIN_ROOT/commands/.
+# 16 commands: filename (with .md) → file under PLUGIN_ROOT/commands/.
+# Added in v2.0.3: phase-continue + the 5 handoff* commands.
 COMMANDS=(
   "phase.md"
   "phase-abort.md"
   "phase-archive.md"
+  "phase-continue.md"
   "phase-execute.md"
   "phase-list.md"
   "phase-next.md"
@@ -92,6 +98,11 @@ COMMANDS=(
   "phase-retry.md"
   "phase-status.md"
   "iterative-review.md"
+  "handoff.md"
+  "handoff-done.md"
+  "handoff-list.md"
+  "handoff-resume.md"
+  "handoff-revive.md"
 )
 
 # ----- runtime state ---------------------------------------------------------
