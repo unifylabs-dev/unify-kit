@@ -1,6 +1,6 @@
 # Orchestration Framework — Design
 
-> Working name: **`flow`** (provisional — see §14 Open decisions)
+> Name: **`phasing-flow`** (decided 2026-06-01). The body + impact matrix still use `flow` as shorthand — a full rename pass (careful: exclude "workflow"/"Workflow") is an M0 task.
 
 | | |
 |---|---|
@@ -171,7 +171,7 @@ M1 is the trust gate: we do not tackle the flagship engine until the reference i
 
 ## 14. Open decisions (for review)
 
-1. **Framework name.** Working: `flow`. Alternatives: `orchestrate`, `conductor`, `relay`, `arc`. (Decide before M2.)
+1. **Framework name.** ✅ RESOLVED — **`phasing-flow`** (decided 2026-06-01; it carries the phasing lineage, re-platformed on workflows). Full rename of the `flow` shorthand across the design + matrix docs is an M0 task (exclude "workflow"/"Workflow").
 2. **`ultraplan` + agent-teams** — leverage as part of the framework, or park as "later"? (Both add cloud/coordination surface.)
 3. **Trust bar** — what evidence (eval pass-rate? a verification-doesn't-regress benchmark?) convinces you native sub-agents have solved the old performative-verification problem, before M2?
 4. **Routines scope** — which detect-only routines (drift / dep-CVE / doc-freshness)? Cloud dependency acceptable?
