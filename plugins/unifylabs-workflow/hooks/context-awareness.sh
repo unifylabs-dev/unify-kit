@@ -278,7 +278,10 @@ if [ "$event" = "SessionStart" ]; then
   fi
 
   # Read pending pointer lines (preserve line numbers for idempotent cleanup).
-  mapfile -t pending_lines < <(grep -n '^- \[Pending handoff' "$memory_md" 2>/dev/null || true)
+  pending_lines=()
+  while IFS= read -r _pl_line; do
+    pending_lines+=("$_pl_line")
+  done < <(grep -n '^- \[Pending handoff' "$memory_md" 2>/dev/null || true)
 
   if [ "${#pending_lines[@]}" -eq 0 ]; then
     _hook_log allow "$_MATCHER" "no-pending"
