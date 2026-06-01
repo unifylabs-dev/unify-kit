@@ -70,12 +70,12 @@ The kit's own counts are already inconsistent across ~15 files, and one CI job a
 - `plugins/unifylabs-workflow/skills/integrate-branch/SKILL.md` `[CI]` — 6-agent audit → typed `parallel()`; + `/goal`.
 - `specs/10-sdd-layer.md` `[CI]`, `templates/core/specs/README.md.template` `[CI]`, `templates/core/issue-templates/*.yml.template` `[CI]`, `templates/core/pull-request-template.md.template` `[CI]` — `/work-issue` phase/verification references (confirm front-door command names survive).
 
-## Theme 6 — Phasing deprecation (M5; keep installed until migration)
+## Theme 6 — Phasing coexistence (M5; phasing continues for the use cases it still fits; deprecation is per-use-case, not wholesale)
 
-- `plugins/unifylabs-workflow/skills/phasing/SKILL.md` `[CI]` — add deprecation pointer to `/workflow` + EnterWorktree; do **not** remove.
+- `plugins/unifylabs-workflow/skills/phasing/SKILL.md` `[CI]` — add a pointer noting phasing-flow exists for new cross-session orchestration (a soft "prefer phasing-flow for X" note, NOT a hard deprecation); do **not** remove; phasing may continue + be improved for the use cases it still fits.
 - `plugins/unifylabs-workflow/skills/phasing/references/{master-plan-shape,phase-spec-shape,checkpoint-shape,handoff-shape,verification-types,archive-policy,github-mode-commands}.md` — *(critic-caught, 7 files)* run.json/fresh-session model.
-- `plugins/unifylabs-workflow/commands/phase*.md` — *(critic-caught, 10 files)* per-command docs for the deprecated orchestration.
-- `plugins/unifylabs-workflow/skills/phasing/scripts/{launch-terminal.sh,archive-run.sh}` + `scripts/test/test-launch-terminal.sh` — retire with phasing.
+- `plugins/unifylabs-workflow/commands/phase*.md` — *(critic-caught, 10 files)* per-command docs for phasing's orchestration (kept; phasing may continue for use cases it fits).
+- `plugins/unifylabs-workflow/skills/phasing/scripts/{launch-terminal.sh,archive-run.sh}` + `scripts/test/test-launch-terminal.sh` — phasing's multi-terminal machinery, not carried into phasing-flow; retire only if/when phasing itself is retired for a given use case.
 - `plugins/unifylabs-workflow/skills/phasing/evals/{orchestrator-evals,phase-executor-evals}.json` — *(critic-caught)* phasing evals.
 - `.claude/phasing/2026-05-04-unify-kit-v0.1/` — *(critic-caught)* live `[local]` run-state (gitignored).
 - `.gitignore` — add ignore for the new `phasing-flow` run-state dir; keep `.claude/phasing/` until migration.

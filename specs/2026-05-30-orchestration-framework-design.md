@@ -7,7 +7,7 @@
 | **Status** | Draft for review (brainstorm → design) |
 | **Date** | 2026-05-30 |
 | **Authors** | Tomer Kurman + Claude (Opus 4.8, 1M) |
-| **Eventually supersedes** | the `phasing` skill, and the within-session half of `handoff` — *after* migration |
+| **Eventually supersedes** | the `phasing` skill *for the cross-session orchestration use cases phasing-flow covers* (phasing may continue + be improved for other use cases — see §2), and the within-session half of `handoff` — *after* migration |
 | **Build branch** | `feature/orchestration-framework` (worktree: `/Users/tomerkurman/unify-kit-orchestration`) |
 | **Restore point** | tag `pre-orchestration-framework` → `36509f2` |
 | **Related** | `specs/2026-05-23-handoff-skill-design.md`, `docs/methodology.md`, `docs/philosophy.md`, the deep-dive + impact-sweep workflow outputs |
@@ -31,7 +31,7 @@ unify-kit's `phasing` (cross-session, multi-terminal) and `handoff` (context-sur
 Build a **brand-new orchestration framework** — *not* a refactor of `phasing`. It **learns from** phasing's hard-won foundations and **drags none of its machinery** (multi-terminal spawn, `launch-terminal.sh`, `run.json` polling, OSC-2 title pills, manual copy-paste). The end state:
 
 - **Target execution is in-process** via the Workflow tool, **gated by a human orchestrator session**.
-- `phasing` stays installed and untouched; it is **deprecated only after we migrate** live usage off it (we are using it on a real project today).
+- `phasing` stays installed and untouched. **Wholesale deprecation is no longer assumed** — phasing-flow supersedes phasing only for the orchestration use cases it covers; phasing may continue (and be improved) for different contexts/tasks it still fits. Any deprecation is a per-use-case decision *after* migration, not a foregone outcome (we are using phasing on a real project today).
 - The framework is **adopted across** `work-issue`, `spec-it`, `iterative-review`, `integrate-branch`, and any other skill it fits.
 - We **dogfood the new pattern to build it** (see §9), so the friction we hit becomes the framework's own requirements.
 
@@ -115,7 +115,7 @@ Two objections this design answers head-on (both were *why* phasing existed):
 - **Adoption (M3):** `work-issue`, `spec-it`, `integrate-branch` onto the engine; `integrate-branch`'s 6-agent audit → typed `parallel()` workflow.
 - **`handoff` (M0 docs / ongoing):** narrowed to cross-session/provenance; within-session rescue → compaction.
 - **New capabilities (M4):** one reference `/workflow-library` recipe; detect-only routine pilots — drift-check + doc-freshness as kit routines, dep-CVE shipped as a consumer-template routine (see §14 #4).
-- **Migration + deprecation (M5):** move live usage off `phasing`; deprecate `phasing`.
+- **Migration + coexistence (M5):** migrate phasing-flow-suitable usage off `phasing`; phasing **continues for the use cases it still fits** and may be improved independently — deprecation, if any, is decided per-use-case (not wholesale).
 - **Keep verbatim:** the 7 security/integrity hooks (durable moat). **M0 verified** they fire *and enforce* on Workflow-spawned in-process agents (file-guard hard-blocked a credential-file write from inside a workflow agent; output-secrets-scanner fires on main-session tool use) — no coverage gap over the new substrate.
 
 ## 9. Build method
@@ -136,7 +136,7 @@ Four layers, exactly as requested:
 
 ## 11. Doc-, CLAUDE.md-, & config-impact matrix
 
-Verified by the `orchestration-impact-sweep` workflow (5 scanners + completeness critic): **101 impacted files + 12 critic-caught misses + 18 count/version locations.** The full execution checklist — grouped into themes (context-discipline, handoff-narrowing, subagent-stance, native-worktrees, engine-adoption, phasing-deprecation, new-caps, governance, counts, opportunistic, reviewed-excluded) — lives in the companion **`2026-05-30-orchestration-framework-impact-matrix.md`**.
+Verified by the `orchestration-impact-sweep` workflow (5 scanners + completeness critic): **101 impacted files + 12 critic-caught misses + 18 count/version locations.** The full execution checklist — grouped into themes (context-discipline, handoff-narrowing, subagent-stance, native-worktrees, engine-adoption, phasing-coexistence, new-caps, governance, counts, opportunistic, reviewed-excluded) — lives in the companion **`2026-05-30-orchestration-framework-impact-matrix.md`**.
 
 Three headlines from the sweep:
 
@@ -155,7 +155,7 @@ Three headlines from the sweep:
 | **M2** | `phasing-flow` engine | execution-workflow pattern + `/goal` verify + adversarial diff-review; `phasing-flow` skill core | end-to-end gated run on a real task |
 | **M3** | Adoption | `work-issue`, `spec-it`, `integrate-branch` onto the engine | each migrated skill passes its own acceptance |
 | **M4** | New capabilities | one `/workflow-library` reference recipe; one detect-only routine pilot | recipe runs; routine reports (never mutates) |
-| **M5** | Migrate + deprecate | move live usage off `phasing`; deprecate `phasing` | live project running on `phasing-flow`; `phasing` marked deprecated |
+| **M5** | Migrate + coexist | migrate phasing-flow-suitable usage off `phasing`; decide per-use-case whether to deprecate or keep + improve `phasing` for the contexts it still fits | live project on `phasing-flow`; phasing's continuing scope (and any per-use-case deprecation) documented |
 
 M1 is the trust gate: we do not tackle the flagship engine until the reference implementation empirically shows native sub-agents don't regress to the performative-DEFERRED-verification failure that killed the old subagent-based skill.
 

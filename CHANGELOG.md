@@ -28,6 +28,7 @@ Stabilize-on-4.8 (M0) for the `phasing-flow` initiative — additive; no consume
 
 ### Docs (phasing-flow initiative — M0 "Stabilize on 4.8")
 - Resolved open decisions #2–#5 and renamed the `flow` shorthand to **`phasing-flow`** across `specs/2026-05-30-orchestration-framework-design.md` + its impact matrix (the Workflow-tool "workflow"/"Workflow" term preserved). **M0-verified** that the 7 security/integrity hooks fire *and enforce* on Workflow-spawned in-process agents — no coverage gap over the new substrate. Added a current-hook-count note to `specs/03-hooks.md`, and added spec 14 + the dated design docs to the `specs/README.md` index.
+- Reframed M5 from wholesale `phasing` deprecation to **phasing-flow / phasing coexistence**: phasing-flow supersedes phasing only for the orchestration use cases it covers; phasing may continue and be improved for other contexts/tasks, and any deprecation is decided per-use-case after migration (design §2/§8/§12 + impact-matrix Theme 6).
 
 ## [2.0.3] - 2026-05-25
 
