@@ -1,5 +1,7 @@
 # Cutover playbook — handoff v2.0.3
 
+> **Superseded (2026-06-01).** This playbook's central premise — mid-flight `/handoff` as a *within-session* RESCUE for context pressure — is obsolete. Native compaction now owns within-session rescue, so the handoff skill is narrowing to cross-session / provenance transfer rather than in-session pressure relief. F4's per-model denominator fix below is also subsumed by the window-fraction move (context % is now the harness-native fraction of the full window, not a transcript-token sum against a 200K/1M denominator). Retained as a historical record of the v2.0.3 cutover; do not action the within-session-rescue framing.
+
 **Audience**: kit author (Tomer) + future readers performing per-orchestrator cutover on an in-flight phasing run from pre-v2.0.3 (≤ 2.0.1) to post-v2.0.3 of `unifylabs-workflow`.
 
 **When to cut over**: at a natural break — between phases, no phase `in_progress`. NOT mid-execute. Cutover at the wrong moment risks losing executor state.

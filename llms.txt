@@ -6,20 +6,20 @@
 
 ## What this is
 
-Unify-kit is a starter kit that *uses* Claude Code well. It composes existing plugins (`superpowers`, `compound-engineering`) with a curated set of templates, hooks, GitHub Actions, scripts, and onboarding docs that encode mature practice. Goal: time-to-productivity. Clone the repo, run a bootstrap script, and a new project (or new dev) lands on day one with a team-ready `CLAUDE.md`, six security hooks installed, a comment-triggered PR-review workflow wired up, and a short onboarding curriculum.
+Unify-kit is a starter kit that *uses* Claude Code well. It composes existing plugins (`superpowers`) with a curated set of templates, hooks, GitHub Actions, scripts, and onboarding docs that encode mature practice. Goal: time-to-productivity. Clone the repo, run `/plugin install unifylabs-workflow` then `scripts/init-project.sh`, and a new project (or new dev) lands on day one with a team-ready `CLAUDE.md`, seven security hooks (+ context-awareness UX hook = 8 total) installed, a comment-triggered PR-review workflow wired up, and a short onboarding curriculum.
 
 ## Stack
 
 - Bash + macOS/Linux only (Windows users use WSL)
 - GitHub Actions for the kit's own CI and the consumer-shipped review workflow
 - Markdown + JSON for kit-shipped artifacts
-- `jq` for JSON manipulation in the bootstrap script
+- `jq` for JSON manipulation in `init-project.sh`
 
 ## Key directories
 
 - `templates/` — 7 templates + 4 Next.js snippets + README; `cheatsheet.md.template` is the source of truth for command vocabulary and reviewer-agent mapping
-- `hooks/` — 6 security hooks (lifted CC0) + `settings-snippet.json` + README
-- `scripts/` — `bootstrap-claude-config.sh` (idempotent installer) + `audit-scan.sh` + test fixtures
+- `plugins/unifylabs-workflow/hooks/` — 8 hooks (7 security + context-awareness) + `settings-snippet.json` + README
+- `scripts/` — `init-project.sh` + `audit-scan.sh` + `dev-symlink-skills.sh` + test fixtures
 - `github-actions/` — comment-triggered tiered PR-review workflow + externalized prompt + adoption README
 - `docs/` — `philosophy.md` (5 principles) + `methodology.md` (operational canon) + `decisions/` (ADRs)
 - `onboarding/` — day-1 / week-1 / day-30 curriculum
@@ -37,7 +37,7 @@ Unify-kit is a starter kit that *uses* Claude Code well. It composes existing pl
 
 ## How to ask for help
 
-- For consumer adoption: read `README.md` → run `scripts/bootstrap-claude-config.sh` → copy templates from `templates/`
+- For consumer adoption: read `README.md` → `/plugin install unifylabs-workflow` → run `scripts/init-project.sh` → copy templates from `templates/`
 - For contribution: read `CONTRIBUTING.md` → open an issue → propose a spec under `specs/` → implement
 - For methodology / philosophy: read `docs/philosophy.md` (5 principles) and `docs/methodology.md` (operational canon)
 - For onboarding: read `onboarding/day-1.md` → `onboarding/week-1.md` → `onboarding/day-30.md`
@@ -48,4 +48,4 @@ MIT (code) + CC0 1.0 (templates) + CC BY-SA 4.0 (narrative docs). See `LICENSE`.
 
 ## Status
 
-v0.1.0 — released 2026-05-05. Development release; v1.0.0 lands when one consumer project has been bootstrapped end-to-end with the kit (per `specs/08-living-docs-and-decision-log.md` §7). v1.0.0 follow-up items are tracked in `BACKLOG.md`.
+v2.0.3 — current release. Ships as the `unifylabs-workflow` plugin (`/plugin install unifylabs-workflow`) plus `scripts/init-project.sh` for per-project scaffolding. Follow-up items are tracked in `BACKLOG.md`.

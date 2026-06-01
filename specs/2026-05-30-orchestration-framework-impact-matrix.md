@@ -47,7 +47,7 @@ The kit's own counts are already inconsistent across ~15 files, and one CI job a
 
 ## Theme 3 — Subagent-stance revision (native subagents under human decision-gates)
 
-- `docs/philosophy.md` `[CI]` — Principle 2 "stay in the loop instead of dispatching subagents" framing; reference the `flow` engine.
+- `docs/philosophy.md` `[CI]` — Principle 2 "stay in the loop instead of dispatching subagents" framing; reference the `phasing-flow` engine.
 - `templates/core/cheatsheet.md.template` `[CI]` — Appendix A reviewer-as-subagent framing (already pro-subagent-under-gate; align wording).
 - `templates/core/ai-usage-charter.md.template` `[CI]` — §4 reviewer-agent invocation; verify no contradiction.
 - (Engine skills in Theme 6 also dispatch subagents — reconcile there.)
@@ -66,7 +66,7 @@ The kit's own counts are already inconsistent across ~15 files, and one CI job a
 - `plugins/unifylabs-workflow/skills/work-issue/SKILL.md` `[CI]` — adopt engine + `/goal` verify; re-point Phase 3.5 `--no-phase` / phasing auto-detect at `/workflow`.
 - `plugins/unifylabs-workflow/skills/spec-it/SKILL.md` `[CI]` — adopt engine + `/goal`; update phasing refs.
 - `plugins/unifylabs-workflow/skills/iterative-review/SKILL.md` `[CI]` — re-implement as enforced loop-until-dry Workflow; reconcile subagent dispatch + phasing-integration.
-- `plugins/unifylabs-workflow/skills/iterative-review/references/phasing-integration.md` — *(critic-caught)* re-point "phase mode" at `flow`.
+- `plugins/unifylabs-workflow/skills/iterative-review/references/phasing-integration.md` — *(critic-caught)* re-point "phase mode" at `phasing-flow`.
 - `plugins/unifylabs-workflow/skills/integrate-branch/SKILL.md` `[CI]` — 6-agent audit → typed `parallel()`; + `/goal`.
 - `specs/10-sdd-layer.md` `[CI]`, `templates/core/specs/README.md.template` `[CI]`, `templates/core/issue-templates/*.yml.template` `[CI]`, `templates/core/pull-request-template.md.template` `[CI]` — `/work-issue` phase/verification references (confirm front-door command names survive).
 
@@ -78,10 +78,10 @@ The kit's own counts are already inconsistent across ~15 files, and one CI job a
 - `plugins/unifylabs-workflow/skills/phasing/scripts/{launch-terminal.sh,archive-run.sh}` + `scripts/test/test-launch-terminal.sh` — retire with phasing.
 - `plugins/unifylabs-workflow/skills/phasing/evals/{orchestrator-evals,phase-executor-evals}.json` — *(critic-caught)* phasing evals.
 - `.claude/phasing/2026-05-04-unify-kit-v0.1/` — *(critic-caught)* live `[local]` run-state (gitignored).
-- `.gitignore` — add ignore for the new `flow` run-state dir; keep `.claude/phasing/` until migration.
-- `~/.claude/CLAUDE.md` `[local]` — the "Phasing check after plan generation" gate references the phased-execution skill / "/phase it"; retarget at `flow`; recalibrate the context-rot rationale (1M + compaction weaken it); extend the tool-suggestion section with the new primitives.
+- `.gitignore` — add ignore for the new `phasing-flow` run-state dir; keep `.claude/phasing/` until migration.
+- `~/.claude/CLAUDE.md` `[local]` — the "Phasing check after plan generation" gate references the phased-execution skill / "/phase it"; retarget at `phasing-flow`; recalibrate the context-rot rationale (1M + compaction weaken it); extend the tool-suggestion section with the new primitives.
 - `docs/curated-plugins.md` — update the compound-engineering opt-out rationale (cites "this kit's phasing skill").
-- `specs/06-onboarding-curriculum.md` `[CI]` *(critic-caught)*, `docs/onboarding/intro.md`, `onboarding/{day-1,day-30,week-1}.md` — `/phase` narrative → `flow`.
+- `specs/06-onboarding-curriculum.md` `[CI]` *(critic-caught)*, `docs/onboarding/intro.md`, `onboarding/{day-1,day-30,week-1}.md` — `/phase` narrative → `phasing-flow`.
 - Historical (flag-only, do **not** rewrite; annotate "superseded"): `docs/audit/{current-stack-inventory,gap-analysis,recommendations,framework-deep-dive,spec-review-2026-05-03}.md`.
 
 ## Theme 7 — New capabilities (M4)
@@ -93,9 +93,9 @@ The kit's own counts are already inconsistent across ~15 files, and one CI job a
 ## Theme 8 — Governance (every milestone PR)
 
 - `CHANGELOG.md` `[CI]` — `[Unreleased]` entry per PR (Added/Changed/Deprecated); changelog-check fails otherwise.
-- `docs/decisions/000N-*.md` + `docs/decisions/README.md` — new ADR(s): flow adoption, subagent-stance reversal, native worktrees, major version bump. (ADR 0001 is immutable — don't edit.)
+- `docs/decisions/000N-*.md` + `docs/decisions/README.md` — new ADR(s): phasing-flow adoption, subagent-stance reversal, native worktrees, major version bump. (ADR 0001 is immutable — don't edit.)
 - `UPGRADING.md` — new top-level migration section if the bump is major (phasing-stays-installed, engine adoption, worktree behavior change, renamed commands).
-- `BACKLOG.md` — add the flow rollout / workflow-library / routines / phasing-deprecation items; move shipped items out.
+- `BACKLOG.md` — add the phasing-flow rollout / workflow-library / routines / phasing-deprecation items; move shipped items out.
 - `CONTRIBUTING.md` — reconcile stale trigger path "hooks/" (now `plugins/`).
 - `specs/01-repo-structure.md` `[CI]` *(critic-caught)*, `specs/08-living-docs-and-decision-log.md` `[CI]` (governance touchpoint — deprecation needs a `### Deprecated` entry + ADR).
 

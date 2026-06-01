@@ -171,6 +171,6 @@ The corresponding slash commands (`/handoff-list`, `/handoff-revive`) are owned 
 
 ## 8. What this reference does not cover
 
-- **Hook implementation** — `context-awareness.sh` lives in P3's deliverable; its internal model→window mapping, token computation, and threshold-driven injection logic are in `plugins/unifylabs-workflow/hooks/context-awareness.sh` and its README.
+- **Hook implementation** — `context-awareness.sh` lives in P3's deliverable; its context-% computation (prefers the harness-native `context_window.used_percentage` window-fraction, falling back to transcript-tokens ÷ model window) and threshold-driven injection logic are in `plugins/unifylabs-workflow/hooks/context-awareness.sh` and its README.
 - **MEMORY.md pointer format** — owned by `SKILL.md` Lifecycle (lifted verbatim from design spec §8.2). This reference describes the consume cleanup *behavior*, not the pointer format itself.
 - **Archive lifecycle** — consumed handoffs older than 30 days are eligible for archive to `.claude/handoffs/archive/<YYYY>/`. v1 ships without auto-archive; manual `mv` works. See design spec §11 (deferred).

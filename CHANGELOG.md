@@ -10,6 +10,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+Stabilize-on-4.8 (M0) for the `phasing-flow` initiative — additive; no consumer migration required.
+
+### Changed
+- **`context-awareness.sh` → harness-native window-fraction.** The context-pressure hook now reads `context_window.used_percentage` (the same signal the statusline uses), falling back to transcript-tokens ÷ the model's physical window only when the payload omits it. Retired the per-model "pressure baseline" table and the `UNIFYLABS_PRESSURE_BASELINE_TOKENS` override — an entire staleness class (the missing-`opus-4-8`-arm over-reporting bug can no longer recur). Recalibrated to generous 1M-era bands: reminder tiers **silent <60 / warn ~60 / suggest-handoff ~75 / urgent ~85**; `/handoff` doc-detail tiers **FULL <75 / LEAN 75–84 / EMERGENCY ≥85**.
+- **Propagated the new bands** across the `handoff` SKILL.md, `references/tier-logic.md`, `references/resume-protocol.md`, `evals/handoff-evals.json`, `docs/methodology.md` §H, `specs/07-philosophy-and-methodology.md` §G, `specs/02-templates.md`, and `templates/core/cheatsheet.md.template`; `/effort xhigh` → `/effort ultracode` in the context-discipline sections.
+- **`handoff` skill reframed to cross-session / provenance transfer.** Native compaction now owns within-session rescue; the skill's durable value is cold-resume across a fresh session. `docs/cutover-handoff-v2.0.3.md` gains a superseded banner.
+- **`work-issue` Phase 3.5 phasing-offer recalibrated.** With a 1M window + compaction, single-pass TDD absorbs most one-issue work — the offer now leans toward *not* phasing.
+- **Reconciled skill/command/hook counts** to the actual surface — **12 skills / 16 commands / 8 hooks (7 security + `context-awareness`)** — across `CLAUDE.md`, the plugin README, root `README.md`, `llms.txt`, `docs/onboarding/intro.md`, `onboarding/day-1.md`, `docs/philosophy.md`, `templates/optional/team-onboarding.md.template`, `templates/core/claude.md.template`, and `dev-symlink-skills.sh` help text. Replaced the retired `review-prototype` with `extract-prototype-review` in live rosters and corrected the "`compound-engineering` is composed" claim (it is opted out). Version-stamped historical claims in `specs/` were intentionally left as the historical record.
+
+### Fixed
+- **`plugin-install-fixture.yml` was failing its own check.** Count assertions corrected from 11 skills / 10 commands to **12 / 16** (matching disk); the version regex `^2\.0\.[0-9]+$` (which blocked any future bump) loosened to a semver pattern; the description skill-grep list extended to all 12 skills.
+- **`context-awareness.sh` error leak.** A non-silent tier reached via the native signal with an empty `transcript_path` no longer leaks a `wc -l` redirection error into the injected reminder.
+
+### Added
+- **Rebuilt the `context-awareness` test suite** to **20 assertions** (previously 2/10 passing): native-signal tiers, computed-fallback tiers, an `opus-4-8[1m]` window fixture, plus suppression and escalation cases. New transcript fixtures replace the stale `35/45/55/70pct` set.
+
+### Docs (phasing-flow initiative — M0 "Stabilize on 4.8")
+- Resolved open decisions #2–#5 and renamed the `flow` shorthand to **`phasing-flow`** across `specs/2026-05-30-orchestration-framework-design.md` + its impact matrix (the Workflow-tool "workflow"/"Workflow" term preserved). **M0-verified** that the 7 security/integrity hooks fire *and enforce* on Workflow-spawned in-process agents — no coverage gap over the new substrate. Added a current-hook-count note to `specs/03-hooks.md`, and added spec 14 + the dated design docs to the `specs/README.md` index.
+
 ## [2.0.3] - 2026-05-25
 
 Minor release adding three coordinated, additive artifacts that turn ad-hoc session→session knowledge transfer into a first-class primitive: a universal `handoff` skill, a `context-awareness` hook, and a checkpoint extension to the existing `phasing` skill. All changes are additive — no consumer migration required.

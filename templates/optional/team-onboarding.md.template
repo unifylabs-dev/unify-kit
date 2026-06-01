@@ -79,7 +79,7 @@ script:
 - Performs a matcher-aware deep-merge of the kit's hook registrations into your
   `~/.claude/settings.json`. Existing entries are preserved; backups are
   mandatory and timestamped.
-- Installs the six security hooks at `~/.claude/hooks/` (or preserves your
+- Installs the seven security hooks at `~/.claude/hooks/` (or preserves your
   edits if you've customized them, unless you pass `--force`).
 - Records a manifest at `~/.claude/.unify-kit-manifest.json` with kit version
   and per-artifact SHA-256 — that's the basis for safe upgrades later.

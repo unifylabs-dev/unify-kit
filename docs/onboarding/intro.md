@@ -18,8 +18,9 @@ repo, and lets us reuse the answer everywhere.
 It's three things at once:
 
 1. **A marketplace** that publishes our workflow plugin.
-2. **The plugin itself** — 10 skills, 10 commands, 7 security hooks, an
-   opt-in statusline. The team workflow as installable software.
+2. **The plugin itself** — 12 skills, 16 commands, 8 hooks (7 security +
+   context-awareness), an opt-in statusline. The team workflow as
+   installable software.
 3. **A template tree** — a tier-organized set of files we drop into every
    new project (CLAUDE.md, cheatsheet, PR template, GitHub Actions,
    compliance scaffolding, etc.).
@@ -47,7 +48,7 @@ as bundled redistribution.
 `plugins/unifylabs-workflow/` is the installable artifact. When you run
 `/plugin install unifylabs-workflow` you get all of its skills, commands,
 hooks, and the statusline registered on your machine. The plugin is
-versioned independently in `CHANGELOG.md` — we're on v2.0.1.
+versioned independently in `CHANGELOG.md` — we're on v2.0.3.
 
 ### Templates
 
@@ -67,7 +68,7 @@ your machine.
 
 ## 3. What the plugin actually gives you
 
-### Ten skills, grouped by purpose
+### Twelve skills, grouped by purpose
 
 **Daily workflow (what you'll use every day)**
 
@@ -76,6 +77,10 @@ your machine.
   TDD → verification → review → PR. Each phase is a gate; you don't get
   past it without evidence. This is the single most important skill in
   the kit.
+- **`spec-it`** — The front-door *to* `work-issue`. Turn a raw feature
+  idea into a `/work-issue`-ready GitHub issue with an embedded draft
+  spec, grounded in repo + memory + external standards research. Use it
+  before you have an issue number.
 - **`ship`** — One-shot commit + push + PR. Used at the end of
   `work-issue` (or any time you're done and want to wrap up cleanly).
 
@@ -86,6 +91,11 @@ your machine.
   plan touches multiple subsystems or has natural break points and you
   want re-grounded context between chunks. Backed by the `/phase*`
   command family (see below).
+- **`handoff`** — Write a structured session-handoff doc so a fresh
+  Claude session resumes cold — same decisions, task state, world state,
+  and do-not-re-litigate guardrails. Also drives the resume side
+  (`/handoff-resume`, `/handoff-list`, …). Cross-session transfer;
+  within-session pressure is handled by native compaction.
 - **`iterative-review`** — Bounded review-fix-verify loop with severity
   gating (Critical always pauses for you; Important auto-fixes;
   Suggestions surface in the report). Auto-detects mode: code, doc, or
@@ -124,13 +134,15 @@ your machine.
   or hook from `~/.claude/` into the plugin so the rest of the team gets
   it. Pairs with the `marketplace-drift-check` hook below.
 
-### Ten commands
+### Sixteen commands
 
-Nine of the ten commands are the `/phase*` family that supports the
-`phasing` skill — they let you start, resume, retry, list, abort,
-archive, and check status of multi-phase runs. The tenth is
-`/iterative-review` which kicks off the review loop directly. You won't
-type most of these by hand; the skills invoke them when needed.
+Ten are the `/phase*` family that supports the `phasing` skill — start,
+resume, continue, retry, list, next, abort, archive, execute, and check
+status of multi-phase runs. One is `/iterative-review`, which kicks off
+the review loop directly. The remaining five are the `/handoff*` family
+(`/handoff`, `/handoff-resume`, `/handoff-list`, `/handoff-revive`,
+`/handoff-done`) for cross-session transfer. You won't type most of these
+by hand; the skills invoke them when needed.
 
 ### Seven security hooks (fail-closed)
 
@@ -303,8 +315,8 @@ Some of these are subtle; all of them bite people.
   missing.
 - **`compound-engineering` is explicitly excluded.** We opted out. Don't
   add it. If you see references to it in old docs, treat them as stale.
-- **Skill set is 10, not 9.** The README currently understates the count
-  by one (a known doc drift; will be corrected). The authoritative
+- **Skill set is 12.** (Older docs said 9 or 10 — that drift was
+  reconciled in the v2.0.3 stabilization pass.) The authoritative
   source is `plugins/unifylabs-workflow/skills/` — list it directly if
   in doubt.
 - **`dev-symlink-skills.sh` is kit-author only.** It's a one-time

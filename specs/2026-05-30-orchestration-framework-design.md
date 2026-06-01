@@ -1,6 +1,6 @@
 # Orchestration Framework — Design
 
-> Name: **`phasing-flow`** (decided 2026-06-01). The body + impact matrix still use `flow` as shorthand — a full rename pass (careful: exclude "workflow"/"Workflow") is an M0 task.
+> Name: **`phasing-flow`** (decided 2026-06-01). The former `flow` shorthand was fully renamed to `phasing-flow` across this design + the impact matrix in M0; "workflow"/"Workflow" refers to the Workflow tool and is intentionally left distinct.
 
 | | |
 |---|---|
@@ -83,8 +83,8 @@ Brainstorm ──[GATE: direction]──▶ Planning-brain Workflow (multi-angle
 | **Stop hooks** (adjacent) | Deterministic, scriptable verification gate (exit 0 = continue) — the no-LLM cousin of `/goal` for hard checks. |
 | **Native worktrees** (adjacent) | Per-unit filesystem isolation; replaces hand-rolled `git worktree` plumbing + "main always on master". |
 | **Routines** (adjacent) | The scheduled, **detect-and-report-only** maintenance tier (never autonomous mutation). |
-| **Agent teams / agent view** (adjacent) | Optional coordination / multi-session models — evaluate, do not assume. |
-| **`ultraplan`** (adjacent) | Optional cloud plan-review surface — evaluate (cloud + GitHub dependency). |
+| **Agent teams / agent view** (adjacent) | **Parked (2026-06-01)** — superseded for our needs by in-process Workflow + orchestrator session; revisit only for live mid-run inter-agent debate. |
+| **`ultraplan`** (adjacent) | **Parked (2026-06-01)** — optional cloud plan-review surface; cloud + GitHub dependency not justified yet. |
 
 ## 6. Gating philosophy
 
@@ -106,17 +106,17 @@ Two objections this design answers head-on (both were *why* phasing existed):
 
 ## 8. Scope of change across the kit
 
-- **New `flow` framework skill** (+ minimal command surface — see §14).
+- **New `phasing-flow` framework skill** + a single `/phasing-flow` command with verb subcommands (`start`/`plan`/`run`/`verify`/`status`/`resume`) — see §14 #5.
 - **Hook fix (M0):** `context-awareness.sh` → window-fraction / native signal.
 - **Native worktrees (M0):** replace hand-rolled `git worktree` plumbing in `work-issue` Phase 2 and `iterative-review` PR mode; drop "main always on master".
 - **`iterative-review` (M1):** re-implement as a real `loop-until-dry` Workflow with *enforced* cap / fixed-point / budget — the reference implementation that proves "gates survive on Workflow."
 - **Planning brain (M1):** prototype the multi-angle + critic + judge planning workflow.
-- **`flow` engine (M2):** execution-workflow pattern + `/goal` verification + adversarial diff-review.
+- **`phasing-flow` engine (M2):** execution-workflow pattern + `/goal` verification + adversarial diff-review.
 - **Adoption (M3):** `work-issue`, `spec-it`, `integrate-branch` onto the engine; `integrate-branch`'s 6-agent audit → typed `parallel()` workflow.
 - **`handoff` (M0 docs / ongoing):** narrowed to cross-session/provenance; within-session rescue → compaction.
-- **New capabilities (M4):** one reference `/workflow-library` recipe; one detect-only routine pilot.
+- **New capabilities (M4):** one reference `/workflow-library` recipe; detect-only routine pilots — drift-check + doc-freshness as kit routines, dep-CVE shipped as a consumer-template routine (see §14 #4).
 - **Migration + deprecation (M5):** move live usage off `phasing`; deprecate `phasing`.
-- **Keep verbatim:** the 7 security/integrity hooks (durable moat). *Verify* they fire on Workflow-spawned in-process agents (M0 check).
+- **Keep verbatim:** the 7 security/integrity hooks (durable moat). **M0 verified** they fire *and enforce* on Workflow-spawned in-process agents (file-guard hard-blocked a credential-file write from inside a workflow agent; output-secrets-scanner fires on main-session tool use) — no coverage gap over the new substrate.
 
 ## 9. Build method
 
@@ -151,11 +151,11 @@ Three headlines from the sweep:
 | # | Name | Deliverables | Exit / proof |
 |---|------|--------------|--------------|
 | **M0** | Stabilize on 4.8 | **fix the broken `plugin-install-fixture` count assertions + version regex**; **reconcile count drift (→ 12/16/8) across ~15 files**; hook → window-fraction; handoff doc reframe; recalibrate over-eager offer gates; security-hook-over-Workflow check | own PR; CI green (incl. the previously-failing fixture); docs updated |
-| **M1** | Reference impl + planning brain | `iterative-review` as enforced `loop-until-dry` Workflow; planning-brain prototype | **proves gates-survive-on-Workflow + verification-doesn't-regress** (eval) |
-| **M2** | `flow` engine | execution-workflow pattern + `/goal` verify + adversarial diff-review; `flow` skill core | end-to-end gated run on a real task |
+| **M1** | Reference impl + planning brain | `iterative-review` as enforced `loop-until-dry` Workflow; planning-brain prototype | **proves gates-survive-on-Workflow + verification ≥ human-gated baseline** (no-regression eval — the M1→M2 trust gate, §14 #3) |
+| **M2** | `phasing-flow` engine | execution-workflow pattern + `/goal` verify + adversarial diff-review; `phasing-flow` skill core | end-to-end gated run on a real task |
 | **M3** | Adoption | `work-issue`, `spec-it`, `integrate-branch` onto the engine | each migrated skill passes its own acceptance |
 | **M4** | New capabilities | one `/workflow-library` reference recipe; one detect-only routine pilot | recipe runs; routine reports (never mutates) |
-| **M5** | Migrate + deprecate | move live usage off `phasing`; deprecate `phasing` | live project running on `flow`; `phasing` marked deprecated |
+| **M5** | Migrate + deprecate | move live usage off `phasing`; deprecate `phasing` | live project running on `phasing-flow`; `phasing` marked deprecated |
 
 M1 is the trust gate: we do not tackle the flagship engine until the reference implementation empirically shows native sub-agents don't regress to the performative-DEFERRED-verification failure that killed the old subagent-based skill.
 
@@ -171,11 +171,11 @@ M1 is the trust gate: we do not tackle the flagship engine until the reference i
 
 ## 14. Open decisions (for review)
 
-1. **Framework name.** ✅ RESOLVED — **`phasing-flow`** (decided 2026-06-01; it carries the phasing lineage, re-platformed on workflows). Full rename of the `flow` shorthand across the design + matrix docs is an M0 task (exclude "workflow"/"Workflow").
-2. **`ultraplan` + agent-teams** — leverage as part of the framework, or park as "later"? (Both add cloud/coordination surface.)
-3. **Trust bar** — what evidence (eval pass-rate? a verification-doesn't-regress benchmark?) convinces you native sub-agents have solved the old performative-verification problem, before M2?
-4. **Routines scope** — which detect-only routines (drift / dep-CVE / doc-freshness)? Cloud dependency acceptable?
-5. **Command surface for `flow`** — does it need a `phase-*`-style command family, or a single `/flow` + subcommands, or just the skill?
+1. **Framework name.** ✅ RESOLVED — **`phasing-flow`** (decided 2026-06-01; it carries the phasing lineage, re-platformed on workflows). Full rename of the former `flow` shorthand to `phasing-flow` across the design + matrix docs — completed in M0 ("workflow"/"Workflow" preserved as the distinct Workflow-tool term).
+2. **`ultraplan` + agent-teams** — ✅ RESOLVED (2026-06-01) — **park both for now; revisit post-M2.** Agent-teams (multi-session coordination with mid-run inter-agent messaging) adds little over the in-process Workflow + orchestrator-session spine, which already gives coordination + dependent tasks at higher scale (16–1000 vs ~5 agents), lower token cost, repeatability, and gate-enforcing "no mid-run input." Its one differentiator — live mid-execution debate — is exactly what the gates-between-runs model deliberately avoids. `ultraplan` adds a cloud + GitHub dependency not justified yet. Revisit either only if a concrete need appears.
+3. **Trust bar** — ✅ RESOLVED (2026-06-01) — **no-regression eval vs. baseline.** Before building the M2 engine, M1's verification quality on a fixed benchmark task must be ≥ the current human-gated baseline. (Maps to the M1 exit proof in §12.)
+4. **Routines scope** — ✅ RESOLVED (2026-06-01) — **drift-check + doc-freshness as kit routines; dep-CVE as a consumer-template routine only** (the kit's own dependency surface is thin — Bash + Markdown + Actions; consumers' scaffolded projects have real trees worth scanning). Cloud scheduling accepted for detect-only (never-mutate) routines.
+5. **Command surface for `phasing-flow`** — ✅ RESOLVED (2026-06-01) — **single `/phasing-flow` + verb subcommands** (`start` / `plan` / `run` / `verify` / `status` / `resume`). Smaller, more discoverable surface than a `phase-*`-style family; avoids re-introducing the count-drift class M0 is fixing.
 
 ## 15. Out of scope
 
