@@ -1,0 +1,151 @@
+From 0000000000000000000000000000000000000001 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] feat(orders): add discount engine + checkout total + currency fmt
+
+Self-contained benchmark diff for the iterative-review code-mode eval.
+Adds three new source files to a Node (CommonJS) project. Line numbers in
+each new file equal the post-image line number shown in the hunk (the diff
+adds whole files, so the "+N" lines are 1..N in the resulting file). Cite a
+finding by `<file>:<line>` using the line number of the `+` line in the hunk.
+
+This patch is intentionally NOT applied to the working tree — it is a frozen
+artifact. A reviewer is handed this text as "the diff under review".
+
+---
+ src/discount-engine.js | 48 ++++++++++++++++++++++++++++++++++++++++++
+ src/checkout.js        | 41 +++++++++++++++++++++++++++++++++++++
+ src/currency.js        | 23 ++++++++++++++++++++
+ 3 files changed, 112 insertions(+)
+
+diff --git a/src/discount-engine.js b/src/discount-engine.js
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/discount-engine.js
+@@ -0,0 +1,48 @@
++'use strict';
++
++// Discount engine: resolves a coupon code to a percentage and applies it.
++// Coupons are looked up in an in-memory registry keyed by uppercased code.
++
++const COUPONS = {
++  SAVE10: { pct: 10, label: 'Spring 10%' },
++  SAVE20: { pct: 20, label: 'Spring 20%' },
++  VIP: { pct: 50, label: 'VIP half-off' },
++};
++
++function lookupCoupon(code) {
++  if (typeof code !== 'string') {
++    return null;
++  }
++  return COUPONS[code.toUpperCase()] || null;
++}
++
++// Applies a coupon to a subtotal and returns the discounted total.
++// BUG (planted, Critical): when the code is unknown, lookupCoupon returns
++// null, and we dereference `coupon.pct` without a guard -> TypeError:
++// "Cannot read properties of null (reading 'pct')" at runtime.
++function applyDiscount(subtotal, code) {
++  const coupon = lookupCoupon(code);
++  const factor = (100 - coupon.pct) / 100;
++  return subtotal * factor;
++}
++
++// Sums an array of line items into a subtotal.
++// BUG (planted, Borderline-Critical): no guard for a missing/undefined
++// `price` on a line item. `undefined` propagates through the running sum and
++// the function returns NaN, which then silently poisons every downstream
++// total. Crashes no thread, but corrupts money math on the happy path the
++// moment any caller omits a price -> sits right at the Critical boundary.
++function sumLineItems(items) {
++  let total = 0;
++  for (const item of items) {
++    total += item.price * item.qty;
++  }
++  return total;
++}
++
++// Formats a discount label for display. Duplicates the uppercasing logic
++// already inside lookupCoupon (planted Suggestion: minor duplication / the
++// `c` parameter name is non-descriptive).
++function describeCoupon(c) {
++  const found = COUPONS[c.toUpperCase()];
++  return found ? found.label : 'No discount';
++}
++
++module.exports = { lookupCoupon, applyDiscount, sumLineItems, describeCoupon };
+diff --git a/src/checkout.js b/src/checkout.js
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/src/checkout.js
+@@ -0,0 +1,41 @@
++'use strict';
++
++const { applyDiscount, sumLineItems } = require('./discount-engine');
++const { persistOrder } = require('./order-store');
++
++// Computes a checkout total from a cart and an optional coupon code, then
++// persists the resulting order. `persistOrder` is async (returns a Promise).
++
++async function checkout(cart, couponCode) {
++  const subtotal = sumLineItems(cart.items);
++  const total = applyDiscount(subtotal, couponCode);
++
++  // BUG (planted, Important — missing await): persistOrder is async but is
++  // called without `await`. The function resolves/returns `total` before the
++  // order is durably stored; a rejection here becomes an unhandled rejection
++  // and the caller has no way to know the write failed.
++  persistOrder({ subtotal, total, couponCode });
++
++  return total;
++}
++
++// Loads an order and reports whether it was paid. Swallows every error.
++async function isOrderPaid(orderId) {
++  try {
++    const order = await loadOrder(orderId);
++    return order.status === 'paid';
++  } catch (e) {
++    // BUG (planted, Important — swallowed error / empty catch): the failure
++    // is discarded with no logging and the caller is told the order is simply
++    // "not paid", masking real load failures (network, corruption, missing id)
++    // as a benign business state.
++    return false;
++  }
++}
++
++// Stub loader used by isOrderPaid; real impl lives elsewhere.
++async function loadOrder(orderId) {
++  return { id: orderId, status: 'pending' };
++}
++
++module.exports = { checkout, isOrderPaid };
+diff --git a/src/currency.js b/src/currency.js
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/src/currency.js
+@@ -0,0 +1,23 @@
++'use strict';
++
++// Currency helpers. SEPARATE FILE carrying a KNOWN Critical, used to prove a
++// lazy/empty initial review must NOT trip skip-if-clean: even if a reviewer
++// glances only at the first two files, this third file alone contains a
++// runtime-crashing defect, so the diff is never "clean".
++
++// Parses an amount of the form "$1,234.56" into a Number of cents.
++// BUG (planted, Critical): `raw.replace` is called unconditionally. When a
++// caller passes `null`/`undefined` (a common "no amount entered" path), this
++// throws "Cannot read properties of null (reading 'replace')" at runtime.
++function parseAmountToCents(raw) {
++  const digits = raw.replace(/[^0-9.]/g, '');
++  return Math.round(parseFloat(digits) * 100);
++}
++
++// Formats integer cents as a display string. This function is correct.
++function formatCents(cents) {
++  const dollars = (cents / 100).toFixed(2);
++  return '$' + dollars;
++}
++
++module.exports = { parseAmountToCents, formatCents };

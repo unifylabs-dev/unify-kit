@@ -307,3 +307,40 @@ jobs:
           # Set CLAUDE_HOME to a tmp dir so we don't touch the runner's real ~/.claude.
           # Script uses $HOME directly; override via HOME env.
           HOME="$RUNNER_TEMP/fake-home" bash scripts/dev-symlink-skills.sh --dry-run
+
+  # The enforced-loop substrate gate (M1). The kit otherwise runs zero Node
+  # tooling; this is the first executed-JS gate, because an enforced
+  # loop-until-dry's ceilings are only PROVABLE by running them (a prose rule a
+  # model is asked to honor is not). Zero-dep on purpose: bare `node --test` /
+  # `node --check`, no package.json / node_modules (ADR: Node stack expansion).
+  # Triggered via the existing `plugins/**` path filter above.
+  loop-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: iterative-review workflow .mjs parse cleanly (node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/workflow
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            node --check "$f"
+          done < <(find "$dir" -name '*.mjs' -type f 2>/dev/null)
+
+      - name: iterative-review enforced-loop tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          testdir=plugins/unifylabs-workflow/skills/iterative-review/workflow/test
+          tests=("$testdir"/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no enforced-loop tests found under $testdir — the gate must have tests"
+            exit 1
+          fi
+          node --test "${tests[@]}"

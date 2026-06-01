@@ -1,0 +1,9 @@
+{
+  "name": "iterative-review-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frozen code-mode benchmark fixture for the iterative-review skill. The presence of a 'test' script makes this a detectable verifier project per references/verifier-detection.md (npm test --silent).",
+  "scripts": {
+    "test": "node verify-clean.js"
+  }
+}

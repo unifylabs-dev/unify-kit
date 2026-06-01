@@ -1,0 +1,79 @@
+{
+  "DO_NOT_SHOW_TO_REVIEWERS": true,
+  "schema_version": 1,
+  "benchmark": "iterative-review code-mode frozen ground truth",
+  "scoring": {
+    "scale": "0-100 confidence score, per references/severity-policy.md",
+    "mapping": {
+      "Critical": "score >= 90 (runtime-breaking bug, security, broken test, contract violation) -> ALWAYS gates user, never auto-fixed",
+      "Important": "score 80-89 (silent failure, missing edge case, type-design weakness, missing await) -> auto-fix by default",
+      "Suggestion": "score < 80 (style nit, refactor with no functional benefit, naming) -> report-only"
+    },
+    "boundary_note": "The Critical/Important boundary is exactly score 90. A finding scored 90 is Critical; 89 is Important. The borderline defect below is scored 90 on purpose to sit on that knife-edge and expose mis-calibration if a reviewer rounds it down to Important."
+  },
+  "matching_hint": "A reviewer's caught finding maps to a gold finding when (1) it cites the SAME file, AND (2) its cited line is the nearest gold line for that file (within +/- 3 lines tolerance, since reviewers may point at the function signature, the call site, or the body line of the same defect), AND (3) its assigned severity matches the gold severity tier. Severity match is required for a FULL match; a file+line hit with the wrong tier counts as a PARTIAL match (caught-but-miscalibrated). The borderline finding (gf-borderline-critical) is the calibration probe: scoring it Important instead of Critical is the expected miscalibration to measure, not a free pass.",
+  "line_coordinate_convention": "All `line` fields here are POST-IMAGE SOURCE lines (1-based within the resulting file after the diff is applied), NOT line numbers within the .fixture patch text. Because the fixture is all whole-file additions, source_line = (patch_text_line - hunk_start_line) for each file. The M1 automated scorer (run-no-regression-eval.mjs) MUST normalize any reviewer-cited line into this post-image source space BEFORE applying the +/-3 match. A naive raw-number compare floors Critical-recall at 0.0 for every run and makes the no-regression gate meaningless — this is a HARD scorer requirement, not optional. (The P0 baseline scorer reconciled coordinates correctly; floor = 2/3.)",
+  "skip_if_clean_probe": "gf-currency-critical lives in a SEPARATE file (src/currency.js) from the other defects. A lazy/empty initial review that only skims src/discount-engine.js and src/checkout.js must STILL surface this file's Critical; if a reviewer reports the diff clean or skips-if-clean, that is an automatic benchmark failure because at least 3 distinct Criticals are present across 2+ files.",
+  "expected_counts": {
+    "critical": 3,
+    "important": 2,
+    "suggestion": 1,
+    "borderline_critical_included_in_critical_count": true
+  },
+  "defects": [
+    {
+      "id": "gf-null-deref-critical",
+      "file": "src/discount-engine.js",
+      "line": 25,
+      "severity": "Critical",
+      "score": 95,
+      "why": "applyDiscount() dereferences coupon.pct without guarding the null returned by lookupCoupon() for an unknown/invalid code. On the common 'bad coupon code' path this throws TypeError: Cannot read properties of null (reading 'pct') and crashes the request at runtime. Genuine null dereference; score 95 -> Critical, always gates.",
+      "is_borderline": false
+    },
+    {
+      "id": "gf-currency-critical",
+      "file": "src/currency.js",
+      "line": 13,
+      "severity": "Critical",
+      "score": 93,
+      "why": "parseAmountToCents() calls raw.replace() unconditionally. A null/undefined input (the routine 'no amount entered' path) throws TypeError: Cannot read properties of null (reading 'replace') at runtime. Lives in a SEPARATE file from the other defects to prove a lazy review cannot trip skip-if-clean. Score 93 -> Critical.",
+      "is_borderline": false
+    },
+    {
+      "id": "gf-borderline-critical",
+      "file": "src/discount-engine.js",
+      "line": 38,
+      "severity": "Critical",
+      "score": 90,
+      "why": "sumLineItems() adds item.price * item.qty with no guard for a missing/undefined price. An undefined price yields NaN, which propagates through every downstream money total silently (no throw). It corrupts financial output on a plausible happy path. Scored exactly 90 -> the Critical floor. This is the calibration probe: a reviewer who scores it 88-89 (Important) is mis-calibrated. is_borderline=true.",
+      "is_borderline": true
+    },
+    {
+      "id": "gf-missing-await-important",
+      "file": "src/checkout.js",
+      "line": 17,
+      "severity": "Important",
+      "score": 85,
+      "why": "checkout() calls the async persistOrder(...) without await, so it returns the total before the order is durably stored and a rejection becomes an unhandled promise rejection the caller cannot observe. Missing await / silent failure -> score 85 -> Important, auto-fix by default.",
+      "is_borderline": false
+    },
+    {
+      "id": "gf-swallowed-error-important",
+      "file": "src/checkout.js",
+      "line": 32,
+      "severity": "Important",
+      "score": 82,
+      "why": "isOrderPaid() wraps loadOrder() in a try/catch whose catch block returns false with no logging, masking real load failures (network, corruption, missing id) as the benign 'not paid' business state. Swallowed error / empty-ish catch -> score 82 -> Important.",
+      "is_borderline": false
+    },
+    {
+      "id": "gf-naming-duplication-suggestion",
+      "file": "src/discount-engine.js",
+      "line": 46,
+      "severity": "Suggestion",
+      "score": 60,
+      "why": "describeCoupon(c) uses the non-descriptive parameter name 'c' and re-implements the uppercased COUPONS lookup already encapsulated in lookupCoupon(). Benign duplication / naming nit with no functional impact -> score 60 -> Suggestion, report-only.",
+      "is_borderline": false
+    }
+  ]
+}
