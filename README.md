@@ -155,7 +155,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) `[2.0.0]` for the full migration block.
 
 ## Status
 
-`v2.0.0` — released 2026-05-12. Cuts over from v1.0.0's
+`v2.0.3` — released 2026-05-25. Cuts over from v1.0.0's
 `bootstrap-claude-config.sh` model to the Claude Code marketplace + plugin
 model. See [`CHANGELOG.md`](CHANGELOG.md) for the full `[2.0.0]` block
 including the "Migration from v1.0.0" section.

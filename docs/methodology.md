@@ -214,18 +214,20 @@ The reason is simple: the cost of a stale doc is higher than the cost of an upda
 
 ## H. Context discipline
 
-The thresholds below are anchored on prompt-cache mechanics and observed agent behavior under context pressure. The Anthropic prompt-cache has a 5-minute TTL — sleeping past that means the next read is uncached, which is slower and more expensive. Beyond ~70% context fill, observed quality degrades; beyond ~90%, agents start hallucinating from truncated context. The thresholds aren't arbitrary; they're the points at which the next degradation becomes likely.
+The bands below are anchored on the fraction of the full context window in use — read from the harness-native `context_window.used_percentage` (the same signal the statusline surfaces) — and observed agent behavior under context pressure. With a 1M window plus native compaction, real pressure is far out, so the bands are intentionally generous. Beyond ~75% the handoff path becomes worthwhile; beyond ~85%, agents start reasoning over a truncated view of their own work and the failure mode is silent. The bands aren't arbitrary; they're the points at which the next degradation becomes likely.
 
-Why each threshold matters: the 50% mark is a soft attention check — finish the current focused work before adding new scope, otherwise the next jump compresses two threads into one. The 70% mark triggers `/compact` to summarize, which buys back working room without losing the thread. The 90% mark mandates `/clear` because past that point the agent reasons over a truncated view of its own work, and the failure mode is silent.
+Why each band matters: below ~60% the context-awareness reminder stays silent — work freely. The ~60% warn band is a soft attention check — finish the current focused work before adding new scope, otherwise the next jump compresses two threads into one. The ~75% band is where suggesting a handoff buys back working room without losing the thread. The ~85% band is urgent — past that point the agent reasons over a truncated view of its own work, and the failure mode is silent.
 
-| Context % | Action |
+| Context % (window fraction) | Action |
 |---|---|
-| 0–50% | Work freely |
-| 50–70% | Pay attention; finish current focused work before adding new scope |
-| 70–90% | `/compact` to summarize |
-| 90%+ | `/clear` (mandatory) |
+| <60% | Work freely (reminder silent) |
+| ~60% (60–74) | Warn; pay attention, finish current focused work before adding new scope |
+| ~75% (75–84) | Suggest handoff to a fresh session |
+| >=85% | Urgent — hand off now |
 
-Plus: `/effort xhigh` for complex work; default to lower for routine work to control cost.
+Handoff doc-detail tiers track the same bands: FULL <75% · LEAN 75–84% · EMERGENCY >=85%.
+
+Plus: `/effort ultracode` for complex work; default to lower for routine work to control cost.
 
 ## I. Multi-agent review
 

@@ -3,11 +3,14 @@
 Pre-implementation specs for `unify-kit`. Each spec describes one component of the
 final repo. **The build phase begins after specs are approved.**
 
-> **Status:** All 14 specs (00–13) implemented as of v0.2.x (2026-05-11). See
-> per-spec frontmatter for the version each landed in. Originally hardened
-> (revision 2, 2026-05-03) as 9 specs + this index; the v0.2.x absorption arc
-> added specs 10–13 (SDD layer, GitHub templates, test discipline, CLAUDE.md
-> enrichment).
+> **Status:** All 15 numbered specs (00–14) implemented. The 00–13 set landed in
+> v0.2.x (2026-05-11); spec 14 (marketplace + plugin) landed with the v2.0.0
+> cutover. See per-spec frontmatter for the version each landed in. Originally
+> hardened (revision 2, 2026-05-03) as 9 specs + this index; the v0.2.x absorption
+> arc added specs 10–13 (SDD layer, GitHub templates, test discipline, CLAUDE.md
+> enrichment). Dated design docs (`2026-05-23-handoff-skill-design.md`,
+> `2026-05-30-orchestration-framework-design.md` + its impact matrix) also live
+> here as the design record for the plugin's later evolution.
 
 ---
 
@@ -29,6 +32,7 @@ final repo. **The build phase begins after specs are approved.**
 | 11 | [`11-github-templates.md`](11-github-templates.md) | GitHub repo scaffolding (PR template + feature-request + bug-report issue templates) |
 | 12 | [`12-test-discipline.md`](12-test-discipline.md) | Smart CI test-split + four-tier pyramid + workflow templates (`ci-pr-fast.yml.template`, `ci-nightly.yml.template`) |
 | 13 | [`13-claude-md-enrichment.md`](13-claude-md-enrichment.md) | Consumer `CLAUDE.md` enrichment (Branch Naming + Spec Discipline + PR Merge Process + Living Doc Triggers), methodology-retro template, 4-week onboarding ramp |
+| 14 | [`14-marketplace.md`](14-marketplace.md) | Marketplace + plugin packaging (v2.0.0 cutover): `marketplace.json`, `plugin.json`, hook migration, `dev-symlink-skills.sh` |
 
 ---
 

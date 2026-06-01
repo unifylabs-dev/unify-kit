@@ -10,14 +10,14 @@
         "cwd is a project root WITHOUT .claude/phasing/<run>/run.json carrying overall_status=in_progress",
         "cwd is a project root WITHOUT .superpowers/brainstorm/<id>/ directory",
         "Current branch is not linked to any open gh issue (so detect-mode does not return work-issue)",
-        "claude session active; chat has built context to ~30% (verify via tail -f $CLAUDE_HOOKS_LOG — context-awareness hook should remain silent at <40%)",
+        "claude session active; chat has built context to ~30% (verify via tail -f $CLAUDE_HOOKS_LOG — context-awareness hook should remain silent at <60%)",
         "plugins/unifylabs-workflow installed; SKILL.md, scripts/detect-mode.sh, hooks/context-awareness.sh, commands/handoff.md all reachable",
         "MEMORY.md may or may not exist; if absent, /handoff creates it with index header on first write"
       ],
       "invocation": "/handoff (no args, no tier override; user types this in chat at ~30%)",
       "expected_observations": [
         "scripts/detect-mode.sh emits JSON with mode=generic, paths.run_json=null, paths.brainstorm_dir=null, paths.gh_issue_number=null",
-        "Skill picks tier=FULL per spec §7.5 (<50% → FULL)",
+        "Skill picks tier=FULL per spec §7.5 (<75% → FULL)",
         "Natural-break gate (§7.6) fires IF a TaskList in_progress task exists; user picks option 1 (finish first) OR option 2 (write now)",
         "Doc lands at <project-root>/.claude/handoffs/<YYYY-MM-DD>-<topic-slug>.md (relative path stored in MEMORY.md pointer)",
         "Frontmatter contains: name=<date>-<slug>, metadata.type=session-handoff, metadata.mode=generic, metadata.tier=full, metadata.status=pending, metadata.context_pct_at_write≈30, metadata.project_root=<abs-path>, metadata.created=<ISO-8601>",
@@ -43,15 +43,15 @@
     },
     {
       "id": "brainstorm-LEAN-natural-break",
-      "summary": "User mid-brainstorm at ~55% context invokes /handoff; expects LEAN-tier handoff at the brainstorm path with §8.C addendum, after the natural-break gate fires.",
+      "summary": "User mid-brainstorm at ~78% context invokes /handoff; expects LEAN-tier handoff at the brainstorm path with §8.C addendum, after the natural-break gate fires.",
       "setup_prerequisites": [
         "cwd contains .superpowers/brainstorm/<id>/ with a recent-mtime notes.md inside it (e.g., id=2026-05-24-storage-options)",
         "superpowers:brainstorming skill was invoked earlier this session",
-        "claude session active; chat built context to ~55% (the context-awareness hook should fire a 50s-tier reminder at the next prompt unless suppressed)",
+        "claude session active; chat built context to ~78% (the context-awareness hook should fire a suggest-handoff-tier reminder at the next prompt unless suppressed)",
         "At least one TaskList task with status=in_progress (e.g., 'Survey storage options A/B/C') so the natural-break gate has something to gate on",
         "Skill + hook + scripts installed as in scenario A"
       ],
-      "invocation": "/handoff (no args; LEAN selected automatically since 55% falls in 50–64% per spec §7.5)",
+      "invocation": "/handoff (no args; LEAN selected automatically since 78% falls in 75–84% per spec §7.5)",
       "expected_observations": [
         "scripts/detect-mode.sh emits JSON with mode=brainstorm, paths.brainstorm_dir=<abs path to .superpowers/brainstorm/<id>/>, paths.run_json=null",
         "Skill picks tier=LEAN per spec §7.5",
@@ -59,7 +59,7 @@
         "If user picks option 1: handoff write defers; skill prints a one-liner ack + exits",
         "If user picks option 2: handoff writes immediately; §5 carries the in_progress task with status=in_progress for the resume session to pick up",
         "Doc lands at <project-root>/.superpowers/brainstorm/<id>/HANDOFF.md (NOT .claude/handoffs/)",
-        "Frontmatter metadata.mode=brainstorm, metadata.tier=lean, metadata.status=pending, metadata.context_pct_at_write≈55",
+        "Frontmatter metadata.mode=brainstorm, metadata.tier=lean, metadata.status=pending, metadata.context_pct_at_write≈78",
         "Body present in order: §1 Trajectory, §2 Locked decisions, §3 Open items, §4 World state, §5 TaskList, §6 Do-not-re-litigate, §7 Resume instructions",
         "§1 is approximately a 10-bullet timeline (NOT 3-8 paragraphs prose) per LEAN-tier core-shape.md",
         "§2 bullets are present in full WITHOUT per-bullet rationales (LEAN drops rationales; NEVER trimmed at section level)",
@@ -83,21 +83,21 @@
     },
     {
       "id": "phasing-orch-EMERGENCY",
-      "summary": "User in a phasing-orchestrator session at ~68% context invokes /handoff; expects EMERGENCY-tier handoff at the phasing-orchestrator path with §8.A addendum populated.",
+      "summary": "User in a phasing-orchestrator session at ~88% context invokes /handoff; expects EMERGENCY-tier handoff at the phasing-orchestrator path with §8.A addendum populated.",
       "setup_prerequisites": [
         "cwd is a project with .claude/phasing/<run-id>/run.json having overall_status=in_progress and at least one phase status=in_progress",
         "Current claude session name matches `orchestrator-<topic-slug>` (env var CLAUDE_PHASE_SESSION unset; detection comes from cwd run.json + session-name heuristic in detect-mode.sh)",
-        "Chat built context to ~68% (the hook should have fired a 60s-tier reminder earlier; Claude consults SKILL.md §7.4 and likely surfaced /handoff already, but final invocation is user-initiated for this scenario)",
+        "Chat built context to ~88% (the hook should have fired an urgent-tier reminder earlier; Claude consults SKILL.md §7.4 and likely surfaced /handoff already, but final invocation is user-initiated for this scenario)",
         "There exist 'mid-conversation locks' to capture — recent in-chat decisions the orchestrator session committed to that are NOT yet reflected in master-plan / phase-spec / run.json. If none, §8.A.4 reads 'none'",
         "There exist 'direction changes pending' — open questions / pivots the founder raised that have not yet been answered. If none, §8.A.5 reads 'none'"
       ],
-      "invocation": "/handoff (no args; 68% selects EMERGENCY automatically per spec §7.5 — ≥65% → EMERGENCY)",
+      "invocation": "/handoff (no args; 88% selects EMERGENCY automatically per spec §7.5 — ≥85% → EMERGENCY)",
       "expected_observations": [
         "scripts/detect-mode.sh emits JSON with mode=phasing-orchestrator, paths.run_json=<abs path>, paths.master_plan=<abs path or null if GitHub mode>, paths.gh_issue_number=<tracking-issue-number-or-null>",
         "Skill picks tier=EMERGENCY",
         "Natural-break gate (§7.6) fires; even at EMERGENCY tier the gate does not bypass — user picks 1/2/3 as in other scenarios",
         "Doc lands at <project-root>/.claude/phasing/<run-id>/session-handoff-<YYYY-MM-DD>.md (NOT .claude/handoffs/ — orchestrator mid-flight handoffs live alongside the run state; NOT phase-N-checkpoint.md which is reserved for phasing-executor mode and ships in P5)",
-        "Frontmatter metadata.mode=phasing-orchestrator, metadata.tier=emergency, metadata.status=pending, metadata.context_pct_at_write≈68, metadata.run_id=<run-id>",
+        "Frontmatter metadata.mode=phasing-orchestrator, metadata.tier=emergency, metadata.status=pending, metadata.context_pct_at_write≈88, metadata.run_id=<run-id>",
         "§1 Trajectory SKIPPED (EMERGENCY tier per core-shape.md; section header may still appear with a single line 'Skipped per EMERGENCY tier — see §8.A.2 for phase-status context')",
         "§2 Locked decisions: full bullets, NEVER trimmed regardless of tier",
         "§4 World state: all three sub-blocks fully populated, NEVER trimmed",

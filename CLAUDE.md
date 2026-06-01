@@ -35,11 +35,13 @@ kit — one repo, three roles. No runtime, no DB.
   are listed in `docs/curated-plugins.md` with install commands; users add
   their own marketplaces independently. `compound-engineering` is explicitly
   excluded (opted out).
-- **Plugin** (`plugins/unifylabs-workflow/`): ships 9 skills (`work-issue`,
-  `ship`, `review-prototype`, `analyze-comms`, `phasing`,
-  `promote-to-marketplace`, `compliance-research`, `iterative-review`,
-  `humanizer`), 10 commands (9 `phase*` + `iterative-review`), 7 security
-  hooks (resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in statusline. Users
+- **Plugin** (`plugins/unifylabs-workflow/`): ships 12 skills (`work-issue`,
+  `spec-it`, `ship`, `phasing`, `extract-prototype-review`, `integrate-branch`,
+  `analyze-comms`, `promote-to-marketplace`, `compliance-research`,
+  `iterative-review`, `humanizer`, `handoff`), 16 commands (10 `phase*` +
+  `iterative-review` + 5 `handoff*`), 8 hooks (7 security/integrity +
+  `context-awareness`, resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in
+  statusline. Users
   install with `/plugin marketplace add github.com/unifylabs-dev/unify-kit`
   then `/plugin install unifylabs-workflow` from a Claude session.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
@@ -89,9 +91,10 @@ Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
 gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec sync
 → analysis → branch → planning → TDD → verification → review prep → PR creation.
 Ships in the `unifylabs-workflow` plugin (this repo's `plugins/unifylabs-workflow/skills/work-issue/`).
-The plugin bundles 9 skills total: `work-issue`, `ship`, `review-prototype`,
-`analyze-comms`, `phasing`, `promote-to-marketplace`, `compliance-research`,
-`iterative-review`, and `humanizer`. Phase 0 reads `<consumer>/docs/specs/`
+The plugin bundles 12 skills total: `work-issue`, `spec-it`, `ship`, `phasing`,
+`extract-prototype-review`, `integrate-branch`, `analyze-comms`,
+`promote-to-marketplace`, `compliance-research`, `iterative-review`,
+`humanizer`, and `handoff`. Phase 0 reads `<consumer>/docs/specs/`
 before any code work; see `docs/methodology.md` §B (Specification-Driven
 Development) and §D (Issue-driven dev) for the contract. See
 `templates/core/cheatsheet.md.template` for the daily command list — this

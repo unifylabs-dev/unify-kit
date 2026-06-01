@@ -48,10 +48,10 @@ Tools encoding this: `docs/methodology.md` §G (the doc-on-ship rule), `<consume
 
 Templates use `{{NAME}}` placeholders — one syntax, mandatory, no alternatives. Hooks are readable shell scripts. Configs are plain JSON. A consumer should never have to debug a templating engine, learn a custom DSL, or unwind a clever abstraction to ship. Plain text means you can `grep` it, `diff` it, paste it into a code review, and explain it to a teammate in one sentence. Magic — clever syntax, hidden lifecycles, "you don't need to understand this part" — fails at the worst times and leaves consumers stranded.
 
-Tools encoding this: the `{{NAME}}` placeholder canon (`specs/02-templates.md`), the six security hooks under `hooks/` (each a single-purpose shell script), the bootstrap script's plain-JSON merge into `~/.claude/settings.json`.
+Tools encoding this: the `{{NAME}}` placeholder canon (`specs/02-templates.md`), the seven security hooks under `plugins/unifylabs-workflow/hooks/` (each a single-purpose shell script), the bootstrap script's plain-JSON merge into `~/.claude/settings.json`.
 
 ### 5. Security as default, not afterthought
 
 Hooks block destructive actions and credential leaks **before** anyone has to remember to be careful. Onboarding installs them on day one; the team's `~/.claude/settings.json` has them registered before the first commit. Default-on beats opt-in, because opt-in security is the security people don't have when they need it. The same logic applies to the kit's own CI — scrub-checks, lint, link-check, fixture tests run on every PR, not "when we remember."
 
-Tools encoding this: the six security hooks (`dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`), `scripts/audit-scan.sh`, the kit's own `scrub-check.yml` workflow.
+Tools encoding this: the seven security hooks (`dangerous-actions-blocker.sh`, `pre-commit-secrets.sh`, `output-secrets-scanner.sh`, `file-guard.sh`, `claudemd-scanner.sh`, `mcp-config-integrity.sh`, `marketplace-drift-check.sh`), `scripts/audit-scan.sh`, the kit's own `scrub-check.yml` workflow.

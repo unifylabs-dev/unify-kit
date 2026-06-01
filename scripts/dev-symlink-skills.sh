@@ -143,8 +143,8 @@ Default (no flags): perform the migration, creating a backup directory
 named ~/.claude/.v2-migration-backup-<UTC-timestamp>/.
 
 Scope:
-  Skills   (10): ${SKILLS[*]}
-  Commands (10): ${COMMANDS[*]}
+  Skills   (12): ${SKILLS[*]}
+  Commands (16): ${COMMANDS[*]}
   Hooks         : every ~/.claude/hooks/*.sh (backed up; user-level entries
                   removed from ~/.claude/settings.json hooks block — plugin
                   provides hooks via \${CLAUDE_PLUGIN_ROOT})

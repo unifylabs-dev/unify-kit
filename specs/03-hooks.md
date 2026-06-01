@@ -232,6 +232,14 @@ plugin and isn't on `~/.claude/.personal-skills` allowlist. See
 [`specs/14-marketplace.md`](14-marketplace.md) for the marketplace + plugin
 shape that this hook enforces.
 
+Subsequently, an **8th** hook was added: `context-awareness.sh` (UserPromptSubmit
++ SessionStart) — a UX hook (not a security hook) that surfaces window-fraction
+context-pressure reminders and pending-handoff resume prompts. The plugin's
+current bundle is therefore **8 hooks: the 7 security/integrity hooks + the
+`context-awareness` UX hook** (`plugins/unifylabs-workflow/README.md` carries the
+live roster). This spec's v1 sections describe the original six-hook bundle and
+are left intact as the historical record.
+
 ### Install path (v2)
 
 Consumers run `/plugin install unifylabs-workflow` from a Claude session.

@@ -469,7 +469,7 @@ Then use `AskUserQuestion`:
 
 **Goal:** Decide whether to delegate implementation to the `phased-execution` skill, or run Phase 4 (TDD) as normal.
 
-This phase is short. It exists because some issues are large enough that running Phase 4 as a single TDD pass risks context rot, context bleed, or hallucinations. For those, `phased-execution` decomposes the plan into a master plan + per-phase specs, orchestrates dispatch (subagent default, session escalation for high-blast-radius phases), and enforces mandatory verification per phase. For small issues, this overhead isn't worth it.
+This phase is short. It exists because some issues are large enough that running Phase 4 as a single TDD pass risks context rot, context bleed, or hallucinations. **With a 1M context window + native compaction, that bar is now high** — a single session absorbs most one-issue work without degradation, so phasing is reserved for genuinely large or cross-cutting issues. For those, `phased-execution` decomposes the plan into a master plan + per-phase specs, orchestrates dispatch (subagent default, session escalation for high-blast-radius phases), and enforces mandatory verification per phase. For everything else the overhead isn't worth it — **when in doubt, don't phase.**
 
 ### Flag handling
 
@@ -483,7 +483,7 @@ Apply the hybrid-conservative gate from the `phased-execution` skill:
 1. **Quantitative gate (any one):** the Phase 3 plan touches >8 files, OR spans >2 subsystems, OR has >12 task bullets, OR explicitly uses "phase" / "milestone" / "step 1 / step 2" language.
 2. **Self-assessment (≥2 of 4 yes):** Does this work need cross-cutting decisions made early? Are there natural break points where re-grounding on the predecessor's output would help? Would the executor's context likely grow unmanageable mid-execution? Would a downstream step benefit from re-grounding?
 
-**Both gates must fire** to propose phasing. Otherwise proceed to Phase 4 (TDD).
+**Both gates must fire** to propose phasing. Otherwise proceed to Phase 4 (TDD). Lean toward NOT phasing: with a 1M window + compaction, single-pass TDD is viable for the large majority of single-issue work, so only propose phasing when the issue is genuinely large or cross-cutting.
 
 If proposing:
 > "This issue's plan looks substantial (touches X files across Y subsystems). Phase the implementation? (y / n)"
