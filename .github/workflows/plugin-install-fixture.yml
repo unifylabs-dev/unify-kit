@@ -344,3 +344,36 @@ jobs:
             exit 1
           fi
           node --test "${tests[@]}"
+
+      # PARITY GUARD: the committed iterative-review.workflow.mjs bundle is the
+      # script the Workflow tool actually runs (the runtime VM cannot import, so
+      # the tested kernel + glue are INLINED into it). Regenerate from source and
+      # fail if the committed bundle drifted — a stale bundle would ship untested
+      # code. The bundler is deterministic (fixed dep order, no timestamps/random),
+      # so a fresh regeneration MUST reproduce the committed bytes exactly.
+      - name: iterative-review bundle parity (regenerate + git diff + node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/workflow
+          bundle="$dir/iterative-review.workflow.mjs"
+          # The bundle MUST be a tracked git file. If it were untracked or
+          # gitignored, the `git diff --exit-code` parity guard below would
+          # silently pass (git diff ignores untracked paths), disarming the
+          # whole guard. Fail loudly if it is not under version control.
+          git ls-files --error-unmatch "$bundle" \
+            || { echo "::error file=$bundle::bundle is not a tracked git file — add it so the parity guard cannot be silently disarmed"; exit 1; }
+          ( cd "$dir" && node build-workflow.mjs )
+          # The committed bundle must match a fresh regeneration byte-for-byte.
+          git diff --exit-code -- "$bundle" \
+            || { echo "::error file=$bundle::bundle drift — run 'node build-workflow.mjs' and commit the result"; exit 1; }
+          # The generated bundle must itself parse cleanly and carry NO imports
+          # (the Workflow VM cannot resolve them). `grep -a` forces text mode so
+          # a stray NUL byte can never silently suppress the match on any grep
+          # flavor (the bundle is text by construction; -a defends against
+          # regression).
+          node --check "$bundle"
+          if grep -anE '^[[:space:]]*import[[:space:]]' "$bundle"; then
+            echo "::error file=$bundle::bundle contains an import statement — the Workflow VM cannot import"
+            exit 1
+          fi
+          echo "bundle is tracked, in parity with source, and import-free"
