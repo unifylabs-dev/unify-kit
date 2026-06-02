@@ -33,7 +33,7 @@ Lives in the [unify-kit](https://github.com/unifylabs-dev/unify-kit) marketplace
 
 ### Hooks (auto-wired via `hooks/hooks.json`)
 
-8 hooks total: 7 security/integrity hooks + the `context-awareness` UX hook.
+9 hooks total: 7 security/integrity hooks + the `context-awareness` and `verifier-backstop` workflow hooks.
 
 | Hook | Triggers | Purpose |
 |---|---|---|
@@ -45,6 +45,7 @@ Lives in the [unify-kit](https://github.com/unifylabs-dev/unify-kit) marketplace
 | `mcp-config-integrity.sh` | SessionStart | Detects CVE-2025-54135/54136 patterns in MCP configs |
 | `marketplace-drift-check.sh` | SessionStart | Warns if `~/.claude/skills/*` has un-promoted skills (advisory; never blocks) |
 | `context-awareness.sh` | UserPromptSubmit, SessionStart | Window-fraction context-pressure reminders (awareness, not authorization) + pending-handoff resume prompts |
+| `verifier-backstop.sh` | Stop | Deterministically re-runs the project's real verifier fresh and blocks the stop on a live RED (no-LLM enforcement half of the verification spine; additive, default-off opt-in) |
 
 ### Statusline (opt-in)
 

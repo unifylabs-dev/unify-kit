@@ -234,9 +234,15 @@ shape that this hook enforces.
 
 Subsequently, an **8th** hook was added: `context-awareness.sh` (UserPromptSubmit
 + SessionStart) — a UX hook (not a security hook) that surfaces window-fraction
-context-pressure reminders and pending-handoff resume prompts. The plugin's
-current bundle is therefore **8 hooks: the 7 security/integrity hooks + the
-`context-awareness` UX hook** (`plugins/unifylabs-workflow/README.md` carries the
+context-pressure reminders and pending-handoff resume prompts.
+
+A **9th** hook then shipped: `verifier-backstop.sh` (Stop event) — an additive,
+default-off workflow hook that deterministically re-runs the project's real
+verifier fresh and blocks the stop on a live RED (the no-LLM enforcement half of
+the M1 verification spine). The plugin's
+current bundle is therefore **9 hooks: the 7 security/integrity hooks + the
+`context-awareness` and `verifier-backstop` workflow hooks**
+(`plugins/unifylabs-workflow/README.md` carries the
 live roster). This spec's v1 sections describe the original six-hook bundle and
 are left intact as the historical record.
 

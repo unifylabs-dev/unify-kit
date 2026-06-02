@@ -73,6 +73,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/verifier-backstop.sh"
+          }
+        ]
+      }
     ]
   }
 }

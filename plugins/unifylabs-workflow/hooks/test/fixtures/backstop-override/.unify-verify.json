@@ -1,0 +1,6 @@
+{
+  "_comment": "Override engaged fixture. resolveVerifier returns [] (docs-only tree), but this explicit `commands` override supplies a failing verifier -> the backstop runs the override and emits decision:block.",
+  "commands": [
+    "echo backstop-override-marker && exit 9"
+  ]
+}

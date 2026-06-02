@@ -39,8 +39,8 @@ kit — one repo, three roles. No runtime, no DB.
   `spec-it`, `ship`, `phasing`, `extract-prototype-review`, `integrate-branch`,
   `analyze-comms`, `promote-to-marketplace`, `compliance-research`,
   `iterative-review`, `humanizer`, `handoff`), 16 commands (10 `phase*` +
-  `iterative-review` + 5 `handoff*`), 8 hooks (7 security/integrity +
-  `context-awareness`, resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in
+  `iterative-review` + 5 `handoff*`), 9 hooks (7 security/integrity +
+  `context-awareness` + `verifier-backstop`, resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in
   statusline. Users
   install with `/plugin marketplace add github.com/unifylabs-dev/unify-kit`
   then `/plugin install unifylabs-workflow` from a Claude session.

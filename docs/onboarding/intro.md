@@ -18,8 +18,8 @@ repo, and lets us reuse the answer everywhere.
 It's three things at once:
 
 1. **A marketplace** that publishes our workflow plugin.
-2. **The plugin itself** — 12 skills, 16 commands, 8 hooks (7 security +
-   context-awareness), an opt-in statusline. The team workflow as
+2. **The plugin itself** — 12 skills, 16 commands, 9 hooks (7 security +
+   context-awareness + verifier-backstop), an opt-in statusline. The team workflow as
    installable software.
 3. **A template tree** — a tier-organized set of files we drop into every
    new project (CLAUDE.md, cheatsheet, PR template, GitHub Actions,

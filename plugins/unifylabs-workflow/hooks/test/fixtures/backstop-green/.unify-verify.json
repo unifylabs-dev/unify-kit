@@ -1,0 +1,6 @@
+{
+  "_comment": "GREEN engaged fixture. package.json gives resolveVerifier a non-empty list; backstopCommands REPLACES it with a deterministic always-pass command that records each invocation to $BACKSTOP_SENTINEL (an env path OUTSIDE the repo, so running it does not mutate git status / the tree fingerprint). The harness uses the sentinel to prove the marker cost-gate skips a re-run on an unchanged tree.",
+  "backstopCommands": [
+    "printf 'green-ran\\n' >> \"$BACKSTOP_SENTINEL\"; exit 0"
+  ]
+}

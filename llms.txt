@@ -6,7 +6,7 @@
 
 ## What this is
 
-Unify-kit is a starter kit that *uses* Claude Code well. It composes existing plugins (`superpowers`) with a curated set of templates, hooks, GitHub Actions, scripts, and onboarding docs that encode mature practice. Goal: time-to-productivity. Clone the repo, run `/plugin install unifylabs-workflow` then `scripts/init-project.sh`, and a new project (or new dev) lands on day one with a team-ready `CLAUDE.md`, seven security hooks (+ context-awareness UX hook = 8 total) installed, a comment-triggered PR-review workflow wired up, and a short onboarding curriculum.
+Unify-kit is a starter kit that *uses* Claude Code well. It composes existing plugins (`superpowers`) with a curated set of templates, hooks, GitHub Actions, scripts, and onboarding docs that encode mature practice. Goal: time-to-productivity. Clone the repo, run `/plugin install unifylabs-workflow` then `scripts/init-project.sh`, and a new project (or new dev) lands on day one with a team-ready `CLAUDE.md`, seven security hooks (+ context-awareness and verifier-backstop workflow hooks = 9 total) installed, a comment-triggered PR-review workflow wired up, and a short onboarding curriculum.
 
 ## Stack
 
@@ -18,7 +18,7 @@ Unify-kit is a starter kit that *uses* Claude Code well. It composes existing pl
 ## Key directories
 
 - `templates/` — 7 templates + 4 Next.js snippets + README; `cheatsheet.md.template` is the source of truth for command vocabulary and reviewer-agent mapping
-- `plugins/unifylabs-workflow/hooks/` — 8 hooks (7 security + context-awareness) + `settings-snippet.json` + README
+- `plugins/unifylabs-workflow/hooks/` — 9 hooks (7 security + context-awareness + verifier-backstop) + `settings-snippet.json` + README
 - `scripts/` — `init-project.sh` + `audit-scan.sh` + `dev-symlink-skills.sh` + test fixtures
 - `github-actions/` — comment-triggered tiered PR-review workflow + externalized prompt + adoption README
 - `docs/` — `philosophy.md` (5 principles) + `methodology.md` (operational canon) + `decisions/` (ADRs)

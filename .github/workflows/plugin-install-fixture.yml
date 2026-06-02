@@ -378,6 +378,95 @@ jobs:
           fi
           echo "bundle is tracked, in parity with source, and import-free"
 
+  # The Stop-hook verifier-backstop gate (M1). The deterministic no-LLM half of
+  # the verification spine: a Stop hook that re-runs the project's REAL verifier
+  # fresh and BLOCKS the stop on a live RED. Its enforcement signal (block on a
+  # non-zero verifier exit, fail-open everywhere else) is only PROVABLE by
+  # running it with the real Stop-event envelope — a prose claim is not proof.
+  # Needs BOTH Node (the resolver shim imports the canonical resolveVerifier) and
+  # jq/git (payloads + the git tree-state fingerprint + fixture repos).
+  # Triggered via the existing `plugins/**` path filter above.
+  verifier-backstop-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Resolver shim parses + tests pass (node --check / node --test)
+        run: |
+          set -euxo pipefail
+          shim=plugins/unifylabs-workflow/bin/verifier-resolve.mjs
+          node --check "$shim"
+          node --test plugins/unifylabs-workflow/bin/verifier-resolve.test.mjs
+
+      # DRIFT GUARD: the shim must IMPORT the one canonical resolveVerifier and
+      # never re-declare it locally. A local reimplementation would let the
+      # backstop's detection drift from the iterative-review resolver — fail if
+      # the import line is absent OR a line-leading `function resolveVerifier`
+      # definition appears.
+      - name: Resolver-drift guard (shim imports the canonical resolver, no inline reimpl)
+        run: |
+          set -euxo pipefail
+          shim=plugins/unifylabs-workflow/bin/verifier-resolve.mjs
+          grep -qE 'import \{ resolveVerifier \}' "$shim" \
+            || { echo "::error file=$shim::shim does not import { resolveVerifier } from the canonical lib — the one-resolver invariant is broken"; exit 1; }
+          if grep -anE '^[[:space:]]*function[[:space:]]+resolveVerifier' "$shim"; then
+            echo "::error file=$shim::shim contains an inline 'function resolveVerifier' definition — it must IMPORT the canonical resolver, not reimplement it"
+            exit 1
+          fi
+          echo "shim imports the canonical resolveVerifier and carries no inline reimplementation"
+
+      # Determinism guard: the hook's trigger + decision path must use NO
+      # wall-clock (date +%s) / Date.now / Math.random outside comments. The
+      # scope/state fingerprint is git-derived, not clock-derived. Strip comment
+      # lines before scanning so the invariant-describing header cannot trip it.
+      - name: Hook decision path is clock-free (no date +%s / Date.now / Math.random)
+        run: |
+          set -euxo pipefail
+          hook=plugins/unifylabs-workflow/hooks/verifier-backstop.sh
+          if grep -nE 'date \+%s|Date\.now|Math\.random' "$hook" | grep -vE '^[0-9]+:[[:space:]]*#'; then
+            echo "::error file=$hook::a wall-clock/random call appears outside a comment — the decision path must be deterministic"
+            exit 1
+          fi
+          echo "hook decision path is clock-free"
+
+      - name: Harness is executable + parses cleanly (bash -n)
+        run: |
+          set -euxo pipefail
+          h=plugins/unifylabs-workflow/hooks/test/test-verifier-backstop.sh
+          test -x "$h" || { echo "::error file=$h::harness not executable"; exit 1; }
+          bash -n "$h"
+
+      # GATE: drive the real Stop hook with real envelopes; assert it blocks on a
+      # live RED verifier, allows on GREEN, no-ops when not engaged / empty, and
+      # honors the marker cost-gate. Any failed case => harness exits non-zero.
+      - name: Backstop fires + blocks (test-verifier-backstop.sh, normal)
+        run: |
+          set -euxo pipefail
+          plugins/unifylabs-workflow/hooks/test/test-verifier-backstop.sh
+
+      # GATE-THE-GATE (RED, like the security-hook + P0 gates): point the harness
+      # at an always-exit-0 stub. The block-asserting cases (RED engaged, override
+      # failing) MUST then fail. If the harness PASSED against the always-allow
+      # stub its block assertions are vacuous — fail the job.
+      - name: RED self-test — always-allow stub MUST fail the block cases
+        run: |
+          set -euxo pipefail
+          stub=plugins/unifylabs-workflow/hooks/test/stub-verifier-backstop-allow.sh
+          if UNIFY_BACKSTOP_HOOK="$(pwd)/$stub" \
+               plugins/unifylabs-workflow/hooks/test/test-verifier-backstop.sh; then
+            echo "::error::RED self-test PASSED against the always-allow stub — the block assertions are not binding (gate-the-gate failure)"
+            exit 1
+          fi
+          echo "RED self-test correctly failed — block assertions bind to real hook enforcement"
+
   # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
   # test that proves a security hook fires+blocks, and CI executed zero hooks —
   # a verbatim hook's enforcement signal is only PROVABLE by running it with the

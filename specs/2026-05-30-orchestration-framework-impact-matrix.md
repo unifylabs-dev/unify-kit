@@ -101,7 +101,7 @@ The kit's own counts are already inconsistent across ~15 files, and one CI job a
 
 ## Theme 9 — Counts & version (consolidated — all must move together)
 
-`plugin.json` (version + counts + skill list) → `marketplace.json` (byte-identical mirror) → `plugin-install-fixture.yml` (assertions + regex) → `dev-symlink-skills.sh` (SKILLS/COMMANDS arrays + comments) → `CLAUDE.md` → `specs/{14,03,02,README,01}.md` → `README.md` → `docs/onboarding/intro.md` → `onboarding/day-1.md` → `llms.txt` → `templates/optional/team-onboarding.md.template` → `docs/philosophy.md` → `templates/core/cheatsheet.md.template` → `hooks.json` (the "8 hooks" source-of-truth). `scripts/{check-drift,audit-scan,init-project}.sh` are count-agnostic (enumerate dynamically) — no edit, but `check-drift` needs the symlinks re-created for any new skill.
+`plugin.json` (version + counts + skill list) → `marketplace.json` (byte-identical mirror) → `plugin-install-fixture.yml` (assertions + regex) → `dev-symlink-skills.sh` (SKILLS/COMMANDS arrays + comments) → `CLAUDE.md` → `specs/{14,03,02,README,01}.md` → `README.md` → `docs/onboarding/intro.md` → `onboarding/day-1.md` → `llms.txt` → `templates/optional/team-onboarding.md.template` → `docs/philosophy.md` → `templates/core/cheatsheet.md.template` → `hooks.json` (the "9 hooks" source-of-truth). `scripts/{check-drift,audit-scan,init-project}.sh` are count-agnostic (enumerate dynamically) — no edit, but `check-drift` needs the symlinks re-created for any new skill.
 
 ## Theme 10 — Also flag (opportunistic)
 

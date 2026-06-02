@@ -1,0 +1,6 @@
+{
+  "_comment": "RED engaged fixture. backstopCommands REPLACES the resolved list with a single command that exits non-zero — the live re-run must capture that exit code and emit a decision:block whose reason names the failing command.",
+  "backstopCommands": [
+    "echo backstop-red-marker && exit 7"
+  ]
+}

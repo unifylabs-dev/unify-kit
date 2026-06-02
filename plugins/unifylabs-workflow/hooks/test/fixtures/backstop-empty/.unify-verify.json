@@ -1,0 +1,4 @@
+{
+  "_comment": "Empty-resolution engaged fixture. No commands / backstopCommands override and resolveVerifier returns [] -> the backstop is a silent no-op (exit 0, no decision:block). This is unify-kit's own live posture.",
+  "workingDir": ""
+}
