@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "fs": { "command": "node", "args": ["server.js"] }
+  }
+}

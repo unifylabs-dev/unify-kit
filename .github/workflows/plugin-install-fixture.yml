@@ -377,3 +377,52 @@ jobs:
             exit 1
           fi
           echo "bundle is tracked, in parity with source, and import-free"
+
+  # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
+  # test that proves a security hook fires+blocks, and CI executed zero hooks —
+  # a verbatim hook's enforcement signal is only PROVABLE by running it with the
+  # real hook-event JSON envelope and asserting its real exit code (a prose claim
+  # that "the hook blocks" is not proof). Zero-dep on purpose: bare bash + the
+  # python3/git/jq already on ubuntu-latest. Drives the seven verbatim hooks
+  # (never reimplementations). Triggered via the existing `plugins/**` path
+  # filter above.
+  security-hook-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ubuntu-latest ships bash + python3 + git; jq is the only add (mirrors
+      # the structural-validation job's install step). The harness preflight
+      # fails LOUDLY if python3/git are missing (the hooks fail-CLOSED without
+      # them, which would make ALLOW cases look like spurious blocks).
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Harness is executable + parses cleanly (bash -n)
+        run: |
+          set -euxo pipefail
+          h=plugins/unifylabs-workflow/hooks/test/test-security-hooks.sh
+          test -x "$h" || { echo "::error file=$h::harness not executable"; exit 1; }
+          bash -n "$h"
+
+      # GATE: drive all seven verbatim hooks with real envelopes; assert each
+      # one's real enforcement signal (exit 2 block / exit 0 allow / advisory
+      # fires+exit 0). Any failed case => harness exits non-zero => job fails.
+      - name: Security hooks fire + block (test-security-hooks.sh, normal)
+        run: |
+          set -euxo pipefail
+          plugins/unifylabs-workflow/hooks/test/test-security-hooks.sh
+
+      # GATE-THE-GATE (RED, like the P0 executed-JS gate): with the expectations
+      # inverted the harness MUST fail. If it passed here, the assertions are
+      # not actually binding to real hook behavior (vacuous-pass regression) and
+      # the normal run above could be giving false confidence — fail the job.
+      - name: RED self-test — inverted expectations MUST fail
+        run: |
+          set -euxo pipefail
+          if HARNESS_SELFTEST_RED=1 \
+               plugins/unifylabs-workflow/hooks/test/test-security-hooks.sh; then
+            echo "::error::RED self-test PASSED — assertions are not binding to real hook behavior (gate-the-gate failure)"
+            exit 1
+          fi
+          echo "RED self-test correctly failed — assertions bind to real hook enforcement"
