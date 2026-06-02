@@ -467,6 +467,80 @@ jobs:
           fi
           echo "RED self-test correctly failed — block assertions bind to real hook enforcement"
 
+  # The planning-brain seed gate (M2 seed). The planning brain (Ground -> Plan
+  # -> Critique -> Judge) is committed as a self-contained importer-free Workflow
+  # bundle, exactly like the iterative-review loop: a tested .mjs kernel + an
+  # injection wrapper + an agent-backed glue, INLINED by a deterministic bundler.
+  # CI cannot test planning QUALITY (that needs a live model — the human/live
+  # eval); this gate guards WIRING + salvage + determinism: the pure logic and
+  # the injection wrapper pass `node --test`, and the committed bundle is in
+  # parity with a fresh regeneration and carries ZERO import lines (the Workflow
+  # VM cannot import). Zero-dep: bare `node --test` / `node --check` on pinned
+  # Node 20. Triggered via the existing `plugins/**` path filter above.
+  planning-brain-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: planning-brain workflow .mjs parse cleanly (node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/workflows/planning-brain
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            node --check "$f"
+          done < <(find "$dir" -name '*.mjs' -type f 2>/dev/null)
+
+      - name: planning-brain wiring + salvage tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          testdir=plugins/unifylabs-workflow/workflows/planning-brain/test
+          tests=("$testdir"/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no planning-brain tests found under $testdir — the gate must have tests"
+            exit 1
+          fi
+          node --test "${tests[@]}"
+
+      # PARITY GUARD: the committed planning-brain.workflow.mjs bundle is the
+      # script the Workflow tool actually runs (the runtime VM cannot import, so
+      # the tested kernel + glue are INLINED into it). Regenerate from source and
+      # fail if the committed bundle drifted — a stale bundle would ship untested
+      # code. The bundler is deterministic (fixed dep order, no timestamps/random),
+      # so a fresh regeneration MUST reproduce the committed bytes exactly.
+      - name: planning-brain bundle parity (regenerate + git diff + node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/workflows/planning-brain
+          bundle="$dir/planning-brain.workflow.mjs"
+          # The bundle MUST be a tracked git file. If it were untracked or
+          # gitignored, the `git diff --exit-code` parity guard below would
+          # silently pass (git diff ignores untracked paths), disarming the
+          # whole guard. Fail loudly if it is not under version control.
+          git ls-files --error-unmatch "$bundle" \
+            || { echo "::error file=$bundle::bundle is not a tracked git file — add it so the parity guard cannot be silently disarmed"; exit 1; }
+          ( cd "$dir" && node build-workflow.mjs )
+          # The committed bundle must match a fresh regeneration byte-for-byte.
+          git diff --exit-code -- "$bundle" \
+            || { echo "::error file=$bundle::bundle drift — run 'node build-workflow.mjs' and commit the result"; exit 1; }
+          # The generated bundle must itself parse cleanly and carry NO imports
+          # (the Workflow VM cannot resolve them). `grep -a` forces text mode so
+          # a stray NUL byte can never silently suppress the match on any grep
+          # flavor (the bundle is text by construction; -a defends against
+          # regression).
+          node --check "$bundle"
+          if grep -anE '^[[:space:]]*import[[:space:]]' "$bundle"; then
+            echo "::error file=$bundle::bundle contains an import statement — the Workflow VM cannot import"
+            exit 1
+          fi
+          echo "bundle is tracked, in parity with source, and import-free"
+
   # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
   # test that proves a security hook fires+blocks, and CI executed zero hooks —
   # a verbatim hook's enforcement signal is only PROVABLE by running it with the

@@ -43,7 +43,12 @@ kit — one repo, three roles. No runtime, no DB.
   `context-awareness` + `verifier-backstop`, resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in
   statusline. Users
   install with `/plugin marketplace add github.com/unifylabs-dev/unify-kit`
-  then `/plugin install unifylabs-workflow` from a Claude session.
+  then `/plugin install unifylabs-workflow` from a Claude session. The plugin
+  also ships a `workflows/` dir — a neutral staging home for self-contained,
+  importer-free Workflow seeds (currently the `planning-brain` seed: a tested
+  `.mjs` kernel + deterministic bundler + committed bundle, mirroring the
+  `iterative-review` precedent). These are NOT skills/commands/hooks (no count
+  ripple); M2 relocates the planning-brain seed under the `phasing-flow` skill.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
   (always applied), `claude-runtime/` (always applied: `.mcp.json` +
   `.claude/settings.json`), `optional/` (opt-in via `--include=`),
@@ -127,7 +132,7 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `security-hook-harness` job running the `bash` hook-enforcement harness), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
+- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
 - **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `plugin-install-fixture`, `changelog-check`) run automatically on push + PR.
 - **Full local**: `gh workflow run plugin-install-fixture.yml` (runs all structural + init-project + audit-scan + dev-symlink dry-run jobs end-to-end against `$RUNNER_TEMP` targets).
 - **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the static-lint layer. The `phasing-flow` engine adds a true executed-test layer: `node --test` over the pure, `agent()`-free stopping engine (`loop-harness`) and a `bash` harness that drives the verbatim security hooks with real tool-call envelopes and asserts their `exit 2`/fire enforcement (`security-hook-harness`) — both **red-capable** (gate-the-gate: a deliberately-broken assertion or disabled hook must turn the gate red).
