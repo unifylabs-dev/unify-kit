@@ -116,7 +116,7 @@ Two objections this design answers head-on (both were *why* phasing existed):
 - **`handoff` (M0 docs / ongoing):** narrowed to cross-session/provenance; within-session rescue → compaction.
 - **New capabilities (M4):** one reference `/workflow-library` recipe; detect-only routine pilots — drift-check + doc-freshness as kit routines, dep-CVE shipped as a consumer-template routine (see §14 #4).
 - **Migration + coexistence (M5):** migrate phasing-flow-suitable usage off `phasing`; phasing **continues for the use cases it still fits** and may be improved independently — deprecation, if any, is decided per-use-case (not wholesale).
-- **Keep verbatim:** the 7 security/integrity hooks (durable moat). **M0 verified** they fire *and enforce* on Workflow-spawned in-process agents (file-guard hard-blocked a credential-file write from inside a workflow agent; output-secrets-scanner fires on main-session tool use) — no coverage gap over the new substrate.
+- **Keep verbatim:** the 7 security/integrity hooks (durable moat). M0 originally *asserted* this; **M1 P4** converts it to executed proof. **Tier-1** (an executed, CI-gated, red-capable harness, `hooks/test/test-security-hooks.sh`) proves all 7 hook scripts fire *and enforce* on the real tool-call envelopes a Workflow-spawned agent emits; a **live probe** then confirmed `file-guard` hard-blocks a credential-file write issued from inside a Workflow-spawned agent (un-fakeable — the file never reached disk; a control write in the same dir succeeded). The formal, human-witnessed **Tier-2** (live `file-guard` + `output-secrets-scanner` over a running loop, committed as an artifact + sign-off) is **bundled with the M1 P6 live eval** — pending. No coverage gap over the new substrate has surfaced.
 
 ## 9. Build method
 
@@ -165,7 +165,7 @@ M1 is the trust gate: we do not tackle the flagship engine until the reference i
 - **Trust regression** (subagents fake verification again). *Mitigation:* prove on M1 (single gate) before M2/flagship; deterministic checks as source of truth; adversarial diff-review.
 - **Prose-vs-enforced illusion** (iterative-review's caps were instructions). *Mitigation:* real JS ceilings; communicate as a correctness upgrade (some runs that "passed" now hard-stop).
 - **Determinism** (Workflow disables wall-clock/RNG). *Mitigation:* run-ids/timestamps from `args`, never generated in-script.
-- **Security-coverage gap** over Workflow-spawned agents. *Mitigation:* M0 verification before any autonomy ships.
+- **Security-coverage gap** over Workflow-spawned agents. *Mitigation:* **largely retired** — M1 P4 Tier-1 (executed, CI-gated, red-capable harness over all 7 verbatim hooks) + a live probe confirming `file-guard` blocks a Workflow-spawned agent's credential write; formal human-witnessed Tier-2 (`file-guard` + `output-secrets-scanner` live) bundled with P6. The Bash path (`dangerous-actions-blocker`) cannot be safely live-fired (no non-destructive command matches it); its substrate coverage rests on Tier-1 + the now-proven "PreToolUse hooks fire on Workflow subagent tool calls" mechanism.
 - **Over-offer regression** (global + work-issue + auto-offer all gate on context-pressure 1M weakened). *Mitigation:* recalibrate offer gates in M0.
 - **Maintenance-drift** (rules duplicated across files). *Mitigation:* the re-implementation collapses duplicated prose into the deterministic script.
 
