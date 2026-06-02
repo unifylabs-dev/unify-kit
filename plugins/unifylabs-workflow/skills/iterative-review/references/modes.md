@@ -38,6 +38,8 @@ Run in order. First match wins.
 
 ### Code mode — PR variant
 
+> **Worktree plumbing below superseded by native EnterWorktree; migration tracked in M0/Theme-4 (not yet landed).** The hand-rolled `git worktree add` step (step 4) remains operational until the native replacement is wired (it cannot yet check out an arbitrary PR head ref).
+
 **Setup (in this order):**
 
 1. **Inspect PR metadata:**

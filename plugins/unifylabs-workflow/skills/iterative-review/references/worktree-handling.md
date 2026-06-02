@@ -1,5 +1,7 @@
 # Worktree handling — PR-mode lifecycle
 
+> **Superseded by native EnterWorktree; migration tracked in M0/Theme-4 (not yet landed).** The hand-rolled git-worktree plumbing below remains operational until the native replacement is wired (it cannot yet check out an arbitrary PR head ref).
+
 Isolation contract for PR mode. The loop runs in a dedicated git worktree so the user's main checkout is untouched. Inspired by `superpowers:using-git-worktrees`; this doc specifies the iterative-review-specific path conventions and cleanup rules.
 
 ## Path convention
