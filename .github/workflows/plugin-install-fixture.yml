@@ -589,3 +589,78 @@ jobs:
             exit 1
           fi
           echo "RED self-test correctly failed — assertions bind to real hook enforcement"
+
+  # The P6 no-regression TRUST-GATE scorer — the TIER-1 OFFLINE half of the
+  # M1->M2 gate (design §12, §14 #3). It scores iterative-review run transcripts
+  # against the frozen code-mode benchmark and decides worst-of-N Critical-recall
+  # vs the human-gated baseline. The scorer is a standalone zero-dep Node script
+  # (NOT a bundled Workflow), so there is no bundle/parity step — just node
+  # --check + node --test + the CLI gate contract. Tier-1 GREEN here does NOT
+  # discharge the binding gate: that still needs N>=3 LIVE witnessed runs + Tomer
+  # sign-off (which cannot run on a runner with no `claude`/credentials).
+  no-regression-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: no-regression eval .mjs parse cleanly (node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/evals
+          node --check "$dir/run-no-regression-eval.mjs"
+          node --check "$dir/run-no-regression-eval.test.mjs"
+
+      - name: scorer unit + matching + RED-normalization tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/evals
+          node --test "$dir/run-no-regression-eval.test.mjs"
+
+      # TIER-1 GREEN: run the scorer in self-test mode. It re-scores the three
+      # committed baseline transcripts from scratch and asserts it reproduces
+      # benchmark/baseline.json (worst-of-3 Critical-recall = 2/3, FP = 0). This
+      # is the deterministic proof that the load-bearing line-coordinate
+      # normalization is correct end-to-end (a naive raw compare floors recall at
+      # 0). Exit 0 = the scorer agrees with the hand-reconciled P0 baseline.
+      - name: Tier-1 self-test — scorer reproduces baseline.json
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/evals
+          node "$dir/run-no-regression-eval.mjs"
+
+      # POSITIVE CONTROL: drive the live-runs CLI path (args supplied) with the
+      # three committed baseline transcripts. They meet the baseline by
+      # construction, so the gate MUST pass (exit 0). Exercises collectRunFiles +
+      # per-file dispatch, not just the no-arg self-test path.
+      - name: Positive control — baseline transcripts pass the gate
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/evals
+          node "$dir/run-no-regression-eval.mjs" "$dir/benchmark/baseline-transcripts"
+
+      # RED GATE-THE-GATE: a deliberately bad run (a "false-clean" review that
+      # surfaces ZERO Criticals while the benchmark plants three) MUST be rejected
+      # with a non-zero exit. If the gate passed it here, its FAIL path is not
+      # binding and a regressed engine could slip through — fail the job.
+      - name: RED self-test — a false-clean run MUST be rejected
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/iterative-review/evals
+          bad="$RUNNER_TEMP/bad-run.md"
+          cat > "$bad" <<'EOF'
+          # Bad Review — false clean (no Criticals)
+
+          | # | File | Line (cited) | Severity | Summary |
+          |---|------|--------------|----------|---------|
+          | 1 | src/checkout.js | 98 | Important | missing await — but reported NO Criticals |
+          EOF
+          if node "$dir/run-no-regression-eval.mjs" "$bad"; then
+            echo "::error::RED self-test PASSED — the gate accepted a false-clean run (FAIL path not binding)"
+            exit 1
+          fi
+          echo "RED self-test correctly failed — the gate rejects a regressed / false-clean run"
