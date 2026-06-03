@@ -44,9 +44,10 @@ const BUNDLE_PATH = join(__dirname, 'iterative-review.workflow.mjs');
 //   mode-detect         (no deps)            [P3]
 //   verifier-detect     (no deps)            [P3]
 //   parse-findings      (no deps)            [P3]
+//   consensus-aggregate (needs canonical)    [M1 engine adapter]
 //   stopping-engine     (needs all lib/*)
 //   wrapper             (needs stopping-engine + mode-detect)   [P3]
-//   src/glue            (needs wrapper + parse-findings + verifier-detect + mode-detect)
+//   src/glue            (needs wrapper + parse-findings + consensus-aggregate + verifier-detect + mode-detect)
 const SOURCES = [
   'lib/exit-reasons.mjs',
   'lib/clamp.mjs',
@@ -57,6 +58,7 @@ const SOURCES = [
   'lib/mode-detect.mjs',
   'lib/verifier-detect.mjs',
   'lib/parse-findings.mjs',
+  'lib/consensus-aggregate.mjs',
   'stopping-engine.mjs',
   'wrapper.mjs',
   'src/glue.mjs',
@@ -244,8 +246,13 @@ export function buildBundle() {
     '',
     ...sections,
     '',
-    '// ===== exported entrypoint (see src/glue.mjs main) =====',
-    'export { main };',
+    '// ===== entrypoint (the runtime executes the body; there is NO exported-entry',
+    '// auto-invocation — proven by probe wf_5ffc08f3-c30). main() runs at the top',
+    '// level and its return value IS the workflow result. The `args` global arrives',
+    '// as a JSON string; main() parses it. This top-level `return` is why the bundle',
+    '// is NOT node --check-clean as a bare module — the Workflow tool wraps the body',
+    '// in an async function. CI validates it via check-bundle.mjs instead. =====',
+    'return await main(typeof args !== "undefined" ? args : {});',
     '',
   ];
 
