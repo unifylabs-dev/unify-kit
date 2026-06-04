@@ -1623,7 +1623,7 @@ function reviewPrompt({ mode, target, workingDir, lens, scope }) {
     '- important: confidence 80-89 — missing edge-case handling, silent failure / swallowed error, missing await, type/robustness weakness, test gap, comment rot.',
     '- suggestion: confidence < 80, or style / refactor / duplication / naming / cosmetic.',
     '',
-    'Cite each finding by <file>:<line> using the line number where the issue appears in what you reviewed (for a diff, the line of the relevant changed line as shown to you).',
+    'Cite each finding as <file>:<line>. <file> MUST be the source file the defect lives in — for a unified diff, the path from that hunk\'s `+++ b/<file>` header (e.g. src/checkout.js), NOT the patch/container file you happened to open. <line> is the line where the issue appears as shown to you (for a diff, the displayed line of the relevant `+` line).',
   ];
   if (Array.isArray(scope) && scope.length > 0) {
     lines.push(`Focus this pass on these files (delta re-review): ${scope.join(', ')}.`);
