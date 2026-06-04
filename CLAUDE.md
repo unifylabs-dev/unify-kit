@@ -154,7 +154,7 @@ behavior changes require which file to update.
 Before merging any PR, complete this checklist:
 
 1. Run the full test suite (`gh workflow run plugin-install-fixture.yml`) — all tests pass (0 failures).
-2. Lint clean (`shellcheck -e SC2086,SC2155,SC2034 scripts/*.sh plugins/unifylabs-workflow/hooks/*.sh plugins/unifylabs-workflow/statusline/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
+2. Lint clean (`shellcheck -e SC2086,SC2155,SC2034 scripts/*.sh plugins/unifylabs-workflow/hooks/*.sh plugins/unifylabs-workflow/hooks/test/*.sh plugins/unifylabs-workflow/statusline/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
 3. Feature verification: trace each test-plan item end-to-end; confirm
    the relevant fixtures under `scripts/test-fixtures/` are consistent with
    any script-output changes; confirm CHANGELOG `[Unreleased]` has an entry

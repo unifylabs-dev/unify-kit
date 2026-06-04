@@ -35,7 +35,7 @@ Orchestrate the full lifecycle of a GitHub issue: analysis → branch → plan �
 **Invocation:** `/work-issue 83` (single issue) or `/work-issue 83 91 145` (batch — process sequentially)
 
 **Optional flags** (single-issue mode only):
-- `--phase` — force phased-execution for the implementation portion (Phase 4). Skips auto-detection.
+- `--phase` — force phasing for the implementation portion (Phase 4). Skips auto-detection.
 - `--no-phase` — skip phasing entirely. Runs Phase 4 as TDD regardless of plan size.
 - (no flag) — runs conservative auto-detection at Phase 3.5; phasing only if both quantitative + self-assessment gates agree.
 
@@ -467,19 +467,19 @@ Then use `AskUserQuestion`:
 
 ## Phase 3.5: Phasing Decision
 
-**Goal:** Decide whether to delegate implementation to the `phased-execution` skill, or run Phase 4 (TDD) as normal.
+**Goal:** Decide whether to delegate implementation to the `phasing` skill, or run Phase 4 (TDD) as normal.
 
-This phase is short. It exists because some issues are large enough that running Phase 4 as a single TDD pass risks context rot, context bleed, or hallucinations. **With a 1M context window + native compaction, that bar is now high** — a single session absorbs most one-issue work without degradation, so phasing is reserved for genuinely large or cross-cutting issues. For those, `phased-execution` decomposes the plan into a master plan + per-phase specs, orchestrates dispatch (subagent default, session escalation for high-blast-radius phases), and enforces mandatory verification per phase. For everything else the overhead isn't worth it — **when in doubt, don't phase.**
+This phase is short. It exists because some issues are large enough that running Phase 4 as a single TDD pass risks context rot, context bleed, or hallucinations. **With a 1M context window + native compaction, that bar is now high** — a single session absorbs most one-issue work without degradation, so phasing is reserved for genuinely large or cross-cutting issues. For those, `phasing` decomposes the plan into a master plan + per-phase specs, orchestrates dispatch (subagent default, session escalation for high-blast-radius phases), and enforces mandatory verification per phase. For everything else the overhead isn't worth it — **when in doubt, don't phase.**
 
 ### Flag handling
 
-- `--phase` → force `phased-execution`. Skip detection.
+- `--phase` → force `phasing`. Skip detection.
 - `--no-phase` → skip detection, go straight to Phase 4 (TDD).
 - (no flag) → run conservative auto-detection.
 
 ### Detection (auto mode only)
 
-Apply the hybrid-conservative gate from the `phased-execution` skill:
+Apply the hybrid-conservative gate from the `phasing` skill:
 1. **Quantitative gate (any one):** the Phase 3 plan touches >8 files, OR spans >2 subsystems, OR has >12 task bullets, OR explicitly uses "phase" / "milestone" / "step 1 / step 2" language.
 2. **Self-assessment (≥2 of 4 yes):** Does this work need cross-cutting decisions made early? Are there natural break points where re-grounding on the predecessor's output would help? Would the executor's context likely grow unmanageable mid-execution? Would a downstream step benefit from re-grounding?
 
@@ -488,9 +488,9 @@ Apply the hybrid-conservative gate from the `phased-execution` skill:
 If proposing:
 > "This issue's plan looks substantial (touches X files across Y subsystems). Phase the implementation? (y / n)"
 
-User accepts → phased-execution. User declines → Phase 4 (TDD).
+User accepts → phasing. User declines → Phase 4 (TDD).
 
-### Invoking phased-execution
+### Invoking phasing
 
 When taking the phased path:
 
@@ -529,7 +529,7 @@ When taking the phased path:
    <verbatim plan from Phase 3 — files, AC mapping, test plan, risks, etc.>
    ```
 
-3. **Invoke `phased-execution`** with the run-id. It will:
+3. **Invoke `phasing`** with the run-id. It will:
    - Read `context/issue.md` as required reading on every phase
    - Decompose the Phase 3 plan into a master plan + per-phase specs (3–7 phases)
    - Present the master plan for user approval (with per-phase `execution_mode` override)
@@ -556,13 +556,13 @@ If phasing:
 ```
 🚏 Phase 3.5 Complete: Phasing Decision
 
-phased-execution will run for the implementation portion.
+phasing will run for the implementation portion.
 Run-id: issue-<N>-<kebab-description>
 Context written: .claude/phases/<run-id>/context/issue.md
 
-work-issue resumes at Phase 5 (Verification) once phased-execution completes.
+work-issue resumes at Phase 5 (Verification) once phasing completes.
 
-⏭️ Next: phased-execution master-plan generation (separate flow)
+⏭️ Next: phasing master-plan generation (separate flow)
 ```
 
 If skipping:
@@ -586,7 +586,7 @@ Then use `AskUserQuestion`:
 
 ## Phase 4: Implementation (Strict TDD)
 
-**Note:** This phase runs only when Phase 3.5 chose the TDD path. If `phased-execution` was invoked at Phase 3.5, this phase is skipped — work-issue resumes at Phase 5 once phased-execution completes.
+**Note:** This phase runs only when Phase 3.5 chose the TDD path. If `phasing` was invoked at Phase 3.5, this phase is skipped — work-issue resumes at Phase 5 once phasing completes.
 
 **Goal:** Implement each AC using strict TDD: RED → GREEN → REFACTOR.
 
