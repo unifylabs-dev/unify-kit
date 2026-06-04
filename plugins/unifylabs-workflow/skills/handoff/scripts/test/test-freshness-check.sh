@@ -147,6 +147,44 @@ assert_eq "fatal: missing files count=1" "1" "$missing_count"
 assert_eq "fatal: run_json_check.status=drift" "drift" "$rj_status"
 
 # ============================================================
+# Case 4 — cross-cwd resume: RELATIVE load-bearing paths + a dir entry + a glob,
+# run from a cwd that is NOT the project repo. Regression for the false `fatal`:
+# resolving against cwd (instead of the handoff's project_root) reported every
+# repo-relative path "missing" and git HEAD/branch "drift". Also exercises the
+# directory (trailing-slash) and glob entries a bare `-f` reported as missing.
+# ============================================================
+echo "case: cross-cwd relative paths + dir + glob"
+REPO="$SBX/xcwd-repo"
+make_repo "$REPO"
+# Add a subdir + a file so the dir entry and the glob entry resolve.
+mkdir -p "$REPO/sub"
+echo "x" > "$REPO/sub/note.txt"
+(
+  cd "$REPO"
+  git add sub/note.txt
+  GIT_COMMITTER_DATE='2026-05-24T02:00:00Z' GIT_AUTHOR_DATE='2026-05-24T02:00:00Z' \
+    git commit -q -m "add sub"
+)
+HEAD=$(cd "$REPO" && git rev-parse HEAD)
+BRANCH=$(cd "$REPO" && git branch --show-current)
+HANDOFF="$SBX/xcwd.md"
+render "$FIX/relative-xcwd.md.tmpl" "$HANDOFF" \
+  REPO "$REPO" HEAD "$HEAD" BRANCH "$BRANCH"
+
+# Run from $SBX (NOT a git repo, NOT the project) — the bug trigger. With the fix,
+# base_dir is read from frontmatter project_root, so git matches + files resolve.
+out=$(cd "$SBX" && bash "$SCRIPT" "$HANDOFF")
+overall=$(printf '%s' "$out" | jq -r '.overall')
+git_status=$(printf '%s' "$out" | jq -r '.git_check.status')
+xcwd_missing=$(printf '%s' "$out" | jq -r '[.load_bearing_files[] | select(.status=="missing")] | length')
+xcwd_exists=$(printf '%s' "$out" | jq -r '[.load_bearing_files[] | select(.status=="exists")] | length')
+
+assert_eq "xcwd: overall=clean (not false-fatal)" "clean" "$overall"
+assert_eq "xcwd: git_check.status=match (resolved via project_root)" "match" "$git_status"
+assert_eq "xcwd: 0 missing load-bearing" "0" "$xcwd_missing"
+assert_eq "xcwd: 3 exist (relative file + dir + glob)" "3" "$xcwd_exists"
+
+# ============================================================
 echo
 echo "summary: $pass pass, $fail fail"
 if [ "$fail" -gt 0 ]; then

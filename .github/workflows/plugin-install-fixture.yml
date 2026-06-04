@@ -685,3 +685,24 @@ jobs:
             exit 1
           fi
           echo "RED self-test correctly failed — the gate rejects a regressed / false-clean run"
+
+  # The handoff skill's resume scripts (freshness-check / detect-mode /
+  # recreate-tasklist) shipped in v2.0.3 with fixture-driven test harnesses but NO
+  # CI coverage — a false-`fatal` regression in freshness-check (it resolved git
+  # state + load-bearing paths against the caller's cwd instead of the handoff's
+  # frontmatter project_root, so a resume from any other clone/worktree reported
+  # every repo-relative path "missing" + HEAD/branch "drift") shipped because nothing
+  # ran these harnesses. This job runs all three (each exits non-zero on any failed
+  # assertion). Zero-dep: bash + the jq/git already on ubuntu-latest.
+  handoff-script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: handoff skill resume-script tests (zero-dep bash + jq)
+        run: |
+          set -euxo pipefail
+          testdir=plugins/unifylabs-workflow/skills/handoff/scripts/test
+          bash "$testdir/test-freshness-check.sh"
+          bash "$testdir/test-detect-mode.sh"
+          bash "$testdir/test-recreate-tasklist.sh"

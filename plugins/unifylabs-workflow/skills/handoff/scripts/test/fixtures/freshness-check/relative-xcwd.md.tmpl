@@ -1,0 +1,44 @@
+---
+name: 2026-05-24-relative-xcwd-fixture
+description: Cross-cwd relative-path freshness-check fixture
+metadata:
+  type: session-handoff
+  mode: generic
+  tier: full
+  status: pending
+  created: 2026-05-24T00:00:00Z
+  consumed_by_session: null
+  origin_session: test-session
+  origin_session_name: test-xcwd
+  project_root: {{REPO}}
+  context_pct_at_write: 50
+  related_artifacts: []
+---
+
+# Session Handoff — cross-cwd relative fixture (2026-05-24)
+
+> **Purpose:** Resume from a DIFFERENT cwd than the project. freshness-check must
+> resolve git state + load-bearing paths against the frontmatter `project_root`, not
+> the caller's cwd, and must handle directory (trailing-slash) and glob entries —
+> the false-`fatal` regression.
+> **Mode:** generic  ·  **Tier:** full  ·  **Context at write:** 50%
+> **Project:** {{REPO}}  ·  **Origin session:** test-xcwd
+
+## §4 World state
+
+### 4.1 Git state
+
+- **Branch:** {{BRANCH}}
+- **HEAD SHA:** {{HEAD}}
+- **Working tree:** clean
+- **Upstream:** —
+- **Last commit subject:** add sub
+
+### 4.2 Files load-bearing for resume
+
+- `load-bearing.txt` — RELATIVE file; must resolve under project_root, not cwd
+- `sub/` — DIRECTORY entry (trailing slash); must test as a dir, not `-f`
+- `sub/*.txt` — GLOB entry; exists if anything matches
+
+---
+**Status:** pending  ·  **Created:** 2026-05-24T00:00:00Z  ·  **Mode:** generic  ·  **Tier:** full
