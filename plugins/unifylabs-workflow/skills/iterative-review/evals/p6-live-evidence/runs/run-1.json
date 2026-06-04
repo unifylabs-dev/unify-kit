@@ -1,0 +1,121 @@
+[
+  {
+    "file": "src/discount-engine.js",
+    "line": 49,
+    "severity": "critical",
+    "score": 97,
+    "description": ""
+  },
+  {
+    "file": "src/currency.js",
+    "line": 141,
+    "severity": "critical",
+    "score": 96,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 62,
+    "severity": "important",
+    "score": 86,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 98,
+    "severity": "important",
+    "score": 88,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 110,
+    "severity": "important",
+    "score": 83,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 71,
+    "severity": "important",
+    "score": 80,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 108,
+    "severity": "important",
+    "score": 88,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 70,
+    "severity": "suggestion",
+    "score": 60,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 47,
+    "severity": "critical",
+    "score": 93,
+    "description": ""
+  },
+  {
+    "file": "src/currency.js",
+    "line": 140,
+    "severity": "critical",
+    "score": 92,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 59,
+    "severity": "important",
+    "score": 88,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 113,
+    "severity": "important",
+    "score": 84,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 36,
+    "severity": "suggestion",
+    "score": 72,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 67,
+    "severity": "important",
+    "score": 84,
+    "description": ""
+  },
+  {
+    "file": "src/currency.js",
+    "line": 145,
+    "severity": "suggestion",
+    "score": 72,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 61,
+    "severity": "important",
+    "score": 86,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 71,
+    "severity": "suggestion",
+    "score": 70,
+    "description": ""
+  }
+]

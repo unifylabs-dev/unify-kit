@@ -1,0 +1,6 @@
+no-regression eval — live runs
+  plugins/unifylabs-workflow/skills/iterative-review/evals/p6-live-evidence/runs/run-1.json: recall=0.6667 (2/3) fp=0 caught=[gf-currency-critical,gf-missing-await-important,gf-naming-duplication-suggestion,gf-null-deref-critical,gf-swallowed-error-important]
+  plugins/unifylabs-workflow/skills/iterative-review/evals/p6-live-evidence/runs/run-2.json: recall=0.6667 (2/3) fp=0 caught=[gf-currency-critical,gf-missing-await-important,gf-naming-duplication-suggestion,gf-null-deref-critical,gf-swallowed-error-important]
+  plugins/unifylabs-workflow/skills/iterative-review/evals/p6-live-evidence/runs/run-3.json: recall=0.6667 (2/3) fp=0 caught=[gf-currency-critical,gf-missing-await-important,gf-naming-duplication-suggestion,gf-null-deref-critical,gf-swallowed-error-important]
+verdict: PASS — worst recall 0.6667 vs baseline 0.6667, worst fp 0 vs baseline 0
+note: Objective half only. The binding M1->M2 gate ALSO requires N>=3 LIVE witnessed runs + the formal security Tier-2 + Tomer sign-off (design §12, §14 #3).
