@@ -11,19 +11,13 @@
 // ===== workflow meta (hoisted first; see src/glue.mjs) =====
 export const meta = {
   name: 'planning-brain',
-  version: 1,
-  entry: 'main',
-  description:
-    'Planning brain: parallel ground scouts -> parallel angled planners -> one ' +
-    'adversarial critic -> a judge that synthesizes ONE master plan and surfaces ' +
-    'open_decisions_for_human. Run as a Workflow over the tested planning-core kernel.',
-  inputs: {
-    task: { type: 'string', required: true },
-    facts: { type: 'string', required: false },
-    plansDir: { type: 'string', required: false },
-    ground: { type: 'boolean', required: false, default: true },
-    scouts: { type: 'number', required: false, default: 2 },
-  },
+  description: 'Planning brain: parallel ground scouts -> parallel angled planners -> one adversarial critic -> a judge that synthesizes ONE master plan and surfaces open_decisions_for_human, over the tested planning-core kernel. JSON args: task (required), facts, plansDir, ground (default true), scouts (default 2).',
+  phases: [
+    { title: 'Ground' },
+    { title: 'Plan' },
+    { title: 'Critique' },
+    { title: 'Judge' },
+  ],
 };
 
 // ===== inlined: lib/planning-core.mjs =====
@@ -455,7 +449,10 @@ async function runPlanningBrain({
 //                             (null if it never called StructuredOutput)
 //   - parallel(tasks)      -> NATIVE bounded fan-out (no hand-rolled limiter —
 //                             the runtime owns the worker pool)
-//   - phase(name, fn?)     -> demarcate a workflow phase for the run log
+//   - phase(title)         -> START a new phase (returns void; NOT a wrapper that
+//                             takes a callback). Stage grouping is done via the
+//                             `phase:` field on each agent() opts, so the glue does
+//                             not call phase() directly.
 //   - log(msg)             -> structured run log
 //
 // LEAN-SCHEMA DISCIPLINE (baked in — this session a planning brain FAILED because
@@ -471,9 +468,15 @@ async function runPlanningBrain({
 //     is explicitly told some planners may have returned nothing.
 
 
-// `meta` MUST be a pure literal and MUST be emitted FIRST in the bundle — the
-// Workflow tool reads it to discover the entrypoint + declared inputs before
-// executing anything.
+// `meta` MUST be a pure literal — no variables, calls, spreads, template strings,
+// or string CONCATENATION; the Workflow tool AST-rejects any non-literal node in
+// `meta` and refuses to run the script (a `+` is a rejected BinaryExpression). It
+// MUST be emitted FIRST in the bundle (the tool reads it before executing the
+// body). Per ADR 0003 the proven shape is `{ name, description, phases }` ONLY —
+// the old `{ version, entry, inputs }` fields are NOT part of the runtime contract
+// (the runtime executes the body via a top-level `return await main(args)`; there
+// is no `entry`-based auto-invocation, and inputs arrive as the JSON-string `args`
+// that main() parses). The declared-inputs doc is folded into the description.
 
 // ---------------------------------------------------------------------------
 // LEAN per-stage schemas. snake_case keys only; few required fields; manifest-
@@ -658,40 +661,56 @@ async function runJudge(judgeInput) {
 }
 
 // ---------------------------------------------------------------------------
-// Entrypoint — bind the runtime globals + inputs and run the wrapper.
+// Entrypoint. The bundler appends a top-level `return await main(args)`; `args`
+// arrives as a JSON string (parse it), and the returned result IS the workflow
+// result. main stays a plain export so a test can import + drive it. There is NO
+// exported-entry auto-invocation (proven by probe wf_5ffc08f3-c30, ADR 0003).
 // ---------------------------------------------------------------------------
 
-async function main(inputs = {}) {
-  const {
+/** Parse the Workflow `args` global, which arrives as a JSON string (or object). */
+function parseArgs(rawArgs) {
+  if (rawArgs == null) return {};
+  if (typeof rawArgs === 'object') return rawArgs;
+  if (typeof rawArgs === 'string') {
+    try {
+      return JSON.parse(rawArgs);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+async function main(rawArgs) {
+  const { task, facts, plansDir, ground = true, scouts = 2 } = parseArgs(rawArgs);
+
+  // Stage grouping comes from the `phase:` field on each agent() opts (Ground /
+  // Plan / Critique / Judge) — NOT from a phase() wrapper (phase() returns void).
+  log(`task=${task ? String(task).slice(0, 80) : '(none)'} ground=${ground} scouts=${scouts}`);
+  const result = await runPlanningBrain({
     task,
     facts,
     plansDir,
-    ground = true,
-    scouts = 2,
-  } = inputs;
-
-  return phase('planning-brain', async () => {
-    log(`task=${task ? String(task).slice(0, 80) : '(none)'} ground=${ground} scouts=${scouts}`);
-    const result = await runPlanningBrain({
-      task,
-      facts,
-      plansDir,
-      // GROUND is opt-out: pass the scout runner only when `ground` is on.
-      runScouts: ground ? makeRunScouts({ scouts }) : undefined,
-      runPlanners,
-      runCritic,
-      runJudge,
-      log,
-    });
-    log(
-      `done: ${result.angled_plans.length} angled plan(s), ` +
-        `critique=${result.critique ? 'yes' : 'no'}, ` +
-        `master_plan=${result.master_plan ? 'yes' : 'no'}, ` +
-        `scouts=${result.scout_count}`,
-    );
-    return result;
+    // GROUND is opt-out: pass the scout runner only when `ground` is on.
+    runScouts: ground ? makeRunScouts({ scouts }) : undefined,
+    runPlanners,
+    runCritic,
+    runJudge,
+    log,
   });
+  log(
+    `done: ${result.angled_plans.length} angled plan(s), ` +
+      `critique=${result.critique ? 'yes' : 'no'}, ` +
+      `master_plan=${result.master_plan ? 'yes' : 'no'}, ` +
+      `scouts=${result.scout_count}`,
+  );
+  return result;
 }
 
-// ===== exported entrypoint (see src/glue.mjs main) =====
-export { main };
+// ===== entrypoint (the runtime executes the body; there is NO exported-entry
+// auto-invocation — proven by probe wf_5ffc08f3-c30, ADR 0003). main() runs at
+// the top level and its return value IS the workflow result. The `args` global
+// arrives as a JSON string; main() parses it. This top-level `return` is why the
+// bundle is NOT node --check-clean as a bare module — the Workflow tool wraps the
+// body in an async function. CI validates it via check-bundle.mjs instead. =====
+return await main(typeof args !== "undefined" ? args : {});

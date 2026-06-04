@@ -247,8 +247,13 @@ export function buildBundle() {
     '',
     ...sections,
     '',
-    '// ===== exported entrypoint (see src/glue.mjs main) =====',
-    'export { main };',
+    '// ===== entrypoint (the runtime executes the body; there is NO exported-entry',
+    '// auto-invocation — proven by probe wf_5ffc08f3-c30, ADR 0003). main() runs at',
+    '// the top level and its return value IS the workflow result. The `args` global',
+    '// arrives as a JSON string; main() parses it. This top-level `return` is why the',
+    '// bundle is NOT node --check-clean as a bare module — the Workflow tool wraps the',
+    '// body in an async function. CI validates it via check-bundle.mjs instead. =====',
+    'return await main(typeof args !== "undefined" ? args : {});',
     '',
   ];
 

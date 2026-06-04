@@ -498,10 +498,18 @@ jobs:
         run: |
           set -euxo pipefail
           dir=plugins/unifylabs-workflow/workflows/planning-brain
+          # Exclude the GENERATED bundle: it ends with a top-level `return await
+          # main(args)` (the runtime executes the script body — proven by probe
+          # wf_5ffc08f3-c30, ADR 0003 — and the top-level return is the workflow
+          # result), which is not legal in a bare ESM module, so `node --check` would
+          # raise "Illegal return statement" on the CORRECT bundle. The bundle is
+          # validated instead by check-bundle.mjs (wrap-parse) in the parity step
+          # below. All SOURCE files (lib/*, wrapper, glue, build/check tools) still
+          # node --check.
           while IFS= read -r f; do
             [ -z "$f" ] && continue
             node --check "$f"
-          done < <(find "$dir" -name '*.mjs' -type f 2>/dev/null)
+          done < <(find "$dir" -name '*.mjs' -type f -not -name 'planning-brain.workflow.mjs' 2>/dev/null)
 
       - name: planning-brain wiring + salvage tests (node --test, zero-dep)
         run: |
@@ -521,7 +529,7 @@ jobs:
       # fail if the committed bundle drifted — a stale bundle would ship untested
       # code. The bundler is deterministic (fixed dep order, no timestamps/random),
       # so a fresh regeneration MUST reproduce the committed bytes exactly.
-      - name: planning-brain bundle parity (regenerate + git diff + node --check)
+      - name: planning-brain bundle parity (regenerate + git diff + check-bundle)
         run: |
           set -euxo pipefail
           dir=plugins/unifylabs-workflow/workflows/planning-brain
@@ -536,17 +544,23 @@ jobs:
           # The committed bundle must match a fresh regeneration byte-for-byte.
           git diff --exit-code -- "$bundle" \
             || { echo "::error file=$bundle::bundle drift — run 'node build-workflow.mjs' and commit the result"; exit 1; }
-          # The generated bundle must itself parse cleanly and carry NO imports
-          # (the Workflow VM cannot resolve them). `grep -a` forces text mode so
-          # a stray NUL byte can never silently suppress the match on any grep
-          # flavor (the bundle is text by construction; -a defends against
-          # regression).
-          node --check "$bundle"
+          # Validate the bundle the way the Workflow tool runs it. We do NOT
+          # `node --check` it: the bundle ends with a top-level `return await
+          # main(args)` (the runtime executes the script BODY — there is no
+          # exported-entry auto-invocation, proven by probe wf_5ffc08f3-c30, ADR
+          # 0003 — and the top-level return is the workflow result), which is not
+          # legal in a bare ESM module. check-bundle.mjs wrap-parses the body as an
+          # async function (the runtime shape) and asserts: zero imports, `export
+          # const meta` is the SOLE export, meta is a pure literal, and a top-level
+          # main() entrypoint is present (the phantom bundle exported main but never
+          # ran it). `grep -a` forces text mode so a stray NUL byte can never
+          # silently suppress the import match.
+          node "$dir/check-bundle.mjs" "$bundle"
           if grep -anE '^[[:space:]]*import[[:space:]]' "$bundle"; then
             echo "::error file=$bundle::bundle contains an import statement — the Workflow VM cannot import"
             exit 1
           fi
-          echo "bundle is tracked, in parity with source, and import-free"
+          echo "bundle is tracked, in parity with source, valid for the runtime, and import-free"
 
   # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
   # test that proves a security hook fires+blocks, and CI executed zero hooks —

@@ -46,8 +46,9 @@ the salvage chokepoint hardened into a tested kernel.
 | `lib/planning-core.mjs` | **PURE** logic: the `ANGLES` table, planner-spec construction, the `.filter(Boolean)` salvage, lean critic/judge input assembly, ground-brief aggregation, the frozen result builder. No `agent()`/`parallel()`/`Date`/random. snake_case keys only. Unit-tested. |
 | `wrapper.mjs` | **INJECTION-BASED** orchestrator. `runPlanningBrain({ task, facts, plansDir, runScouts, runPlanners, runCritic, runJudge, log })` takes every effectful step as an injected async callback, so it is unit-testable with stubs. No `agent()`/`parallel()` here. |
 | `src/glue.mjs` | The **ONLY** file touching runtime globals. Holds `export const meta` + the `agent()`/`parallel()` dispatch that supplies the injected callbacks (scouts + planners via NATIVE `parallel()`; critic + judge via `agent()`), plus the LEAN per-stage schemas. |
-| `build-workflow.mjs` | The **DETERMINISTIC** bundler. Fixed `SOURCES` order, strips every `import`/`export`, hoists `meta` to the top, no timestamps/random => byte-identical idempotent output. Exports `buildBundle()`; writes only when invoked directly. |
-| `planning-brain.workflow.mjs` | The **GENERATED** self-contained bundle (`DO NOT EDIT`). `meta` first; **zero** import lines. This is the script the Workflow tool runs. |
+| `build-workflow.mjs` | The **DETERMINISTIC** bundler. Fixed `SOURCES` order, strips every `import`/`export`, hoists `meta` to the top, **appends the top-level `return await main(args)` entrypoint** (ADR 0003), no timestamps/random => byte-identical idempotent output. Exports `buildBundle()`; writes only when invoked directly. |
+| `check-bundle.mjs` | The runtime-shape validator that replaces `node --check` for the bundle. Wrap-parses the body as an async function (the way the Workflow tool runs it) and asserts zero imports, `export const meta` is the SOLE export, **meta is a pure literal**, and a top-level `main()` entrypoint is present. |
+| `planning-brain.workflow.mjs` | The **GENERATED** self-contained bundle (`DO NOT EDIT`). `meta` first (pure literal `{name, description, phases}`); **zero** import lines; ends with a top-level `return await main(args)`. This is the script the Workflow tool runs — proven live (run `wf_3e271589-060`). |
 | `test/*.test.mjs` | Bare `node:test` (zero-dep). Guards the pure logic + the injection wrapper with stubs. |
 
 ## Lean-schema discipline (bake this in)
@@ -107,8 +108,13 @@ untested code) fails the gate.
 
 ## Invocation (via Workflow `scriptPath`)
 
-The bundle is run by the Workflow tool against `planning-brain.workflow.mjs`.
-Declared inputs (see `meta` in `src/glue.mjs`):
+The bundle is run by the Workflow tool against `planning-brain.workflow.mjs`,
+passing the inputs below as the Workflow `args`. Per ADR 0003 they arrive in the
+script as the JSON-string `args` global, which `main()` parses (`parseArgs`) — they
+are NOT declared in `meta` (the proven `meta` shape is `{name, description, phases}`
+only). Proven live: run `wf_3e271589-060` (`ground:false`) returned the frozen
+`{master_plan, critique, angled_plans, scout_count}` with the judge writing its
+master plan to `plansDir`. Inputs (see `main()` in `src/glue.mjs`):
 
 | input | type | default | meaning |
 | --- | --- | --- | --- |
@@ -121,9 +127,11 @@ Declared inputs (see `meta` in `src/glue.mjs`):
 ## Regenerate the bundle
 
 ```bash
-node build-workflow.mjs          # writes planning-brain.workflow.mjs
-node --test test/*.test.mjs      # zero-dep test suite
-node --check planning-brain.workflow.mjs
+node build-workflow.mjs               # writes planning-brain.workflow.mjs
+node --test test/*.test.mjs           # zero-dep test suite
+node check-bundle.mjs planning-brain.workflow.mjs   # NOT `node --check` — the bundle's
+                                      # top-level `return` is illegal in a bare module;
+                                      # check-bundle wrap-parses it as the runtime does
 ```
 
 (Use Node 20+; CI pins Node 20.)
