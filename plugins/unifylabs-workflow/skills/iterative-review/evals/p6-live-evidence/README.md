@@ -43,11 +43,13 @@ Important, exactly as the human baseline does — recall rides the floor, does n
 regress), 0 critical false-positives, ≥1 Critical (no false-clean). Re-runnable:
 `node ../run-no-regression-eval.mjs runs` exits 0.
 
-## Pending (human half — does NOT pass on a CI runner; needs a witnessed session)
+## Human half — ✅ DISCHARGED 2026-06-04 (see `security-tier2/`)
 
-- **Security Tier-2** — a live run where a loop-spawned fixer attempts a guarded
-  write (e.g. `.env`) and is hard-blocked by `file-guard`, AND
-  `output-secrets-scanner` fires on a secret in agent output. (P4 already proved the
-  canonical `file-guard` path live; this is the formal witnessed capture.)
-- **Tomer sign-off** — confirming the runs were faithful (real engine, real fixture,
-  no peeking at gold). The scorer emits the objective verdict; the human confirms.
+- **Security Tier-2** — ✅ captured live: a loop-spawned agent inside a running
+  Workflow (the engine's verbatim fixer dispatch) attempting a guarded `.env` write
+  was hard-blocked by `file-guard`, AND a loop agent's `Read` of a fake-key fixture
+  tripped `output-secrets-scanner`. Runs `wf_27829dbb-5de` + `wf_9f708a0f-a26`;
+  evidence + verbatim transcript in `security-tier2/`.
+- **Tomer sign-off** — ✅ signed 2026-06-04, confirming both the objective N=3 runs
+  (real engine, real fixture, no peeking at gold) and the security witness were
+  faithful. **The binding M1→M2 trust gate is discharged; M2 is unblocked.**
