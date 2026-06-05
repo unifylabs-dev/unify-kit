@@ -6,7 +6,7 @@
 
 ## ⚠️ Theme 0 — Pre-existing drift + a broken CI gate (fix in M0, regardless of the framework)
 
-The kit's own counts are already inconsistent across ~15 files, and one CI job already fails its own assertion. This blocks every initiative PR until reconciled to the **current actual** surface (**12 skills / 16 commands / 8 hooks**), *before* the framework changes add more.
+The kit's own counts are already inconsistent across ~15 files, and one CI job already fails its own assertion. This blocks every initiative PR until reconciled to the **current actual** surface (**12 skills / 16 commands / 9 hooks**), *before* the framework changes add more.
 
 - `.github/workflows/plugin-install-fixture.yml` `[CI]` — **BROKEN**: asserts `n_skills==11` (label "10 skills") & `n_cmds==10`; real = 12 & 16. Fix the count assertions, fix the label, **loosen the version regex `^2\.0\.[0-9]+$`** (blocks any bump), update the description-skill grep list.
 - `CLAUDE.md` — §2/§4 say "9 skills / 10 commands / 7 hooks", list old `review-prototype`, omit `spec-it`/`integrate-branch`/`handoff`. Reconcile.

@@ -22,14 +22,16 @@ Lives in the [unify-kit](https://github.com/unifylabs-dev/unify-kit) marketplace
 | `iterative-review` | Iterative review-fix-verify loop for code, docs, and phasing-run artifacts; severity-gated stopping with a 3-iteration cap |
 | `humanizer` | Removes signs of AI-generated writing from text (based on Wikipedia's "Signs of AI writing") |
 | `handoff` | Writes a structured session-handoff doc so a fresh Claude session can resume cold; also handles the resume side (`/handoff-resume`, `/handoff-list`, …) |
+| `phasing-flow` | Human-gated orchestration on native Workflows: brainstorm → planning-brain (multi-angle + critic + judge) → approve plan → execution-engine (per unit: execute → deterministic verify → adversarial diff-review) → sign off → next unit. Single `/phasing-flow` command with verb subcommands |
 
 ### Slash commands
 
-16 commands total — 10 `phase*` commands that pair with the `phasing` skill, the `iterative-review` command, and 5 `handoff*` commands:
+17 commands total — 10 `phase*` commands that pair with the `phasing` skill, the `iterative-review` command, 5 `handoff*` commands, and the `/phasing-flow` command:
 
 - **Phasing (10):** `/phase`, `/phase-abort`, `/phase-archive`, `/phase-continue`, `/phase-execute`, `/phase-list`, `/phase-next`, `/phase-resume`, `/phase-retry`, `/phase-status`
 - **Review (1):** `/iterative-review`
 - **Handoff (5):** `/handoff`, `/handoff-done`, `/handoff-list`, `/handoff-resume`, `/handoff-revive`
+- **Flow (1):** `/phasing-flow`
 
 ### Hooks (auto-wired via `hooks/hooks.json`)
 

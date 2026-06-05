@@ -8,7 +8,7 @@
     {
       "name": "unifylabs-workflow",
       "source": "./plugins/unifylabs-workflow",
-      "description": "Unifylabs team Claude Code workflow: 12 skills (work-issue, spec-it, ship, phasing, extract-prototype-review, integrate-branch, analyze-comms, promote-to-marketplace, compliance-research, iterative-review, humanizer, handoff), 16 phase + review + handoff commands, 9 security/workflow hooks, opt-in statusline."
+      "description": "Unifylabs team Claude Code workflow: 13 skills (work-issue, spec-it, ship, phasing, phasing-flow, extract-prototype-review, integrate-branch, analyze-comms, promote-to-marketplace, compliance-research, iterative-review, humanizer, handoff), 17 phase + review + handoff + flow commands, 9 security/workflow hooks, opt-in statusline."
     }
   ]
 }

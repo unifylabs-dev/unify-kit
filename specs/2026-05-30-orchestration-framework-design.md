@@ -140,7 +140,7 @@ Verified by the `orchestration-impact-sweep` workflow (5 scanners + completeness
 
 Three headlines from the sweep:
 
-1. **Pre-existing drift blocks us until M0 fixes it.** The kit's own counts are inconsistent across ~15 files (variously 9/10/7, 10/10/7, 12/16/8; plugin README still says `2.0.0-pre.1`; `llms.txt` is back at v0.1.0). **M0 must reconcile every count to the current actual (12 skills / 16 commands / 8 hooks) before layering framework changes on top.**
+1. **Pre-existing drift blocks us until M0 fixes it.** The kit's own counts are inconsistent across ~15 files (variously 9/10/7, 10/10/7, 12/16/8; plugin README still says `2.0.0-pre.1`; `llms.txt` is back at v0.1.0). **M0 must reconcile every count to the current actual (12 skills / 16 commands / 9 hooks) before layering framework changes on top.**
 2. **A CI gate is already broken.** `plugin-install-fixture.yml` asserts `n_skills==11` / `n_cmds==10` (real: 12 / 16) — it currently fails its own check — and its version regex `^2\.0\.[0-9]+$` would reject any bump. Fix in M0 or every initiative PR fails.
 3. **`statusline.sh` already reads the harness-native `used_percentage`** — it is the reference implementation the context hook should converge to (Theme 1), confirming window-fraction is the right, already-present signal.
 

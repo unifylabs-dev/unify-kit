@@ -44,7 +44,7 @@ From any Claude Code session, register the marketplace and install the plugin:
 /plugin install unifylabs-workflow
 ```
 
-This installs the kit's 12 skills, 16 commands, and 9 hooks (7 security +
+This installs the kit's 13 skills, 17 commands, and 9 hooks (7 security +
 context-awareness + verifier-backstop) under
 `${CLAUDE_PLUGIN_ROOT}` — Claude Code resolves the hooks declared in the
 plugin's `hooks/hooks.json` automatically. No filesystem edits to

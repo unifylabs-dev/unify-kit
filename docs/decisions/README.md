@@ -72,6 +72,7 @@ Examples: `0001-hook-bundle-licensing.md`, `0002-some-future-decision.md`.
 | [0001](0001-hook-bundle-licensing.md) | Hook bundle, audit-scan, GH Actions workflow, and security-checklist reclassified from `verbatim` / `verbatim-with-light-edit` to `customization` | accepted | 2026-05-04 |
 | [0002](0002-consensus-critical-aggregation.md) | Multi-reviewer Critical findings aggregate by consensus (≥2 votes), not max-over-reviewers | accepted | 2026-06-04 |
 | [0003](0003-workflow-scriptpath-contract.md) | Committed Workflow seeds follow the proven scriptPath body-execution contract (not a node-check-clean exported-entry module) | accepted | 2026-06-04 |
+| [0004](0004-phasing-flow-execution-engine.md) | The phasing-flow execution-engine seed: frozen-vocabulary reuse, copied-lib byte-identity, deterministic-first verification, and no fixed-point ceiling in M2 | accepted | 2026-06-05 |
 
 When you add an ADR, append a row here — keep ADRs in numeric order.
 
