@@ -562,6 +562,106 @@ jobs:
           fi
           echo "bundle is tracked, in parity with source, valid for the runtime, and import-free"
 
+  # The phasing-flow execution-engine seed gate (M2 D1). The flagship engine
+  # (execute -> deterministic verify -> adversarial diff-review, looping until a
+  # provable ceiling fires) is committed as a self-contained importer-free Workflow
+  # bundle exactly like iterative-review + planning-brain: a tested .mjs kernel +
+  # an injection wrapper + an agent-backed glue, INLINED by a deterministic bundler.
+  # CI cannot test live QUALITY (needs a model); this gate guards the ENFORCED
+  # CEILINGS (node --test, red-capable), WIRING + determinism (parse + parity +
+  # import-free + check-bundle), and the COPIED-LIB single-source-of-truth
+  # (byte-identity vs the iterative-review originals — J3). Zero-dep: bare node
+  # --test / node --check on pinned Node 20. Triggered via the plugins/** filter.
+  phasing-flow-engine-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: phasing-flow-engine workflow .mjs parse cleanly (node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/phasing-flow/workflow
+          # Exclude the GENERATED bundle: it ends with a top-level `return await
+          # main(args)` (ADR 0003), illegal in a bare ESM module, so `node --check`
+          # would raise "Illegal return statement" on the CORRECT bundle.
+          # check-bundle.mjs (wrap-parse) validates it in the parity step instead.
+          # All SOURCE files (lib/*, kernel, wrapper, glue, build/check tools) still
+          # node --check.
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            node --check "$f"
+          done < <(find "$dir" -name '*.mjs' -type f -not -name 'phasing-flow-engine.workflow.mjs' 2>/dev/null)
+
+      - name: phasing-flow engine kernel tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          testdir=plugins/unifylabs-workflow/skills/phasing-flow/workflow/test
+          tests=("$testdir"/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no phasing-flow engine tests found under $testdir — the gate must have tests"
+            exit 1
+          fi
+          node --test "${tests[@]}"
+
+      # COPIED-LIB BYTE-IDENTITY DIFF-GUARD (J3): the 7 generic lib modules are
+      # COPIED verbatim from iterative-review (single source of truth, NOT a
+      # cross-seed bundle import). Assert each is byte-identical to its origin so a
+      # divergence (an accidental edit to one copy) fails loudly instead of
+      # silently forking the two engines' shared logic.
+      - name: copied lib modules are byte-identical to the iterative-review originals
+        run: |
+          set -euxo pipefail
+          src=plugins/unifylabs-workflow/skills/iterative-review/workflow/lib
+          dst=plugins/unifylabs-workflow/skills/phasing-flow/workflow/lib
+          for m in exit-reasons clamp canonical make-return budget-guard verifier-detect consensus-aggregate; do
+            cmp "$src/$m.mjs" "$dst/$m.mjs" \
+              || { echo "::error::lib drift — $m.mjs differs from the iterative-review original (copied libs must stay byte-identical)"; exit 1; }
+          done
+          echo "all 7 copied lib modules are byte-identical to their iterative-review originals"
+
+      # PARITY GUARD: the committed bundle must be a tracked git file, match a fresh
+      # regeneration byte-for-byte, validate for the runtime (check-bundle), and be
+      # import-free. A stale bundle would ship untested code.
+      - name: phasing-flow engine bundle parity (regenerate + git diff + check-bundle)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/phasing-flow/workflow
+          bundle="$dir/phasing-flow-engine.workflow.mjs"
+          git ls-files --error-unmatch "$bundle" \
+            || { echo "::error file=$bundle::bundle is not a tracked git file — add it so the parity guard cannot be silently disarmed"; exit 1; }
+          ( cd "$dir" && node build-workflow.mjs )
+          git diff --exit-code -- "$bundle" \
+            || { echo "::error file=$bundle::bundle drift — run 'node build-workflow.mjs' and commit the result"; exit 1; }
+          node "$dir/check-bundle.mjs" "$bundle"
+          if grep -anE '^[[:space:]]*import[[:space:]]' "$bundle"; then
+            echo "::error file=$bundle::bundle contains an import statement — the Workflow VM cannot import"
+            exit 1
+          fi
+          echo "bundle is tracked, in parity with source, valid for the runtime, and import-free"
+
+      # RED GATE-THE-GATE: disable a real ceiling (the budget circuit-breaker) and
+      # assert the kernel suite FAILS. If it PASSED against the sabotaged engine the
+      # ceiling assertions are not binding (vacuous-pass regression) — fail the job.
+      - name: RED self-test — a disabled ceiling MUST fail the kernel suite
+        run: |
+          set -euo pipefail
+          dir=plugins/unifylabs-workflow/skills/phasing-flow/workflow
+          cp "$dir/execution-engine.mjs" "$RUNNER_TEMP/ee.bak"
+          sed 's/if (budgetCheck.tripped) {/if (false \&\& budgetCheck.tripped) {/' "$RUNNER_TEMP/ee.bak" > "$dir/execution-engine.mjs"
+          if node --test "$dir"/test/*.test.mjs > /dev/null 2>&1; then
+            cp "$RUNNER_TEMP/ee.bak" "$dir/execution-engine.mjs"
+            echo "::error::RED self-test PASSED against a disabled circuit-breaker — the ceiling assertions are not binding (gate-the-gate failure)"
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/ee.bak" "$dir/execution-engine.mjs"
+          echo "RED self-test correctly failed — ceiling assertions bind to real engine behavior"
+
   # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
   # test that proves a security hook fires+blocks, and CI executed zero hooks —
   # a verbatim hook's enforcement signal is only PROVABLE by running it with the
