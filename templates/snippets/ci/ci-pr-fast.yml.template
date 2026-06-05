@@ -75,7 +75,15 @@ jobs:
         run: "{{TYPECHECK_CMD}}"
 
       - name: Unit tests (CI split)
-        run: "{{TEST_CI_CMD}}"
+        run: |
+          # If this is a Node project whose package.json defines no "test"
+          # script, warn and skip instead of failing CI on main. Stacks
+          # without a package.json (Python, Go, Ruby, etc.) run unchanged.
+          if [ -f package.json ] && ! node -e "const s=require('./package.json').scripts||{}; process.exit(s.test?0:1)"; then
+            echo "::warning::No test script in package.json - skipping unit tests. Add a test script (or edit this step) to enable."
+            exit 0
+          fi
+          {{TEST_CI_CMD}}
 
   # ── Tier 2: E2E daily (cron only — NOT on PRs) ────────────────────
   # Runs only on the scheduled trigger; saves ~15-20 min per PR.
