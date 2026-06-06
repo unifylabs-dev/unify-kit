@@ -125,6 +125,23 @@ Run all six dimensions. Each emits findings categorized **Critical / Important /
 
 **Composite score** = `0.30·D1 + 0.20·D2 + 0.15·D3 + 0.10·D4 + 0.20·D5 + 0.05·D6` (D6 omitted and renormalized if not applicable).
 
+### Run via the committed audit seed (M3)
+
+**M3 adoption (phasing-flow):** the Phase-2 audit is implemented as a committed Workflow **seed** at `workflow/integrate-audit.workflow.mjs` — a typed `parallel()` over the six dimensions below, reduced by the authoritative, unit-tested `compute-audit` kernel (the composite, the ÷0.95 D6 renormalization, the FAIL-CLOSED blocking overrides, and the route matrix). It runs the **same formulas the prose below specifies**, with D4 consensus-aggregated (critVotes=1, dedup-only — the six distinct `pr-review-toolkit` lenses rarely co-locate) and D2 resolved via `resolveVerifier` + a synthetic `npx tsc --noEmit` fallback (so a project lacking a `typecheck` script keeps the type-check gate).
+
+Invoke it after Phase 1 has resolved the branch and created the detached audit worktree:
+
+```
+Workflow({
+  scriptPath: "${CLAUDE_PLUGIN_ROOT}/skills/integrate-branch/workflow/integrate-audit.workflow.mjs",
+  args: { workingDir: "<audit-worktree>", branch: "<branch>", baseRef: "master", diffRange: "master...HEAD" }
+})
+```
+
+It returns `{ scores, composite, composite_display, route, route_basis, override, degraded, signals }` with **NO mid-run gate** — a running Workflow takes no human input, so the salvage/rebuild/discard route gate stays in THIS session (Phase 3). Render the audit report (Phase 3 format) from this result, then hold the route gate. A `degraded: true` result (a dimension agent failed to report a deterministic signal) never auto-recommends Salvage — it downgrades to *user-decides*, and the blocking `override_signals` are treated as potentially-firing (FAIL-CLOSED).
+
+**The D1–D6 prose below is the SPEC the seed implements** (the verbatim scoring formulas) **and the fallback** if the seed is unavailable. The Phase-3 route gate and the Phase-4 handoffs are **byte-unchanged**. **To revert M3:** delete `workflow/` and this `### Run via the committed audit seed` block — the prose audit below remains the standalone fallback.
+
 ### Dimension 1: CLAUDE.md non-negotiables (weight 30%)
 
 For every modified/added Server Action (typically `src/app/.../actions.ts` or `src/lib/actions/**`):

@@ -662,6 +662,101 @@ jobs:
           cp "$RUNNER_TEMP/ee.bak" "$dir/execution-engine.mjs"
           echo "RED self-test correctly failed — ceiling assertions bind to real engine behavior"
 
+  # M3 adoption (skill 1 of 3): the integrate-branch Phase-2 AUDIT seed. Mirrors
+  # phasing-flow-engine-harness (node --check + node --test + copied-lib
+  # byte-identity + bundle parity + a RED gate-the-gate) — the executed-test
+  # layer for the new audit seed. CRITICAL difference: the copied-lib cmp loop
+  # iterates EXACTLY the 3 libs this seed copies (canonical / consensus-aggregate
+  # / verifier-detect), NOT the engine's 7 — a verbatim 7-lib clone would fail
+  # (the other 4 do not exist here). Triggered via the plugins/** path filter.
+  integrate-audit-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: integrate-audit workflow .mjs parse cleanly (node --check)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/integrate-branch/workflow
+          # Exclude the GENERATED bundle: it ends with a top-level `return await
+          # main(args)` (ADR 0003), illegal in a bare ESM module, so `node --check`
+          # would raise "Illegal return statement" on the CORRECT bundle.
+          # check-bundle.mjs (wrap-parse) validates it in the parity step instead.
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            node --check "$f"
+          done < <(find "$dir" -name '*.mjs' -type f -not -name 'integrate-audit.workflow.mjs' 2>/dev/null)
+
+      - name: integrate-audit kernel tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          testdir=plugins/unifylabs-workflow/skills/integrate-branch/workflow/test
+          tests=("$testdir"/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no integrate-audit tests found under $testdir — the gate must have tests"
+            exit 1
+          fi
+          node --test "${tests[@]}"
+
+      # COPIED-LIB BYTE-IDENTITY DIFF-GUARD (ADR 0003): this seed copies EXACTLY 3
+      # libs — the only ones the D4 (consensus) / D2 (resolveVerifier) paths need.
+      # Assert each is byte-identical to the canonical iterative-review origin
+      # (single source of truth shared across iterative-review / phasing-flow /
+      # integrate-branch). NOT the 7-lib loop — see the job comment.
+      - name: copied lib modules are byte-identical to the iterative-review originals
+        run: |
+          set -euxo pipefail
+          src=plugins/unifylabs-workflow/skills/iterative-review/workflow/lib
+          dst=plugins/unifylabs-workflow/skills/integrate-branch/workflow/lib
+          for m in canonical consensus-aggregate verifier-detect; do
+            cmp "$src/$m.mjs" "$dst/$m.mjs" \
+              || { echo "::error::lib drift — $m.mjs differs from the iterative-review original (copied libs must stay byte-identical)"; exit 1; }
+          done
+          echo "all 3 copied lib modules are byte-identical to their iterative-review originals"
+
+      # PARITY GUARD: the committed bundle must be a tracked git file, match a
+      # fresh regeneration byte-for-byte, validate for the runtime (check-bundle),
+      # and be import-free. A stale bundle would ship untested code.
+      - name: integrate-audit bundle parity (regenerate + git diff + check-bundle)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/skills/integrate-branch/workflow
+          bundle="$dir/integrate-audit.workflow.mjs"
+          git ls-files --error-unmatch "$bundle" \
+            || { echo "::error file=$bundle::bundle is not a tracked git file — add it so the parity guard cannot be silently disarmed"; exit 1; }
+          ( cd "$dir" && node build-workflow.mjs )
+          git diff --exit-code -- "$bundle" \
+            || { echo "::error file=$bundle::bundle drift — run 'node build-workflow.mjs' and commit the result"; exit 1; }
+          node "$dir/check-bundle.mjs" "$bundle"
+          if grep -anE '^[[:space:]]*import[[:space:]]' "$bundle"; then
+            echo "::error file=$bundle::bundle contains an import statement — the Workflow VM cannot import"
+            exit 1
+          fi
+          echo "bundle is tracked, in parity with source, valid for the runtime, and import-free"
+
+      # RED GATE-THE-GATE: mutate a compute-audit weight and assert the suite
+      # FAILS. If it PASSED against the sabotaged reduce, the verdict-parity +
+      # weight-pinning assertions are not binding (vacuous-pass regression).
+      - name: RED self-test — a mutated audit weight MUST fail the suite
+        run: |
+          set -euo pipefail
+          dir=plugins/unifylabs-workflow/skills/integrate-branch/workflow
+          cp "$dir/compute-audit.mjs" "$RUNNER_TEMP/ca.bak"
+          sed 's/d1: 0.3,/d1: 0.31,/' "$RUNNER_TEMP/ca.bak" > "$dir/compute-audit.mjs"
+          if node --test "$dir"/test/*.test.mjs > /dev/null 2>&1; then
+            cp "$RUNNER_TEMP/ca.bak" "$dir/compute-audit.mjs"
+            echo "::error::RED self-test PASSED against a mutated weight — the parity/weight assertions are not binding (gate-the-gate failure)"
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/ca.bak" "$dir/compute-audit.mjs"
+          echo "RED self-test correctly failed — weight/parity assertions bind to real reduce arithmetic"
+
   # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
   # test that proves a security hook fires+blocks, and CI executed zero hooks —
   # a verbatim hook's enforcement signal is only PROVABLE by running it with the

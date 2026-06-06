@@ -50,7 +50,14 @@ kit — one repo, three roles. No runtime, no DB.
   `iterative-review` precedent). These are NOT skills/commands/hooks (no count
   ripple); M3 relocates the planning-brain seed under the `phasing-flow` skill
   (M2 wired `/phasing-flow plan` onto it in place). The `phasing-flow` skill also
-  ships its own `workflow/` execution-engine seed (the third ADR-0003 seed).
+  ships its own `workflow/` execution-engine seed (the third ADR-0003 seed). M3
+  adds a **fourth ADR-0003 seed** under `integrate-branch/workflow/` — the
+  Phase-2 audit re-platformed as a typed `parallel()` over the 6 weighted
+  dimensions (D4 = 6 `pr-review-toolkit` reviewers + consensus; D2 =
+  `resolveVerifier`) reduced by a pure `compute-audit` kernel; the
+  salvage/rebuild/discard route gate stays in the skill session. Also NOT a
+  skill/command/hook (no count ripple); revert = delete the `workflow/` dir +
+  one SKILL pointer block (the D1–D6 prose remains the fallback). ADR 0005.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
   (always applied), `claude-runtime/` (always applied: `.mcp.json` +
   `.claude/settings.json`), `optional/` (opt-in via `--include=`),
@@ -134,7 +141,7 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
+- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle + the `integrate-audit-harness` job running `node --test` over the integrate-branch audit seed (the pure `compute-audit` reduce + the `verdict-parity` two-gate harness + the content-anchored Phase-3/4 frozen-region guard) and parity/3-copied-lib-byte-identity/RED-self-test-guarding its bundle), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
 - **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `plugin-install-fixture`, `changelog-check`) run automatically on push + PR.
 - **Full local**: `gh workflow run plugin-install-fixture.yml` (runs all structural + init-project + audit-scan + dev-symlink dry-run jobs end-to-end against `$RUNNER_TEMP` targets).
 - **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the static-lint layer. The `phasing-flow` engine adds a true executed-test layer: `node --test` over the pure, `agent()`-free stopping engine (`loop-harness`) and a `bash` harness that drives the verbatim security hooks with real tool-call envelopes and asserts their `exit 2`/fire enforcement (`security-hook-harness`) — both **red-capable** (gate-the-gate: a deliberately-broken assertion or disabled hook must turn the gate red).

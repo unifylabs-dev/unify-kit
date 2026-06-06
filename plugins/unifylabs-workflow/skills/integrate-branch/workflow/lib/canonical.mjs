@@ -1,0 +1,90 @@
+// canonical.mjs — canonical key for a finding (M2 foundation).
+//
+// DELIBERATE UPGRADE over the legacy stopping-rules.md rule 4:
+//   legacy: canonical = hash((severity, description[:80]))
+//   here:   canonical = (file, line, severity, normalized-FULL-description)
+//
+// Why upgrade: desc[:80] collides two distinct findings that share an 80-char
+// prefix (common with templated review text), which would make the fixed-point
+// detector think the set shrank when it did not. The full-tuple key matches the
+// severity-policy.md aggregation key exactly (file, line, normalized
+// description), so the engine's stall/cycle detection and the report's
+// dedup agree on what "the same finding" means. Recorded in rule_encoding.
+//
+// Key encoding: JSON.stringify of the 4-tuple ARRAY
+//   [file, line, severity, normalized-description]. This is unambiguous (the
+//   JSON-quoted array bracketing + per-field quoting + escaping makes
+//   field-content collision impossible — no field can forge the boundary
+//   between two fields) and is pure TEXT (no NUL / control-byte separator), so
+//   the generated bundle that inlines this source stays a text file: git can
+//   diff it and grep can scan it on any platform.
+//
+// Determinism: pure string transform. No wall-clock, no random.
+
+/**
+ * Normalize a finding's description for stable comparison:
+ *  - lowercase
+ *  - collapse internal whitespace runs to a single space
+ *  - trim ends
+ * This is the "normalized description" half of the aggregation key.
+ * @param {string} desc
+ * @returns {string}
+ */
+export function normalizeDescription(desc) {
+  return String(desc ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Canonical key over the FULL tuple (file, line, severity, normalized
+ * description). Used as a Set/Map key, so it must be a primitive string.
+ * @param {{file?: string, line?: number|string, severity?: string, description?: string}} f
+ * @returns {string}
+ */
+export function canonical(f) {
+  return JSON.stringify([
+    String(f?.file ?? ''),
+    String(f?.line ?? ''),
+    String(f?.severity ?? '').toLowerCase(),
+    normalizeDescription(f?.description),
+  ]);
+}
+
+/**
+ * Build a Set of canonical keys from an array of findings.
+ * @param {Array<object>} findings
+ * @returns {Set<string>}
+ */
+export function canonicalSet(findings) {
+  const s = new Set();
+  for (const f of findings ?? []) s.add(canonical(f));
+  return s;
+}
+
+/**
+ * True iff every member of `a` is also in `b` (a ⊆ b).
+ * @param {Set<string>} a
+ * @param {Set<string>} b
+ * @returns {boolean}
+ */
+export function isSubset(a, b) {
+  for (const x of a) {
+    if (!b.has(x)) return false;
+  }
+  return true;
+}
+
+/**
+ * Stable serialization of a canonical set for cycle/oscillation detection:
+ * sort the keys so {x,y} and {y,x} serialize identically. Each key is itself a
+ * JSON-tuple string from canonical(), so JSON.stringify of the sorted array is
+ * an unambiguous, pure-TEXT serialization (no NUL / control-byte separator) —
+ * keeping the inlined bundle a text file that git can diff and grep can scan.
+ * @param {Set<string>} s
+ * @returns {string}
+ */
+export function serializeSet(s) {
+  return JSON.stringify(Array.from(s).sort());
+}
