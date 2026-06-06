@@ -58,6 +58,18 @@ kit — one repo, three roles. No runtime, no DB.
   salvage/rebuild/discard route gate stays in the skill session. Also NOT a
   skill/command/hook (no count ripple); revert = delete the `workflow/` dir +
   one SKILL pointer block (the D1–D6 prose remains the fallback). ADR 0005.
+  **M3 #2 (skill 2 of 3) re-platforms `work-issue`** onto the framework as a
+  SKILL REWIRE that DRIVES the existing planning-brain + execution-engine seeds
+  by scriptPath — NOT a new seed (work-issue has no parity-lockable arithmetic).
+  Phase 3 → planning-brain (M/L issues, null-guarded); Phase 4 → the engine as
+  the per-AC verify + diff-review gate (Mode B, S/M/L conditional, one AC = one
+  unit); Phase 3.5 + the `--phase`/`--no-phase` flags DELETED; Phase 5.5 stays a
+  human-gated orchestrator check (never the engine's fail-OPEN layer). A 10-block
+  content-anchored frozen-region test (`skills/work-issue/test/`, the new
+  `work-issue-frozen-harness` CI job → **20 CI jobs**) proves the untouched
+  phases stay byte-verbatim; revert = delete the two SKILL pointer blocks (the
+  prose is the fallback). ADR-0004's deferred dead `fixedPointK` is removed from
+  the engine `wrapper.mjs`. No skill/command/hook count ripple. ADR 0006.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
   (always applied), `claude-runtime/` (always applied: `.mcp.json` +
   `.claude/settings.json`), `optional/` (opt-in via `--include=`),
@@ -141,7 +153,7 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle + the `integrate-audit-harness` job running `node --test` over the integrate-branch audit seed (the pure `compute-audit` reduce + the `verdict-parity` two-gate harness + the content-anchored Phase-3/4 frozen-region guard) and parity/3-copied-lib-byte-identity/RED-self-test-guarding its bundle), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
+- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle + the `integrate-audit-harness` job running `node --test` over the integrate-branch audit seed (the pure `compute-audit` reduce + the `verdict-parity` two-gate harness + the content-anchored Phase-3/4 frozen-region guard) and parity/3-copied-lib-byte-identity/RED-self-test-guarding its bundle + the `work-issue-frozen-harness` job running `node --test` over the 10-block content-anchored frozen-region guard that proves the M3 #2 `work-issue` SKILL rewire kept the untouched phases byte-verbatim (the 2 seed pointers landed + Phase 3.5/flags gone; CI is now **20 jobs**, the honest M3.1 mirror)), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
 - **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `plugin-install-fixture`, `changelog-check`) run automatically on push + PR.
 - **Full local**: `gh workflow run plugin-install-fixture.yml` (runs all structural + init-project + audit-scan + dev-symlink dry-run jobs end-to-end against `$RUNNER_TEMP` targets).
 - **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the static-lint layer. The `phasing-flow` engine adds a true executed-test layer: `node --test` over the pure, `agent()`-free stopping engine (`loop-harness`) and a `bash` harness that drives the verbatim security hooks with real tool-call envelopes and asserts their `exit 2`/fire enforcement (`security-hook-harness`) — both **red-capable** (gate-the-gate: a deliberately-broken assertion or disabled hook must turn the gate red).

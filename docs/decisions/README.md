@@ -74,6 +74,7 @@ Examples: `0001-hook-bundle-licensing.md`, `0002-some-future-decision.md`.
 | [0003](0003-workflow-scriptpath-contract.md) | Committed Workflow seeds follow the proven scriptPath body-execution contract (not a node-check-clean exported-entry module) | accepted | 2026-06-04 |
 | [0004](0004-phasing-flow-execution-engine.md) | The phasing-flow execution-engine seed: frozen-vocabulary reuse, copied-lib byte-identity, deterministic-first verification, and no fixed-point ceiling in M2 | accepted | 2026-06-05 |
 | [0005](0005-integrate-branch-audit-seed.md) | The integrate-branch Phase-2 audit seed: reduce-parity acceptance, copy-3-libs, consensus dedup-only for distinct lenses, a synthetic-tsc D2 fallback, and transitive engine adoption | accepted | 2026-06-06 |
+| [0006](0006-work-issue-phasing-flow-rewire.md) | The work-issue phasing-flow rewire: a SKILL-rewire driving the existing seeds (no new kernel), Mode-B Phase-4 engine-gating, S/M/L-conditional host, Phase-3.5 deletion, a 10-block frozen-region guard, and the ADR-0004 fixed-point discharge | accepted | 2026-06-06 |
 
 When you add an ADR, append a row here — keep ADRs in numeric order.
 

@@ -757,6 +757,54 @@ jobs:
           cp "$RUNNER_TEMP/ca.bak" "$dir/compute-audit.mjs"
           echo "RED self-test correctly failed — weight/parity assertions bind to real reduce arithmetic"
 
+  # M3 adoption (skill 2 of 3): the work-issue phasing-flow REWIRE. Unlike the
+  # integrate-branch audit seed (skill 1 of 3), work-issue ships NO new compute
+  # kernel/bundle/copied-libs — its M3 wiring is a SKILL rewrite that DRIVES the
+  # already-live planning-brain + execution-engine seeds by scriptPath. The only
+  # executed-test surface is the content-anchored frozen-region guard: it proves the
+  # genuinely-untouched SKILL.md blocks stay byte-verbatim (no-regression) and that
+  # the two seed pointers landed + Phase 3.5 is gone. Zero-dep (node --test only).
+  # Triggered via the plugins/** path filter.
+  work-issue-frozen-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: work-issue frozen-region tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          testdir=plugins/unifylabs-workflow/skills/work-issue/test
+          tests=("$testdir"/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no work-issue frozen-region tests found under $testdir — the gate must have tests"
+            exit 1
+          fi
+          node --test "${tests[@]}"
+
+      # RED GATE-THE-GATE: perturb a frozen golden and assert the suite FAILS. If it
+      # PASSED against a drifted golden, the byte-identity assertions are not binding
+      # (vacuous-pass regression — the no-regression guard would be inert).
+      - name: RED self-test — a drifted frozen golden MUST fail the suite
+        run: |
+          set -euo pipefail
+          dir=plugins/unifylabs-workflow/skills/work-issue
+          golden="$dir/test/golden/07-phase5.md"
+          cp "$golden" "$RUNNER_TEMP/wi.bak"
+          printf '\nDRIFT-INJECTED\n' >> "$golden"
+          if node --test "$dir"/test/*.test.mjs > /dev/null 2>&1; then
+            cp "$RUNNER_TEMP/wi.bak" "$golden"
+            echo "::error::RED self-test PASSED against a drifted golden — the frozen-region assertions are not binding (gate-the-gate failure)"
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/wi.bak" "$golden"
+          echo "RED self-test correctly failed — frozen-region assertions bind to the real SKILL.md blocks"
+
   # The Tier-1 security-hook ENFORCEMENT gate (P4). The kit previously had NO
   # test that proves a security hook fires+blocks, and CI executed zero hooks —
   # a verbatim hook's enforcement signal is only PROVABLE by running it with the

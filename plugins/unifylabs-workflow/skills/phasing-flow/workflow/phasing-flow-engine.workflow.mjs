@@ -992,7 +992,6 @@ function finalize({ exitReason, completed, residualUnits, budget, truncationLog 
  * @param {(ctx:object)=>Promise<number>} opts.diffReview
  * @param {{spent:()=>number, remaining:()=>number, total:number|null}} opts.budget
  * @param {number} [opts.cap]
- * @param {number} [opts.fixedPointK=1]
  * @param {number} [opts.relativeMultiplier=5]
  * @param {number} [opts.absoluteThreshold]
  * @param {string} [opts.workingDir]
@@ -1006,7 +1005,6 @@ async function runPhasingFlowExecution({
   diffReview,
   budget,
   cap,
-  fixedPointK = 1,
   relativeMultiplier = 5,
   absoluteThreshold,
   workingDir,
@@ -1026,7 +1024,6 @@ async function runPhasingFlowExecution({
     diffReview,
     budget,
     cap,
-    fixedPointK,
     relativeMultiplier,
     absoluteThreshold,
     workingDir,
