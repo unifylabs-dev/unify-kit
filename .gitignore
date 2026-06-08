@@ -29,6 +29,11 @@ node_modules/
 # Phasing run state (created by /phase orchestrator; not committed)
 .claude/phasing/
 
+# Phasing-flow run-scratch + session handoffs (local working state; not committed)
+.phasing-flow/
+.phasing-flow-run/
+.claude/handoffs/
+
 # Kit's own project manifest from init-project.sh self-bootstrap.
 # The kit IS the kit-version source of truth — tracking the manifest would
 # create a circular reference.
