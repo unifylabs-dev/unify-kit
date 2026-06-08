@@ -1,7 +1,7 @@
 # Decomposition heuristics — Phase 4
 
 Phase 4 decides whether the feature should be one issue or several. Bad calls in both directions:
-- **Under-splitting** — one giant issue burns through `/work-issue` Phase 3.5's phasing gate; user loses the granularity of separate PRs; review is harder.
+- **Under-splitting** — one giant issue lands as a single oversized `/work-issue`; user loses the granularity of separate PRs; review is harder.
 - **Over-splitting** — three tiny linked issues add overhead without benefit; reviewers context-switch between PRs unnecessarily.
 
 This file is the trigger catalog + split strategies.

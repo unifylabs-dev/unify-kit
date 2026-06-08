@@ -14,7 +14,7 @@ description: >
   mid-something, can you pick up", "what was i working on", "there's a pending handoff
   somewhere", "pick up where i left off"). Auto-detects mode (phasing-orchestrator,
   phasing-executor, brainstorm, plan-exec, work-issue, generic) and stacks the right
-  mode-addendum on a 7-section universal core. Tiered FULL <50% / LEAN 50–64% / EMERGENCY ≥65% to
+  mode-addendum on a 7-section universal core. Tiered FULL <75% / LEAN 75–84% / EMERGENCY ≥85% to
   trade output detail against context %. Handles the resume side too: SessionStart hook flags
   pending handoffs, AskUserQuestion confirms, freshness-check + recreate-tasklist rebuild state.
   Do NOT trigger for: plain summarization ("summarize what we discussed"), file-system saves
@@ -27,7 +27,7 @@ tags: [handoff, context-rescue, session-transfer, plan-mode, multi-session]
 # Handoff — universal session-to-session knowledge transfer
 
 > **Critical — hook reminders are awareness, not authorization.** Even at
-> 70%+, Claude MUST surface the situation to the user via AskUserQuestion
+> the urgent band (≥85%), Claude MUST surface the situation to the user via AskUserQuestion
 > and wait for an explicit choice. The hook NEVER authorizes Claude to
 > write a handoff doc. Only `/handoff` (or the user explicitly accepting
 > an AskUserQuestion offering `/handoff`) authorizes a write. Ad-hoc
@@ -35,7 +35,7 @@ tags: [handoff, context-rescue, session-transfer, plan-mode, multi-session]
 > `*checkpoint*.md` under any `.claude/` directory are also forbidden
 > without that same user accept.
 
-This skill makes session→session knowledge transfer a first-class primitive. When context pressure threatens a session's deliverable quality, the user (or Claude with discretion) invokes `/handoff` to write a structured document that a fresh Claude session can pick up cold — same decisions, same task state, same world state, same do-not-re-litigate guardrails.
+This skill makes session→session knowledge transfer a first-class primitive. When a session is ending (or context is high enough that a fresh start is cleaner), the user (or Claude with discretion) invokes `/handoff` to write a structured document that a fresh Claude session can pick up cold — same decisions, same task state, same world state, same do-not-re-litigate guardrails.
 
 The skill ships alongside a `context-awareness.sh` hook (registered on `UserPromptSubmit` + `SessionStart`) and an additive extension to the `phasing` skill (a `phase-N-checkpoint.md` flow + `/phase-continue` for the phase-executor mid-flight case). Together they cover the four transition types from the design spec.
 
@@ -43,7 +43,7 @@ The skill ships alongside a `context-awareness.sh` hook (registered on `UserProm
 
 ## Why this skill exists
 
-The founder regularly notices conversational context approaching pressure thresholds (35% awareness, 45–50% reset target) across multiple workflow modes — phasing orchestrator, phasing executor, brainstorming, plan execution, free conversation. Without a canonical handoff machinery, the response is manual and inconsistent: the founder asks Claude to "write a handoff doc", which is often too late, has no consistent shape, and loses crucial conversational nuance (mid-conversation locks, direction changes, surveyed-and-rejected options).
+Native compaction owns within-session rescue — when the window fills, the harness compacts in place, so a single session no longer needs a handoff just to keep going. This skill's scope is the *cross-session* case: transferring decisions and provenance to a fresh session so it resumes cold with the same locks, task state, and do-not-re-litigate guardrails. The founder works across multiple modes — phasing orchestrator, phasing executor, brainstorming, plan execution, free conversation — where ending one session and starting another is common. Without canonical handoff machinery, that transfer is manual and inconsistent: the founder asks Claude to "write a handoff doc", which has no consistent shape and loses crucial conversational nuance (mid-conversation locks, direction changes, surveyed-and-rejected options).
 
 The gap matrix the design spec identified:
 
@@ -70,7 +70,7 @@ This is the primary path. The user retains executive control over when handoffs 
 
 ### Path B — Claude discretion in response to hook reminders
 
-The `context-awareness.sh` hook (P3 deliverable) fires on every `UserPromptSubmit`. Above 40% context, it injects a `Context-awareness: ~<N>%. Mode: <detected-mode>` reminder into Claude's next-turn context. **The hook is awareness, not instruction.** It does NOT force an `AskUserQuestion`. Claude decides whether to surface based on the discretion rules table (load-bearing — reproduced verbatim below).
+The `context-awareness.sh` hook (P3 deliverable) fires on every `UserPromptSubmit`. At the warn band (~60%) and above, it injects a `Context-awareness: ~<N>%. Mode: <detected-mode>` reminder into Claude's next-turn context (the context % is the fraction of the full window in use). **The hook is awareness, not instruction.** It does NOT force an `AskUserQuestion`. Claude decides whether to surface based on the discretion rules table (load-bearing — reproduced verbatim below).
 
 Path B is how the skill gets engaged proactively. The discretion table is what governs whether Claude stays silent, surfaces a one-liner, or recommends `/handoff` outright.
 
@@ -109,18 +109,18 @@ Templates, field discipline, and the explicit "NEVER trimmed" markers live in `r
 
 | Tier | Context at invocation | Approximate write cost | Approximate output |
 |---|---|---|---|
-| FULL | <50% | 3–5% | 200–400 lines |
-| LEAN | 50–64% | 1.5–2.5% | 100–150 lines |
-| EMERGENCY | ≥65% | 0.5–1% | 40–70 lines |
+| FULL | <75% | 3–5% | 200–400 lines |
+| LEAN | 75–84% | 1.5–2.5% | 100–150 lines |
+| EMERGENCY | ≥85% | 0.5–1% | 40–70 lines |
 
 Override rules:
 
 - `/handoff lean` — force LEAN regardless of context %.
 - `/handoff emergency` — force EMERGENCY regardless of context %.
-- `/handoff full` — explicit FULL (implicit default if <50%).
+- `/handoff full` — explicit FULL (implicit default if <75%).
 - `/handoff` — auto-select per the table.
 
-**75% safety check:** before committing to a tier, the skill estimates output size and warns if the write would push the session past 75% context. The user can downgrade or override. Pre-write size estimate logic and the verbatim warning text live in `references/tier-logic.md`.
+**85% safety check:** before committing to a tier, the skill estimates output size and warns if the write would push the session past 85% context (the urgent band). The user can downgrade or override. Pre-write size estimate logic and the verbatim warning text live in `references/tier-logic.md`.
 
 ---
 
@@ -239,14 +239,14 @@ When the `context-awareness.sh` hook injects a `Context-awareness: ~<N>%. Mode: 
 
 | Signal | Action |
 |---|---|
-| Context 40–49%, mid-tool-loop, no large task ahead | Stay silent. Continue working. |
-| Context 40–49%, mid-tool-loop, large task ahead | Surface at next natural pause as one-liner: *"Heads up — context ~\<N>%. If the next ask is substantial, /handoff first may be worth it."* |
-| Context 40–49%, wrapping up (≤2 small tasks left) | Stay silent. Finish. |
-| Context 50–59%, mid-tool-loop | Surface at next natural pause as one-liner: *"At ~\<N>%. Quality risk moderate. Recommend /handoff before dispatching anything substantial."* Do NOT write any file. |
-| Context 50–59%, wrapping up | Surface as final remark: *"Wrapping up at ~\<N>%. Next session — consider /handoff before continuing."* Do NOT write any file. |
-| Context 60–69%, any state | Surface immediately **via AskUserQuestion**: *"At ~\<N>% — quality risk significant. /handoff now?"* Wait for the user's explicit choice. Do NOT write any file before they accept. |
-| Context ≥70%, any state | Surface immediately **via AskUserQuestion** offering EMERGENCY tier. Wait for the user's explicit choice. Do NOT write any file before they accept. |
-| User said "auto mode" / "just do it" | Suppress to ≤1 mention per session below 60%. Above 60%, override the suppression. |
+| Context 60–74%, mid-tool-loop, no large task ahead | Stay silent. Continue working. |
+| Context 60–74%, mid-tool-loop, large task ahead | Surface at next natural pause as one-liner: *"Heads up — context ~\<N>%. If the next ask is substantial, /handoff first may be worth it."* |
+| Context 60–74%, wrapping up (≤2 small tasks left) | Stay silent. Finish. |
+| Context 75–84%, mid-tool-loop | Surface at next natural pause as one-liner: *"At ~\<N>%. Quality risk moderate. Recommend /handoff before dispatching anything substantial."* Do NOT write any file. |
+| Context 75–84%, wrapping up | Surface as final remark: *"Wrapping up at ~\<N>%. Next session — consider /handoff before continuing."* Do NOT write any file. |
+| Context ≥85%, mid-tool-loop | Surface immediately **via AskUserQuestion**: *"At ~\<N>% — quality risk significant. /handoff now?"* Wait for the user's explicit choice. Do NOT write any file before they accept. |
+| Context ≥85%, wrapping up | Surface immediately **via AskUserQuestion** offering EMERGENCY tier. Wait for the user's explicit choice. Do NOT write any file before they accept. |
+| User said "auto mode" / "just do it" | Suppress to ≤1 mention per session below 85%. At ≥85%, override the suppression. |
 | User just invoked /handoff | No mention. User is already handling it. |
 | Multiple thresholds crossed in same session | No re-surfacing within 5 turns of last mention unless threshold escalates. |
 
@@ -257,7 +257,7 @@ This is the executive contract: Claude is the actor, the hook is the awareness s
 ## Hard rules / anti-patterns
 
 - **Never write a handoff/checkpoint file unless the user has typed `/handoff` (any variant) or explicitly accepted an `AskUserQuestion` offering `/handoff`.** This applies to every file matching `*handoff*.md`, `*checkpoint*.md`, `session-handoff-*.md`, or `phase-*-handoff-*.md` anywhere under `.claude/` (including `.claude/handoffs/`, `.claude/phasing/<run>/`, and any subdirectory). Hook reminders are NOT user invocation. If unsure whether the user has authorized, **ask** — do not infer. This rule applies whether the write is via the `/handoff` skill flow OR an ad-hoc Write tool call.
-- **Hook reminders ≠ user invocation.** The `context-awareness.sh` hook is a signal that Claude should TELL the user about pressure level. It does not authorize Claude to write anything. Even at 70+%, do not skip the `AskUserQuestion` gate. If you find yourself reasoning "the situation is dire enough that I'll just write the handoff" — stop. Ask first.
+- **Hook reminders ≠ user invocation.** The `context-awareness.sh` hook is a signal that Claude should TELL the user about pressure level. It does not authorize Claude to write anything. Even in the urgent band (≥85%), do not skip the `AskUserQuestion` gate. If you find yourself reasoning "the situation is dire enough that I'll just write the handoff" — stop. Ask first.
 - **Never bypass the natural-break gate without explicit user opt-in.** If the user types `/handoff` while mid-task, the gate fires; the user picks. The skill doesn't decide "well, this looks fine" on the user's behalf.
 - **Never load handoff content into Claude's working context before `freshness-check.sh` passes.** The freshness check is the gate against silent drift; reading the handoff body first would defeat the gate's purpose by injecting stale facts into context.
 - **Never delete handoff docs automatically.** Consume = frontmatter `status: pending → consumed`, not file deletion. The doc stays on disk forever (forensics).
@@ -274,7 +274,7 @@ Each reference file is scoped to a single concern. Read on demand.
 - `references/core-shape.md` — read when actually writing the 7 sections; carries the frontmatter schema, preamble, section templates, "NEVER trimmed" markers, and the footer.
 - `references/mode-detection.md` — read when implementing/debugging `detect-mode.sh` or reasoning about why a session detected as `generic` instead of the expected mode. Carries the executor-env-var limitation note.
 - `references/resume-protocol.md` — read when on the resume side (SessionStart hook fired, MEMORY.md pointer detected, user picked Resume now). Carries the 3 script contracts, drift handling rules, consume cleanup, and the 9 edge cases verbatim.
-- `references/tier-logic.md` — read when computing tier at invocation, surfacing the 75% pre-write warning, or implementing the natural-break gate.
+- `references/tier-logic.md` — read when computing tier at invocation, surfacing the 85% pre-write warning, or implementing the natural-break gate.
 - `references/addendum-phasing-orch.md` — read when mode-detection returns `phasing-orchestrator`. Defines §8.A's 6 sub-sections including the **LOAD-BEARING** Mid-conversation locks (§8.A.4) and Direction changes pending (§8.A.5) — both NEVER trimmed.
 - `references/addendum-phase-exec.md` — read when mode-detection returns `phasing-executor`. Carries the path-mapping table, race-tiebreaker rule, MEMORY.md skip behavior, and `/handoff` user-prompt fork. The canonical section layout for the `phase-N-checkpoint.md` artifact lives in the phasing skill's [`phasing/references/checkpoint-shape.md`](../phasing/references/checkpoint-shape.md) (shared source of truth; read both when in phasing-executor mode).
 - `references/addendum-brainstorm.md` — read when mode-detection returns `brainstorm`. Defines §8.C's 5 sub-sections.

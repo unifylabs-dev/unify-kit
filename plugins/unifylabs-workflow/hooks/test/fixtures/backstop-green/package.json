@@ -1,0 +1,7 @@
+{
+  "name": "backstop-green-fixture",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

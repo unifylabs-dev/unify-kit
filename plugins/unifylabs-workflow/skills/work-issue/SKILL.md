@@ -34,12 +34,10 @@ Orchestrate the full lifecycle of a GitHub issue: analysis → branch → plan �
 
 **Invocation:** `/work-issue 83` (single issue) or `/work-issue 83 91 145` (batch — process sequentially)
 
-**Optional flags** (single-issue mode only):
-- `--phase` — force phased-execution for the implementation portion (Phase 4). Skips auto-detection.
-- `--no-phase` — skip phasing entirely. Runs Phase 4 as TDD regardless of plan size.
-- (no flag) — runs conservative auto-detection at Phase 3.5; phasing only if both quantitative + self-assessment gates agree.
-
-Example: `/work-issue 83 --phase`
+> **M3 (phasing-flow adoption):** the old `--phase` / `--no-phase` flags were removed. Phasing-style
+> orchestration is now built into the workflow itself — Phase 3 drives the **planning-brain** seed for
+> M/L issues, and Phase 4 hosts the per-AC TDD body on the **execution engine** (S/M/L conditional).
+> There is no separate "phasing decision" to toggle. (See the Phase 3 / Phase 4 seed pointers below.)
 
 ## Instructions
 
@@ -373,6 +371,38 @@ Then use `AskUserQuestion`:
 
 **Goal:** Explore the codebase, create an implementation plan mapped to ACs.
 
+### Run via the committed seed (M3 — phasing-flow adoption)
+
+For **M/L-scope** issues, drive planning with the live **planning-brain** seed instead of a single
+free-form plan-mode pass — multi-angle planners + an adversarial critic + a judge produce a stronger,
+hallucination-resistant plan. The seed RUNS LIVE; invoke it by `scriptPath` (do **not** re-build it):
+
+```
+Workflow({
+  scriptPath: "${CLAUDE_PLUGIN_ROOT}/workflows/planning-brain/planning-brain.workflow.mjs",
+  args: {
+    task:     "<issue title + the behavioral + visual ACs>",
+    facts:    "<repo conventions (CLAUDE.md), the spec deltas from Phase 0, the files/areas touched, the visual spec + prototype branch, and any locked constraints>",
+    plansDir: "<worktree>/.work-issue/plans",
+    ground:   true,
+    scouts:   2
+  }
+})
+```
+
+When it returns, render the plan from **`result.master_plan.*`** — the gate fields are **nested there,
+NOT top-level**: `.summary`, the ordered `.steps[]`, and each `.open_decisions_for_human[]`
+`{decision, options, recommendation}` triple. **MANDATORY null-guard:** if `result.master_plan` is
+`null` (the structured-output pitfall), fall back to the in-session `### Enter Plan Mode` flow below
+and **never advance to Phase 4 without an approved plan** (fail-CLOSED).
+
+**For S-scope issues, skip the seed** and plan in-session via `### Enter Plan Mode` below — the 1M
+context window makes single-pass planning fine at small scope.
+
+Both paths converge on the SAME human surface: post **Milestone Comment 1** and hold **GATE 3**
+(plan approval) below. Revert: delete this block; the in-session `### Enter Plan Mode` flow is the
+standing fallback.
+
 ### Enter Plan Mode
 
 Use `EnterPlanMode` before doing any exploration or planning work. Plan mode gives you structured thinking space to reason through the architecture, weigh tradeoffs, and produce a higher-quality plan — especially important for M/L scope issues. Stay in plan mode throughout the exploration and plan formulation steps below, then exit once the plan is finalized and ready to present.
@@ -465,130 +495,46 @@ Then use `AskUserQuestion`:
 
 ---
 
-## Phase 3.5: Phasing Decision
-
-**Goal:** Decide whether to delegate implementation to the `phased-execution` skill, or run Phase 4 (TDD) as normal.
-
-This phase is short. It exists because some issues are large enough that running Phase 4 as a single TDD pass risks context rot, context bleed, or hallucinations. For those, `phased-execution` decomposes the plan into a master plan + per-phase specs, orchestrates dispatch (subagent default, session escalation for high-blast-radius phases), and enforces mandatory verification per phase. For small issues, this overhead isn't worth it.
-
-### Flag handling
-
-- `--phase` → force `phased-execution`. Skip detection.
-- `--no-phase` → skip detection, go straight to Phase 4 (TDD).
-- (no flag) → run conservative auto-detection.
-
-### Detection (auto mode only)
-
-Apply the hybrid-conservative gate from the `phased-execution` skill:
-1. **Quantitative gate (any one):** the Phase 3 plan touches >8 files, OR spans >2 subsystems, OR has >12 task bullets, OR explicitly uses "phase" / "milestone" / "step 1 / step 2" language.
-2. **Self-assessment (≥2 of 4 yes):** Does this work need cross-cutting decisions made early? Are there natural break points where re-grounding on the predecessor's output would help? Would the executor's context likely grow unmanageable mid-execution? Would a downstream step benefit from re-grounding?
-
-**Both gates must fire** to propose phasing. Otherwise proceed to Phase 4 (TDD).
-
-If proposing:
-> "This issue's plan looks substantial (touches X files across Y subsystems). Phase the implementation? (y / n)"
-
-User accepts → phased-execution. User declines → Phase 4 (TDD).
-
-### Invoking phased-execution
-
-When taking the phased path:
-
-1. **Determine the run-id.** Format: `issue-<N>-<kebab-description>` (e.g., `issue-83-auth-refactor`). This makes it easy to find the run later.
-
-2. **Write caller context** to `<worktree-root>/.claude/phases/<run-id>/context/issue.md`:
-
-   ```markdown
-   # Caller context: work-issue (issue #<N>)
-
-   ## Issue
-   - Number: <N>
-   - Title: <title>
-   - URL: https://github.com/<org>/<repo>/issues/<N>
-   - Branch: <type>/<N>-<kebab-description>
-
-   ## Description
-   <issue body>
-
-   ## Acceptance Criteria
-   ### Behavioral
-   - [ ] AC1
-   - [ ] AC2
-
-   ### Visual Fidelity
-   - [ ] Visual AC1
-   - [ ] Visual AC2
-
-   ## Visual Specification
-   <verbatim Visual Specification section if present, otherwise "(none)">
-
-   ## Prototype Branch
-   <branch name if present, otherwise "(none)">
-
-   ## Phase 3 implementation plan
-   <verbatim plan from Phase 3 — files, AC mapping, test plan, risks, etc.>
-   ```
-
-3. **Invoke `phased-execution`** with the run-id. It will:
-   - Read `context/issue.md` as required reading on every phase
-   - Decompose the Phase 3 plan into a master plan + per-phase specs (3–7 phases)
-   - Present the master plan for user approval (with per-phase `execution_mode` override)
-   - Orchestrate phase dispatch — subagent or session per recommendation
-   - Enforce mandatory verification per phase (TDD `command` for code phases; `check` / `review` / `user_gate` for non-code)
-   - Surface memory candidates at run completion
-
-4. **Wait for return.** Background-poll `<worktree>/.claude/phases/<run-id>/run.json` for `overall_status: complete | failed | aborted`. While waiting, you can chat with the user about other things.
-
-5. **On `complete`:** read the final phase's handoff and aggregate deliverables from all phase handoffs. **Resume at Phase 5 (Verification)** — the work-issue verification suite runs against the combined output.
-
-6. **On `failed` or `aborted`:** surface in this terminal. Offer:
-   - Re-run from a checkpoint via `/phase-resume <run-id>`
-   - Fix the issue manually then re-run
-   - Abort the entire work-issue workflow (cleanup per the Abort section at top)
-
-### Skipping phasing
-
-Default for small issues, when `--no-phase` is set, or when user declines the suggestion — proceed to Phase 4 (TDD) unchanged.
-
-**🚏 GATE 3.5 — STOP and confirm path forward.**
-
-If phasing:
-```
-🚏 Phase 3.5 Complete: Phasing Decision
-
-phased-execution will run for the implementation portion.
-Run-id: issue-<N>-<kebab-description>
-Context written: .claude/phases/<run-id>/context/issue.md
-
-work-issue resumes at Phase 5 (Verification) once phased-execution completes.
-
-⏭️ Next: phased-execution master-plan generation (separate flow)
-```
-
-If skipping:
-```
-🚏 Phase 3.5 Complete: Phasing Decision
-
-No phasing — proceeding with single TDD implementation.
-
-⏭️ Next: Phase 4 — Implementation (Strict TDD)
-```
-
-Then use `AskUserQuestion`:
-- Question: "Phase 3.5 complete — proceed?"
-- Header: "Phase 3.5"
-- Options:
-  1. **Continue (Recommended)** — "Proceed with the chosen path."
-  2. **Switch path** — "Flip between phased / TDD before continuing."
-  3. **Abort** — "Stop the workflow. Print cleanup instructions."
-
----
-
 ## Phase 4: Implementation (Strict TDD)
 
-**Note:** This phase runs only when Phase 3.5 chose the TDD path. If `phased-execution` was invoked at Phase 3.5, this phase is skipped — work-issue resumes at Phase 5 once phased-execution completes.
-
 **Goal:** Implement each AC using strict TDD: RED → GREEN → REFACTOR.
+
+### Run via the committed seed (M3 — phasing-flow adoption)
+
+For **M/L-scope** issues, the TDD body runs in **Mode B**: author each AC's RED→GREEN→REFACTOR cycle
+**in-session** (the `superpowers:test-driven-development` skill is the fit-for-purpose RED→GREEN enforcer),
+then hand the completed change to the live **execution-engine** seed as the per-AC **verify + adversarial
+diff-review GATE**. The engine RUNS LIVE; invoke it by `scriptPath` (do **not** re-build it):
+
+```
+Workflow({
+  scriptPath: "${CLAUDE_PLUGIN_ROOT}/skills/phasing-flow/workflow/phasing-flow-engine.workflow.mjs",
+  args: {
+    units: [ { id: "<AC id>", title: "<AC description>",
+               instruction: "<this AC's completed TDD change — already authored RED→GREEN→REFACTOR in-session>" } ],
+    workingDir: "<worktree>",
+    diffReviewers: 2
+  }
+})
+```
+
+- **One AC = one unit, serial.** The engine runs each unit through execute → **deterministic verify
+  (AUTHORITATIVE, fail-CLOSED)** → **adversarial diff-review (fail-OPEN, consensus ≥2)**, stopping at the
+  first blocking unit (`criticals-pending-gate`) — isomorphic to this phase's "one AC at a time" +
+  "GREEN fails 3× → stop" rules.
+- **Why Mode B (not "TDD inside `unit.instruction`"):** the engine executor is a *generic* agent and its
+  deterministic verify cannot prove a test was RED *before* the implementation. Encoding the whole TDD
+  body in the instruction would risk GREEN-without-RED that no verify catches. RED→GREEN authoring stays
+  in-session; the engine is the verify + diff-review gate.
+- **POST-engine orchestrator duties (the 4 verify-spine gaps the engine does NOT cover):** after the
+  engine returns, still run `npx tsc --noEmit`, the **scope guard**, and the **modified-test check** (all
+  in Phase 5), and **assert the engine's resolved verifier was NON-EMPTY** for this worktree (an empty
+  resolution silently passes — a real Next.js consumer must resolve `npm test` / `npm run build`).
+- **For S-scope issues, skip the engine** and run the in-session TDD loop below end-to-end — the
+  deterministic verify still happens at Phase 5.
+
+Either path keeps **GATE 4** (implementation review) + **Milestone Comment 2** below. Revert: delete this
+block; the in-session TDD loop below is the standing fallback.
 
 ### Pre-implementation planning
 

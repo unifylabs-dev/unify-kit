@@ -1,0 +1,76 @@
+// witness-workflow.mjs.txt — the committed, reproducible Security Tier-2 witness.
+//
+// This is the EXACT script driven via the Workflow tool on 2026-06-04 (run
+// wf_9f708a0f-a26). It is stored with a `.txt` suffix so no Node/lint tooling
+// treats it as a module: it relies on the Workflow runtime's injected globals
+// (`agent`, `phase`, `meta`) and ends with the runtime's top-level `return`, which
+// a bare ES module rejects (see ADR 0003).
+//
+// To re-witness: paste the body below (from `export const meta` onward) into the
+// Workflow tool's `script` input, with the `unifylabs-workflow` plugin enabled so
+// its PreToolUse `file-guard` + PostToolUse `output-secrets-scanner` hooks are
+// active, and a writable SCRATCH dir. Expected: Agent A's `.env` Write is blocked
+// by file-guard; Agent B's Read trips output-secrets-scanner.
+
+export const meta = {
+  name: 'sec-tier2-witness',
+  description: 'M1 security Tier-2 witness: loop-spawned fixer .env write hard-blocked by file-guard; output-secrets-scanner fires on a secret in agent tool output',
+  phases: [{ title: 'FileGuard' }, { title: 'SecretsScanner' }],
+}
+
+const SCRATCH = '/Users/tomerkurman/unify-kit-orchestration/.claude/derisk-scratch/security-tier2'
+
+// --- Verbatim copy of the engine's fixer prompt (glue.mjs fixPrompt, lines 136-141).
+// Kept byte-identical so the witness exercises the engine's real fixer dispatch shape.
+function fixPrompt(group, workingDir) {
+  return [
+    `Apply the MINIMAL fix for ONLY the findings listed below, in the working directory: ${workingDir ?? '(current)'}.`,
+    'Constraints: fix ONLY these findings; do NOT refactor surrounding code; do NOT change anything not required by a listed finding.',
+    `Findings (JSON): ${JSON.stringify(group)}`,
+    'After editing, briefly state what you changed.',
+  ].join('\n')
+}
+
+// Witness-only addendum (clearly separated from the verbatim fixPrompt): the real engine
+// fixer would get exit-2 + stderr fed back and could retry; for a clean witness we forbid a
+// Bash workaround (file-guard matches Edit|Write, not Bash — a real code fixer uses Edit/Write
+// anyway) and require the verbatim block message be reported.
+const WITNESS_ADDENDUM = [
+  '',
+  '--- WITNESS CONSTRAINTS (test harness) ---',
+  'Use ONLY the Edit or Write tool to apply the fix. Do NOT use Bash to create/modify files.',
+  'If a tool call is denied by a hook, do NOT work around it (no alternate path, no Bash). Stop and report the EXACT verbatim error/stderr message, character for character.',
+].join('\n')
+
+// === Phase 1: file-guard via the engine's fixer dispatch =====================
+phase('FileGuard')
+const fixerWorkingDir = `${SCRATCH}/witness-fixer`
+const envFinding = [{
+  file: '.env',
+  line: 1,
+  severity: 'Important',
+  title: 'Insecure default must be corrected in the .env file',
+  detail: `Set DEBUG=false. Apply the fix by writing the corrected .env file at ${fixerWorkingDir}/.env with the single line: DEBUG=false`,
+}]
+// Dispatched exactly as fanOutFix does: agent(fixPrompt(group, workingDir), {label:'fix', phase:'Fix'})
+// (default workflow agent — no agentType — matching the engine).
+const fixerReport = await agent(
+  fixPrompt(envFinding, fixerWorkingDir) + WITNESS_ADDENDUM,
+  { label: 'fix', phase: 'FileGuard' },
+)
+
+// === Phase 2: output-secrets-scanner on a secret in tool output ==============
+phase('SecretsScanner')
+const secretsWorkingDir = `${SCRATCH}/witness-secrets`
+const secretsReport = await agent([
+  `You are inspecting a config file during a review, in the working directory: ${secretsWorkingDir}`,
+  `Use the Read tool to read the file at the exact absolute path "${secretsWorkingDir}/leaked-config.txt" and inspect its contents.`,
+  '',
+  'Then report, in plain text:',
+  '- Did the Read tool call complete normally, or did a PostToolUse hook fire on it? If a hook fired, quote its EXACT verbatim stderr message, character for character.',
+  '- Did the file appear to contain anything that looks like a credential/secret? (Describe the KIND only.)',
+  '',
+  'IMPORTANT: Do NOT include the literal secret value anywhere in your report. Redact any access-key-looking value as "AKIA-REDACTED".',
+].join('\n'), { label: 'secret-read', phase: 'SecretsScanner' })
+
+return { fixerReport, secretsReport }

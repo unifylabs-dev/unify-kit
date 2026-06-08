@@ -60,7 +60,7 @@ closes when the resulting PR merges. Example: `feature/83-staff-management`.
 Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
 gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec sync
 → analysis → branch → planning → TDD → verification → review prep → PR creation.
-Ships in the `superpowers` + `compound-engineering` plugins. Phase 0 reads
+Ships in the `unifylabs-workflow` plugin. Phase 0 reads
 `<consumer>/docs/specs/` before any code work; see `docs/methodology.md` §B
 (Specification-Driven Development) and §D (Issue-driven dev) for the contract.
 See `templates/core/cheatsheet.md.template` for the daily command list — this

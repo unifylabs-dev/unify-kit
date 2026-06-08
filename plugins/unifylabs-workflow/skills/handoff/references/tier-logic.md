@@ -1,6 +1,6 @@
 # Tier logic — FULL / LEAN / EMERGENCY selection
 
-**Read when**: computing the tier at `/handoff` invocation, surfacing the 75% pre-write safety warning, or implementing the natural-break gate.
+**Read when**: computing the tier at `/handoff` invocation, surfacing the 85% pre-write safety warning, or implementing the natural-break gate.
 
 The tier controls section *depth*, never section *presence*. The 7-section core (per `references/core-shape.md`) is always present; tier governs how much each section spends on prose, sub-blocks, and trim-eligible material.
 
@@ -10,39 +10,39 @@ The tier controls section *depth*, never section *presence*. The 7-section core 
 
 | Tier | Context at invocation | Approximate write cost | Approximate output |
 |---|---|---|---|
-| FULL | <50% | 3–5% | 200–400 lines |
-| LEAN | 50–64% | 1.5–2.5% | 100–150 lines |
-| EMERGENCY | ≥65% | 0.5–1% | 40–70 lines |
+| FULL | <75% | 3–5% | 200–400 lines |
+| LEAN | 75–84% | 1.5–2.5% | 100–150 lines |
+| EMERGENCY | ≥85% | 0.5–1% | 40–70 lines |
 
-**Note on the % values.** They are relative to the **pressure baseline** that `context-awareness.sh` uses (the absolute token count at which quality degradation is felt — typically 500k for Opus 4.7 1M and 150k for 200k-window models, env-overridable via `UNIFYLABS_PRESSURE_BASELINE_TOKENS`). They are NOT a fraction of the model's physical context window. This keeps the tier semantics calibrated to user-felt pressure regardless of which model is in use.
+**Note on the % values.** They are the **window-fraction**: the fraction of the full context window in use, read from the harness-native `context_window.used_percentage` (the same value the statusline already surfaces). They are NOT relative to a separate pressure baseline. With a 1M window plus native compaction, real pressure is far out, so the bands are intentionally generous.
 
 The tier is computed from the context-percentage value the hook last injected (per `context-awareness.sh`'s `Context-awareness: ~<N>%` reminder). When the skill is invoked without recent hook injection (e.g., user typed `/handoff` cold), the skill computes context % itself by reading the transcript per the same logic the hook uses.
 
 Mapping:
 
-- `pct < 50` → FULL
-- `50 ≤ pct < 65` → LEAN
-- `pct ≥ 65` → EMERGENCY
+- `pct < 75` → FULL
+- `75 ≤ pct < 85` → LEAN
+- `pct ≥ 85` → EMERGENCY
 
-Boundaries are inclusive on the lower end. A session at exactly 50% writes LEAN; at exactly 65% writes EMERGENCY.
+Boundaries are inclusive on the lower end. A session at exactly 75% writes LEAN; at exactly 85% writes EMERGENCY.
 
 ---
 
-## 2. Pre-write size estimate (the 75% safety check)
+## 2. Pre-write size estimate (the 85% safety check)
 
-Before committing to a tier, the skill estimates the output size and checks whether the write itself will push the session past 75%. The procedure:
+Before committing to a tier, the skill estimates the output size and checks whether the write itself will push the session past 85%. The procedure:
 
 1. Compute (section depths × tier multiplier) → estimated output line count.
 2. Convert to tokens via line-to-token heuristic (~10 tokens per markdown line average; conservative).
-3. Add to current context tokens. Divide by **pressure baseline** (the same denominator the hook uses — see `context-awareness.sh` header for the value). → post-write context %.
-4. If post-write % > 75, surface a warning to the user with an AskUserQuestion offering downgrade tier.
+3. Add to current context tokens. Divide by the **full context window** (the same window-fraction denominator the hook uses — `context_window.used_percentage`). → post-write context %.
+4. If post-write % > 85, surface a warning to the user with an AskUserQuestion offering downgrade tier.
 
-The check matters most at the FULL/LEAN boundary: a 48%-context session asking for FULL might land at 53% post-write — fine. A 49%-context session asking for FULL on a complex addendum-stacking handoff might land at 78% — dangerous (the write itself just created a context-pressure problem worse than the one it solved). Using the same pressure-baseline denominator as the hook keeps the user's mental model consistent across the two systems.
+The check matters most at the LEAN/EMERGENCY boundary: an 80%-context session asking for LEAN might land at 82% post-write — fine. An 83%-context session asking for FULL on a complex addendum-stacking handoff might land at 88% — dangerous (the write itself just created a context-pressure problem worse than the one it solved). Using the same window-fraction denominator as the hook keeps the user's mental model consistent across the two systems.
 
-**75% safety warning (verbatim):**
+**85% safety warning (verbatim):**
 
 ```text
-"This /handoff write at <tier> tier is estimated to push the session past 75% context (~<post-pct>%). After the write, very little headroom remains for finishing the current task — and the resume session will spend more loading the handoff than it would if you used a leaner tier. Continue at <tier>, or downgrade?"
+"This /handoff write at <tier> tier is estimated to push the session past 85% context (~<post-pct>%). After the write, very little headroom remains for finishing the current task — and the resume session will spend more loading the handoff than it would if you used a leaner tier. Continue at <tier>, or downgrade?"
 
 Options:
   1. Downgrade to <next-tier-down> (Recommended) — smaller output, smaller post-write footprint.
@@ -60,14 +60,14 @@ The user can force a tier with subcommand suffixes (the command surface is owned
 
 - `/handoff lean` — force LEAN tier regardless of context %.
 - `/handoff emergency` — force EMERGENCY tier regardless of context %.
-- `/handoff full` — explicit FULL tier (implicit default if context < 50%, but available as an explicit form).
+- `/handoff full` — explicit FULL tier (implicit default if context < 75%, but available as an explicit form).
 - `/handoff` — auto-select per the tier table.
 
-A user-forced tier still triggers the 75% safety check; the warning surfaces but the user-chosen tier is the default option in the warning's AskUserQuestion (`Continue at <user-chosen-tier>` becomes Recommended).
+A user-forced tier still triggers the 85% safety check; the warning surfaces but the user-chosen tier is the default option in the warning's AskUserQuestion (`Continue at <user-chosen-tier>` becomes Recommended).
 
 Forcing EMERGENCY when context % is low (e.g., at 22%) is allowed — useful for sessions where the user wants a quick handoff because they're context-switching rather than because they're out of room. The 7-section core is always present; EMERGENCY just compresses the trim-eligible sections.
 
-Forcing FULL when context % is high (e.g., at 73%) triggers the safety warning by definition.
+Forcing FULL when context % is high (e.g., at 83%) triggers the safety warning by definition.
 
 ---
 

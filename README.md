@@ -16,13 +16,14 @@ A Claude Code kit that ships:
 
 - A **marketplace** (`.claude-plugin/marketplace.json`) curating the
   `unifylabs-workflow` plugin.
-- A **plugin** (`plugins/unifylabs-workflow/`) bundling 12 skills
-  (`work-issue`, `spec-it`, `ship`, `phasing`, `extract-prototype-review`,
-  `integrate-branch`, `analyze-comms`, `promote-to-marketplace`,
-  `compliance-research`, `iterative-review`, `humanizer`, `handoff`),
-  16 commands (the 9 `phase*` set plus `iterative-review`, the 5
-  `handoff*` commands, and `/phase-continue`), 8 security/workflow hooks
-  (including `context-awareness`; resolved via `${CLAUDE_PLUGIN_ROOT}`),
+- A **plugin** (`plugins/unifylabs-workflow/`) bundling 13 skills
+  (`work-issue`, `spec-it`, `ship`, `phasing`, `phasing-flow`,
+  `extract-prototype-review`, `integrate-branch`, `analyze-comms`,
+  `promote-to-marketplace`, `compliance-research`, `iterative-review`,
+  `humanizer`, `handoff`),
+  17 commands (the 10 `phase*` set plus `iterative-review`, the 5
+  `handoff*` commands, and `/phasing-flow`), 9 security/workflow hooks
+  (including `context-awareness` and `verifier-backstop`; resolved via `${CLAUDE_PLUGIN_ROOT}`),
   and an opt-in statusline.
 - A **template tree** (`templates/`) organized into tiers — `core/`,
   `claude-runtime/`, `optional/`, `compliance/profiles/{baseline-pipeda,
@@ -155,7 +156,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) `[2.0.0]` for the full migration block.
 
 ## Status
 
-`v2.0.0` — released 2026-05-12. Cuts over from v1.0.0's
+`v2.0.3` — released 2026-05-25. Cuts over from v1.0.0's
 `bootstrap-claude-config.sh` model to the Claude Code marketplace + plugin
 model. See [`CHANGELOG.md`](CHANGELOG.md) for the full `[2.0.0]` block
 including the "Migration from v1.0.0" section.

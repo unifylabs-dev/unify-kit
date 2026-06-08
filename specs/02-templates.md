@@ -185,8 +185,8 @@ reference; they do not redefine these lists.
   `verification-before-completion`
 - **Build/test commands** (parameterized): `{{BUILD_CMD}}`, `{{TEST_CI_CMD}}`,
   `{{TEST_FULL_CMD}}`, `{{LINT_CMD}}`, `{{TYPECHECK_CMD}}`
-- **Context thresholds:** 0–50% free / 50–70% pay attention / 70–90% `/compact` /
-  90%+ `/clear` (mandatory)
+- **Context thresholds** (window-fraction of the full context window): <60% free /
+  ~60% warn / ~75% suggest `/handoff` / ~85%+ urgent `/handoff`
 - **Plan mode + phasing trigger** — 1-line each
 
 **Reviewer-agent mapping** — moved out of the cheatsheet body into an appendix at

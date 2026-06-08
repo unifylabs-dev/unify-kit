@@ -57,7 +57,7 @@ Default mapping:
 
 A review agent MAY emit an explicit `severity: critical` tag in its output, overriding the confidence-derived tier. This is for findings where the agent has lower textual confidence but the issue is structurally catastrophic (e.g., a security finding with confidence 75 should still gate as Critical).
 
-The iterative-review skill respects these tags.
+The iterative-review skill respects these tags **as that reviewer's Critical vote**; the cross-agent consensus rule below then decides the aggregated tier (a lone explicit-Critical from a single reviewer is corroborated-or-demoted like any other). A future refinement may let `security`-category Criticals bypass consensus; M1 does not, to keep the gate's aggregation deterministic and validated.
 
 ## Cross-cutting overrides
 
@@ -84,10 +84,25 @@ This flag exists for power users doing thorough polish passes. Default behavior 
 
 ## Aggregation across multiple agents
 
-When multiple agents return findings for the same file:line:
+The loop fans out N independent reviewers and unions their findings. The Critical
+tier is aggregated by **consensus, NOT max-over-reviewers**: a single reviewer's
+stochastic over-escalation of an Important to Critical must not become the run's
+verdict. (Max aggregation was proven to fail the no-regression trust gate's FP≤0
+criterion during the M1 engine de-risk — one reviewer scoring a gold-Important at
+90 produced a worst-of-N false positive. The human baseline got FP=0 because it
+was one calibrated judgment, not a max over six.) Encoded in
+`workflow/lib/consensus-aggregate.mjs`.
 
-1. Group by (file, line, normalized description).
-2. Pick the highest severity / confidence as the canonical finding.
-3. Preserve the source agent list in the finding metadata (useful for fixer routing).
+When multiple agents return findings:
 
-Deduplication is exact-match on description. Near-duplicates (similar text, same line) are kept separate; let the user decide.
+1. **Group by proximity** — findings within ±3 lines in the same file are "the
+   same finding".
+2. **Critical consensus** — a finding is Critical iff ≥2 distinct reviewers
+   independently tier a Critical within that ±3 window; otherwise it is demoted to
+   Important. The real, unanimous Criticals survive; a lone over-escalation is
+   downgraded (it still surfaces — auto-fixed as Important by default, or collected
+   for the gate under `--gate-important` — but it does not auto-block the run).
+3. **Dedup** by the canonical key (file, line, severity, normalized description);
+   identical findings from multiple reviewers collapse to one.
+
+Near-duplicates beyond the ±3 window are kept separate; let the user decide.

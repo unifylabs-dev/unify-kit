@@ -1,0 +1,675 @@
+{
+  "$schema-note": "SINGLE SOURCE OF TRUTH for the stopping-engine tests. test/stopping-engine.test.mjs READS this file and generates one node:test per scenario, building deterministic stubs so the JSON and the harness cannot silently drift. NO wall-clock / random anywhere.",
+  "harness-contract": {
+    "severity": "Each finding's tier derives from numeric `score` (>=90 critical, 80-89 important, <80 suggestion) unless it carries an explicit `severity` string tag that overrides.",
+    "reviewRound": "round n (1-indexed) returns rounds[n-1].reviewReturns.",
+    "verify": "round n returns rounds[n-1].verify (default 'pass').",
+    "budget.spent": "starts at initialSpend (the initial review pass cost, captured by the engine as initialReviewCost). Immediately BEFORE round n's callbacks run, the harness accrues rounds[n-1].spend. Thus the top-of-round budget check for round n sees spend through round n-1.",
+    "budget.remaining": "budgetTotal === null ? Infinity : budgetTotal - spent().",
+    "budget.total": "budgetTotal (number | null).",
+    "expect": "exitReason, roundsRun, residualCritical, residualImportant must match the engine's frozen return."
+  },
+  "scenarios": [
+    {
+      "id": "cap-hit-no-criticals",
+      "description": "No Criticals throughout; Important set strictly shrinks EVERY round (5 -> 4 -> 3 -> 2), so the fixed-point detector never fires, but a residual remains when the cap is reached -> 'cap' at round 3. (A set that shrinks every round can only hit 'cap', never 'fixed-point'.)",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" },
+        { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" },
+        { "file": "a.js", "line": 4, "severity": "important", "description": "imp-4" },
+        { "file": "a.js", "line": 5, "severity": "important", "description": "imp-5" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" },
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" },
+            { "file": "a.js", "line": 4, "severity": "important", "description": "imp-4" },
+            { "file": "a.js", "line": 5, "severity": "important", "description": "imp-5" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" },
+            { "file": "a.js", "line": 4, "severity": "important", "description": "imp-4" },
+            { "file": "a.js", "line": 5, "severity": "important", "description": "imp-5" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 4, "severity": "important", "description": "imp-4" },
+            { "file": "a.js", "line": 5, "severity": "important", "description": "imp-5" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "cap: reached maxRounds 3",
+      "expect": { "exitReason": "cap", "roundsRun": 3, "residualCritical": 0, "residualImportant": 2 }
+    },
+    {
+      "id": "clamp-with-warning-zero",
+      "description": "cap=0 clamps to 1 (clamp-with-warning). One round, no Criticals, residual Important -> 'cap' at round 1.",
+      "config": {
+        "cap": 0,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "cap 0 clamped to 1",
+      "expect": { "exitReason": "cap", "roundsRun": 1, "residualCritical": 0, "residualImportant": 1 }
+    },
+    {
+      "id": "clamp-with-warning-ninetynine",
+      "description": "cap=99 clamps to 5 (clamp-with-warning). Important shrinks each round until clean at round 4 (well within the clamped ceiling of 5).",
+      "config": {
+        "cap": 99,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" },
+        { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" },
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 1
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 1
+        },
+        {
+          "reviewReturns": [],
+          "verify": "pass",
+          "spend": 1
+        }
+      ],
+      "expectTruncationContains": "cap 99 clamped to 5",
+      "expect": { "exitReason": "clean", "roundsRun": 3, "residualCritical": 0, "residualImportant": 0 }
+    },
+    {
+      "id": "fixed-point-strict-no-shrink",
+      "description": "No Criticals; Important set is identical across rounds (no strict shrinkage). With K=1 a single non-shrinking round is a stall -> 'fixed-point' at round 1.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "no strict shrinkage",
+      "expect": { "exitReason": "fixed-point", "roundsRun": 1, "residualCritical": 0, "residualImportant": 2 }
+    },
+    {
+      "id": "set-swap-same-size-new-item",
+      "description": "No Criticals; Important set stays size 2 but swaps one member for a brand-new one. Not a subset of prev -> 'fixed-point' (set-swap) at round 1.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+            { "file": "a.js", "line": 9, "severity": "important", "description": "imp-NEW" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "set-swap",
+      "expect": { "exitReason": "fixed-point", "roundsRun": 1, "residualCritical": 0, "residualImportant": 2 }
+    },
+    {
+      "id": "oscillation-2-1-2-1",
+      "description": "No Criticals; Important set oscillates 2 -> 1 -> 2 (repeats the size-2 set seen at entry). Cycle detection must stop it BEFORE the cap, NOT run to cap. The repeat of the initial size-2 set is caught at round 2's re-review.",
+      "config": {
+        "cap": 5,
+        "fixedPointK": 2,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "cycle detected",
+      "expect": { "exitReason": "fixed-point", "roundsRun": 2, "residualCritical": 0, "residualImportant": 2 }
+    },
+    {
+      "id": "skip-if-clean",
+      "description": "Initial set has 0 Critical and 0 Important -> 'skip-if-clean' WITHOUT entering the loop. reviewRound must never be called (the harness asserts the call count is 0).",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 50
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "suggestion", "description": "sug-1" }
+      ],
+      "rounds": [],
+      "expectReviewRoundCalls": 0,
+      "expect": { "exitReason": "skip-if-clean", "roundsRun": 0, "residualCritical": 0, "residualImportant": 0 }
+    },
+    {
+      "id": "empty-set-under-no-skip-clean",
+      "description": "Clean initial set BUT --no-skip-clean. The pre-gate is disabled, so the engine enters the loop; round 1 re-review returns empty -> 'clean' (iii), NOT 'fixed-point'.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": false,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 50
+      },
+      "initialFindings": [],
+      "rounds": [
+        { "reviewReturns": [], "verify": "pass", "spend": 5 }
+      ],
+      "expectTruncationContains": "skip-if-clean disabled",
+      "expectReviewRoundCalls": 1,
+      "expect": { "exitReason": "clean", "roundsRun": 1, "residualCritical": 0, "residualImportant": 0 }
+    },
+    {
+      "id": "relative-budget-breaker-null-total",
+      "description": "budgetTotal=null (no absolute budget) — the common no-budget case. Spend grows past 5x the initial review cost; the RELATIVE backstop fires -> 'circuit-breaker', proving runaway protection survives a null total (spent() is always measurable). initialReviewCost=100, so the limit is 500. Round 1 accrues 600 (a costly fixer) and strictly shrinks Important 1->1... actually keeps a Critical + 1 Important and shrinks nothing-new so the loop would continue; the budget check at the TOP of round 2 sees 100+600=700 > 500 and trips BEFORE round 2's fixer runs.",
+      "config": {
+        "cap": 5,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 3, "severity": "important", "description": "imp-2" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" }
+          ],
+          "verify": "pass",
+          "spend": 600
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" }
+          ],
+          "verify": "pass",
+          "spend": 50
+        }
+      ],
+      "expectTruncationContains": "relative 5x backstop",
+      "expect": { "exitReason": "circuit-breaker", "roundsRun": 2, "residualCritical": 1, "residualImportant": 1 }
+    },
+    {
+      "id": "absolute-budget-breaker-finite-total",
+      "description": "Finite budgetTotal=300, absoluteThreshold=100, relativeMultiplier=1000 (relative limit 50000 so it never trips — isolates the absolute breaker). Round 1 accrues 250 (a costly fixer). The budget check at the TOP of round 2 sees remaining = 300-(50+250) = -50 < 100 and trips -> 'circuit-breaker' at round 2. Proves the absolute floor is active ONLY with a finite total.",
+      "config": {
+        "cap": 5,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": 300,
+        "relativeMultiplier": 1000,
+        "absoluteThreshold": 100,
+        "initialSpend": 50
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" },
+        { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-2" },
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 250
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "absolute floor",
+      "expect": { "exitReason": "circuit-breaker", "roundsRun": 2, "residualCritical": 0, "residualImportant": 2 }
+    },
+    {
+      "id": "include-suggestions-ordering",
+      "description": "includeSuggestions promotes Suggestions to the gate. Initial set has only Suggestions, so skip-if-clean does NOT fire (promoted Suggestions present). Round 1 review returns empty -> 'clean' (iii) because 0 Critical AND 0 Important AND 0 promoted Suggestions. Proves ordering: the promoted-Suggestion count participates in skip/clean but Suggestions are never the shrink signal.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": true,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 50
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "suggestion", "description": "sug-1" },
+        { "file": "a.js", "line": 2, "severity": "suggestion", "description": "sug-2" }
+      ],
+      "rounds": [
+        { "reviewReturns": [], "verify": "pass", "spend": 5 }
+      ],
+      "expectReviewRoundCalls": 1,
+      "expect": { "exitReason": "clean", "roundsRun": 1, "residualCritical": 0, "residualImportant": 0 }
+    },
+    {
+      "id": "criticals-pending-gate-at-cap",
+      "description": "Residual Criticals present AND round reaches the cap with auto-fixable Important still shrinking. Precedence (iv) MUST label this 'criticals-pending-gate', NOT 'cap'. Important shrinks 2->1 over rounds; at round 3 (cap) a Critical and an Important remain.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" },
+        { "file": "a.js", "line": 3, "severity": "important", "description": "imp-2" },
+        { "file": "a.js", "line": 4, "severity": "important", "description": "imp-3" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+            { "file": "a.js", "line": 3, "severity": "important", "description": "imp-2" },
+            { "file": "a.js", "line": 4, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+            { "file": "a.js", "line": 4, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        },
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+            { "file": "a.js", "line": 4, "severity": "important", "description": "imp-3" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "criticals-pending-gate",
+      "expect": { "exitReason": "criticals-pending-gate", "roundsRun": 3, "residualCritical": 1, "residualImportant": 1 }
+    },
+    {
+      "id": "criticals-pending-gate-at-fixed-point",
+      "description": "Residual Criticals present AND the Important working set stalls (no strict shrinkage) before the cap. Precedence (iv) MUST label this 'criticals-pending-gate', NOT 'fixed-point'. Round 1: Important stays 1 (stall) while a Critical remains.",
+      "config": {
+        "cap": 5,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+            { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "criticals-pending-gate",
+      "expect": { "exitReason": "criticals-pending-gate", "roundsRun": 1, "residualCritical": 1, "residualImportant": 1 }
+    },
+    {
+      "id": "criticals-pending-gate-no-autofixable",
+      "description": "Residual Criticals AND the auto-fixable set is empty after re-review (only Criticals left). Precedence (iv) 'criticals-pending-gate' via the workingCount===0 branch. Round 1 review returns only the Critical.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "criticals-pending-gate",
+      "expect": { "exitReason": "criticals-pending-gate", "roundsRun": 1, "residualCritical": 1, "residualImportant": 0 }
+    },
+    {
+      "id": "verifier-fail-permanent-aborted",
+      "description": "Verifier returns 'fail-permanent' in round 1 (after the fix attempt, before re-review). Precedence (ii) -> 'aborted'. Residuals reflect the pre-review state (no re-review ran).",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "critical", "description": "crit-1" },
+        { "file": "a.js", "line": 2, "severity": "important", "description": "imp-1" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [],
+          "verify": "fail-permanent",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "verifier permanently failed",
+      "expect": { "exitReason": "aborted", "roundsRun": 1, "residualCritical": 1, "residualImportant": 1 }
+    },
+    {
+      "id": "gate-important-collects-not-fixes",
+      "description": "gateImportant=true: Important is COLLECTED, never auto-fixed, so the auto-fixable working set is empty from the start. Initial set has only Important findings; skip-if-clean does NOT fire (Important present). Round 1: workingCount===0 and 0 Critical, BUT a collected Important PERSISTS. Collected Important under --gate-important is a BLOCKING finding awaiting the between-runs gate, so the run MUST NOT exit 'clean' (FIX 3): precedence (iv) generalizes to ANY residual blocking finding -> 'criticals-pending-gate' with residualImportant>0. 'clean' requires zero residual blocking findings.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": true,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "criticals-pending-gate",
+      "expect": { "exitReason": "criticals-pending-gate", "roundsRun": 1, "residualCritical": 0, "residualImportant": 1 }
+    },
+    {
+      "id": "happy-path-clean",
+      "description": "Mixed initial set with one Important; round 1 auto-fixes it and re-review returns empty -> 'clean' at round 1.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 80
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" }
+      ],
+      "rounds": [
+        { "reviewReturns": [], "verify": "pass", "spend": 8 }
+      ],
+      "expect": { "exitReason": "clean", "roundsRun": 1, "residualCritical": 0, "residualImportant": 0 }
+    },
+    {
+      "id": "score-derived-tiers",
+      "description": "Findings carry numeric scores (no explicit severity tag): 95->critical, 85->important, 70->suggestion. Initial set has one of each, so skip-if-clean does NOT fire. Round 1 fixes the Important; re-review leaves the Critical -> 'criticals-pending-gate' (no auto-fixable left).",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "score": 95, "description": "score-crit" },
+        { "file": "a.js", "line": 2, "score": 85, "description": "score-imp" },
+        { "file": "a.js", "line": 3, "score": 70, "description": "score-sug" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "score": 95, "description": "score-crit" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "criticals-pending-gate",
+      "expect": { "exitReason": "criticals-pending-gate", "roundsRun": 1, "residualCritical": 1, "residualImportant": 0 }
+    },
+    {
+      "id": "full-tuple-key-collision",
+      "description": "FIX 1 — locks the FULL-tuple canonical key (file,line,severity,normalized-full-description). Two Important findings share an IDENTICAL 85-char description prefix (so desc.slice(0,80) is identical) but DIFFER in file/line and in their full description suffix (ALPHA vs BRAVO). Under the correct full-tuple key they are 2 distinct keys; under a legacy desc.slice(0,80) key they COLLAPSE to 1. Initial set: one of the prefix-findings (ALPHA) plus an unrelated short Important finding -> 2 keys either way (prev=2). Round 1 re-review returns the TWO prefix-findings (ALPHA + BRAVO): correct key sees curr=2 with C-short swapped out for BRAVO -> set-swap stall -> 'fixed-point' at round 1 with residualImportant=2; a legacy slice(0,80) key would see curr=1 (false strict shrinkage 2->1) and WRONGLY continue toward 'clean'. Load-bearing: mutating canonical to return desc.slice(0,80) flips the exit/rounds, so this scenario fails under the mutation.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": false,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ALPHA" },
+        { "file": "c.js", "line": 3, "severity": "important", "description": "a short distinct finding" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "a.js", "line": 1, "severity": "important", "description": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ALPHA" },
+            { "file": "b.js", "line": 2, "severity": "important", "description": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX BRAVO" }
+          ],
+          "verify": "pass",
+          "spend": 10
+        }
+      ],
+      "expectTruncationContains": "set-swap",
+      "expect": { "exitReason": "fixed-point", "roundsRun": 1, "residualCritical": 0, "residualImportant": 2 }
+    },
+    {
+      "id": "residual-promoted-suggestion-blocks-clean",
+      "description": "FIX 2 — locks the promoted-Suggestion clean-block under includeSuggestions=true. Initial set has 1 Important + 1 Suggestion; the Suggestion is PROMOTED to the gate (so skip-if-clean does NOT fire). Round 1 clears the Important (working 1->0, a strict shrink) but the promoted Suggestion PERSISTS. The clean gate (iii) requires promotedSuggestionCount===0, so with a residual promoted Suggestion 'clean' is BLOCKED: round 1 has nothing stalled (the working set just shrank) so the loop CONTINUES; round 2's empty working set is flat (K=1 stall) -> 'fixed-point' at round 2 with the Suggestion still promoted. Load-bearing: hardcoding the engine's promoted-suggestion count feeding the clean gate to 0 lets round 1 exit 'clean' at round 1 instead, so this scenario fails under that mutation.",
+      "config": {
+        "cap": 3,
+        "fixedPointK": 1,
+        "skipClean": true,
+        "includeSuggestions": true,
+        "gateImportant": false,
+        "budgetTotal": null,
+        "relativeMultiplier": 5,
+        "absoluteThreshold": 0,
+        "initialSpend": 100
+      },
+      "initialFindings": [
+        { "file": "a.js", "line": 1, "severity": "important", "description": "imp-1" },
+        { "file": "s.js", "line": 9, "severity": "suggestion", "description": "sug-keeps" }
+      ],
+      "rounds": [
+        {
+          "reviewReturns": [
+            { "file": "s.js", "line": 9, "severity": "suggestion", "description": "sug-keeps" }
+          ],
+          "verify": "pass",
+          "spend": 5
+        },
+        {
+          "reviewReturns": [
+            { "file": "s.js", "line": 9, "severity": "suggestion", "description": "sug-keeps" }
+          ],
+          "verify": "pass",
+          "spend": 5
+        }
+      ],
+      "expectTruncationContains": "no strict shrinkage",
+      "expect": { "exitReason": "fixed-point", "roundsRun": 2, "residualCritical": 0, "residualImportant": 0 }
+    }
+  ]
+}

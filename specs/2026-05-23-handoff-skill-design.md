@@ -38,14 +38,16 @@ related:
 
 ### 2.2 The gap matrix
 
+> **Recalibration note (2026-06-01):** with the 1M window + harness-native compaction, *within-session* (mid-flight) context rescue is now owned by native compaction — the rows tagged ~~struck~~ below are no longer the handoff skill's job. The skill's durable value is *cross-session* knowledge transfer (the phase-end row and the phase-executor → orchestrator checkpoint row), where compaction can't carry conversational nuance, locks-not-yet-in-files, and resume protocol across a fresh session boundary.
+
 | Scenario | Has handoff today? | Triggered by? | Documented in skill? |
 |---|---|---|---|
 | Phase end → next phase (`phase-N-handoff.md`) | ✅ Mandatory | Phase completion/failure | ✅ Yes |
-| Orchestrator mid-flight context rescue | ⚠️ Ad-hoc | Manual user intervention | ❌ Improvised |
+| ~~Orchestrator mid-flight context rescue~~ (now native compaction) | ⚠️ Ad-hoc | Manual user intervention | ❌ Improvised |
 | **Phase executor mid-flight context rescue** | ❌ **Nothing** | — | ❌ |
-| Brainstorming mid-flight context rescue | ⚠️ Ad-hoc | Manual user intervention | ❌ |
-| Plan-execution mid-flight context rescue | ⚠️ Ad-hoc | Manual user intervention | ❌ |
-| Free-conversation mid-flight context rescue | ⚠️ Ad-hoc | Manual user intervention | ❌ |
+| ~~Brainstorming mid-flight context rescue~~ (now native compaction) | ⚠️ Ad-hoc | Manual user intervention | ❌ |
+| ~~Plan-execution mid-flight context rescue~~ (now native compaction) | ⚠️ Ad-hoc | Manual user intervention | ❌ |
+| ~~Free-conversation mid-flight context rescue~~ (now native compaction) | ⚠️ Ad-hoc | Manual user intervention | ❌ |
 
 ### 2.3 Four transition types this design covers
 
@@ -60,7 +62,7 @@ related:
 
 | # | Decision | Choice |
 |---|---|---|
-| 1 | Detection model | Hybrid: user-primary via `/handoff`; Claude has discretion at 40% / 50% / 60% / 70% thresholds via hook-injected awareness reminders |
+| 1 | Detection model | Hybrid: user-primary via `/handoff`; Claude has discretion at the 60% (warn) / 75% (suggest-handoff) / 85% (urgent) window-fraction thresholds via hook-injected awareness reminders |
 | 2 | Document shape | Universal core (7 sections) + auto-detected mode addenda |
 | 3 | Storage & lifecycle | Mode-adaptive paths + frontmatter status flag (pending → consumed) + MEMORY.md pointer for resume discovery + docs never auto-deleted |
 | 4 | Resume protocol | Auto path: SessionStart hook → MEMORY.md pointer → AskUserQuestion confirmation → freshness check → consume. Explicit escape hatch: `/handoff resume [<path>]` |
@@ -106,7 +108,7 @@ related:
 │     - Computes context % from model-specific window size             │
 │     - Injects system-reminder additionalContext when:                │
 │         * pending handoff exists (SessionStart → ask-to-resume)     │
-│         * context crosses 40/50/60/70 thresholds (UserPromptSubmit) │
+│         * context crosses 60/75/85 thresholds (UserPromptSubmit)    │
 │     - Auto-detects mode (calls detect-mode.sh) to tailor reminder    │
 │                                                                     │
 │   hooks.json (extends existing)                                      │
@@ -137,15 +139,15 @@ related:
 ### 4.2 Runtime interaction (happy path, phasing-orchestrator mode)
 
 ```
-1.  User in orchestrator session, context at ~45%.
+1.  User in orchestrator session, context at ~65% (warn band).
 2.  Hook (UserPromptSubmit) computes context %; injects awareness:
-      "Context-awareness: ~45%. Mode: phasing-orchestrator. Apply discretion rules."
+      "Context-awareness: ~65%. Mode: phasing-orchestrator. Apply discretion rules."
 3.  Claude applies §6.4 discretion rules; decides next user message will be
     a "dispatch P4" request → surface at next natural pause.
-4.  At pause: "Heads up — context ~45%. If P4 is heavy, /handoff first may be worth it."
+4.  At pause: "Heads up — context ~65%. If P4 is heavy, /handoff first may be worth it."
 5.  User: "yeah, /handoff"
 6.  Skill loads; detect-mode.sh returns mode=phasing-orchestrator + run.json path
-    + master-plan path. Tier selected: FULL (<50%).
+    + master-plan path. Tier selected: FULL (<75%).
 7.  Natural-break gate: no in-progress tasks; pass through.
 8.  Skill writes:
       .claude/phasing/<run>/session-handoff-<YYYY-MM-DD>.md
@@ -352,10 +354,13 @@ context_pct = round((input_tokens + output_tokens) / model_context_window * 100)
 ```
 
 Model context window is detected from session model ID:
+- `claude-opus-4-8` / `claude-opus-4-8[1m]` (1M variant) → 1,000,000
 - `claude-opus-4-7` (1M variant) → 1,000,000
 - `claude-sonnet-4-6` → 200,000
 - `claude-haiku-4-5-20251001` → 200,000
 - Fallback for unknown models → 200,000 (conservative)
+
+> **Recalibration note (2026-06-01):** the context % is now the fraction of the FULL context window in use, read directly from the harness-native `context_window.used_percentage` (the statusline already consumes this). The former per-model pressure-baseline table, the 500k/150k denominators, and the `UNIFYLABS_PRESSURE_BASELINE_TOKENS` override are RETIRED. The model→window table above survives only as the fallback path for harnesses that don't surface `used_percentage`; when the native value is present, prefer it. With a 1M window + native compaction, real pressure is far out, so the reminder/tier bands below are intentionally generous.
 
 The 1M-window case materially changes math — 40% of 1M is 400K tokens, four times the absolute size of 40% of 200K. The skill surfaces the effective window in its tier-decision logic so the user sees both percent and absolute counts.
 
@@ -365,11 +370,10 @@ Hook fires on `UserPromptSubmit` (primary — timing is between turns). Falls ba
 
 | Context % | Injected reminder text |
 |---|---|
-| <40% | Nothing injected. Hook silent. |
-| 40–49% | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Apply discretion rules from handoff skill — surface to user only if situation warrants per rules table."` |
-| 50–59% | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Quality risk moderate. Default to surfacing at next natural pause unless work is clearly wrapping up."` |
-| 60–69% | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Quality risk significant. Strongly recommend surfacing /handoff option at next natural pause. EMERGENCY tier will apply if invoked."` |
-| ≥70% | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Quality risk HIGH. Surface /handoff immediately unless user explicitly said 'just finish this'. EMERGENCY tier mandatory."` |
+| <60% | Nothing injected. Hook silent. |
+| 60–74% (warn) | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Apply discretion rules from handoff skill — surface to user only if situation warrants per rules table."` |
+| 75–84% (suggest-handoff) | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Quality risk moderate. Default to surfacing at next natural pause unless work is clearly wrapping up. LEAN tier will apply if invoked."` |
+| ≥85% (urgent) | `"Context-awareness: ~<N>%. Mode: <detected-mode>. Quality risk HIGH. Surface /handoff immediately unless user explicitly said 'just finish this'. EMERGENCY tier mandatory."` |
 
 **Pending-handoff signal (on SessionStart):**
 
@@ -390,14 +394,13 @@ Hook NEVER forces an `AskUserQuestion`. It hands Claude a fact + recommendation.
 
 | Signal | Action |
 |---|---|
-| Context 40–49%, mid-tool-loop, no large task ahead | Stay silent. Continue working. |
-| Context 40–49%, mid-tool-loop, large task ahead | Surface at next natural pause as one-liner: *"Heads up — context ~<N>%. If the next ask is substantial, /handoff first may be worth it."* |
-| Context 40–49%, wrapping up (≤2 small tasks left) | Stay silent. Finish. |
-| Context 50–59%, mid-tool-loop | Surface at next natural pause: *"At ~<N>%. Quality risk moderate. Recommend /handoff before dispatching anything substantial."* |
-| Context 50–59%, wrapping up | Surface as final remark: *"Wrapping up at ~<N>%. Next session — consider /handoff before continuing."* |
-| Context 60–69%, any state | Surface immediately: *"At ~<N>% — quality risk significant. Strongly recommend /handoff now."* |
-| Context ≥70%, any state | Surface immediately + recommend EMERGENCY tier. |
-| User said "auto mode" / "just do it" | Suppress to ≤1 mention per session below 60%. Above 60%, override the suppression. |
+| Context 60–74% (warn), mid-tool-loop, no large task ahead | Stay silent. Continue working. |
+| Context 60–74% (warn), mid-tool-loop, large task ahead | Surface at next natural pause as one-liner: *"Heads up — context ~<N>%. If the next ask is substantial, /handoff first may be worth it."* |
+| Context 60–74% (warn), wrapping up (≤2 small tasks left) | Stay silent. Finish. |
+| Context 75–84% (suggest-handoff), mid-tool-loop | Surface at next natural pause: *"At ~<N>%. Quality risk moderate. Recommend /handoff before dispatching anything substantial."* |
+| Context 75–84% (suggest-handoff), wrapping up | Surface as final remark: *"Wrapping up at ~<N>%. Next session — consider /handoff before continuing."* |
+| Context ≥85% (urgent), any state | Surface immediately + recommend EMERGENCY tier. |
+| User said "auto mode" / "just do it" | Suppress to ≤1 mention per session below 75%. Above 75%, override the suppression. |
 | User just invoked /handoff | No mention. User is already handling it. |
 | Multiple thresholds crossed in same session | No re-surfacing within 5 turns of last mention unless threshold escalates. |
 
@@ -405,11 +408,11 @@ Hook NEVER forces an `AskUserQuestion`. It hands Claude a fact + recommendation.
 
 | Tier | Context at invocation | Approximate write cost | Approximate output |
 |---|---|---|---|
-| FULL | <50% | 3–5% | 200–400 lines |
-| LEAN | 50–64% | 1.5–2.5% | 100–150 lines |
-| EMERGENCY | ≥65% | 0.5–1% | 40–70 lines |
+| FULL | <75% | 3–5% | 200–400 lines |
+| LEAN | 75–84% | 1.5–2.5% | 100–150 lines |
+| EMERGENCY | ≥85% | 0.5–1% | 40–70 lines |
 
-Pre-write check: skill estimates output size and warns if it would push session past 75%. User can override tier via `/handoff lean` or `/handoff emergency`.
+Pre-write check: skill estimates output size and warns if it would push session past 85% (the urgent band). User can override tier via `/handoff lean` or `/handoff emergency`.
 
 ### 7.6 Natural-break gate
 

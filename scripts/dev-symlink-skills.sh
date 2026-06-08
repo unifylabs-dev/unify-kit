@@ -65,10 +65,11 @@ readonly KIT_ROOT
 readonly PLUGIN_ROOT="${KIT_ROOT}/plugins/unifylabs-workflow"
 readonly CLAUDE_HOME="${HOME}/.claude"
 
-# 12 skills: name → relative path under PLUGIN_ROOT (dir-typed).
+# 13 skills: name → relative path under PLUGIN_ROOT (dir-typed).
 # (extract-prototype-review is the rename of review-prototype, not net-new.)
 # Added in v2.0.x: spec-it (front-door to /work-issue), handoff (session-
-# to-session knowledge transfer).
+# to-session knowledge transfer). Added in v2.1.0: phasing-flow (the
+# human-gated orchestration framework on native Workflows).
 SKILLS=(
   "work-issue"
   "ship"
@@ -82,10 +83,12 @@ SKILLS=(
   "humanizer"
   "spec-it"
   "handoff"
+  "phasing-flow"
 )
 
-# 16 commands: filename (with .md) → file under PLUGIN_ROOT/commands/.
+# 17 commands: filename (with .md) → file under PLUGIN_ROOT/commands/.
 # Added in v2.0.3: phase-continue + the 5 handoff* commands.
+# Added in v2.1.0: phasing-flow (single command, verb subcommands).
 COMMANDS=(
   "phase.md"
   "phase-abort.md"
@@ -103,6 +106,7 @@ COMMANDS=(
   "handoff-list.md"
   "handoff-resume.md"
   "handoff-revive.md"
+  "phasing-flow.md"
 )
 
 # ----- runtime state ---------------------------------------------------------
@@ -143,8 +147,8 @@ Default (no flags): perform the migration, creating a backup directory
 named ~/.claude/.v2-migration-backup-<UTC-timestamp>/.
 
 Scope:
-  Skills   (10): ${SKILLS[*]}
-  Commands (10): ${COMMANDS[*]}
+  Skills   (12): ${SKILLS[*]}
+  Commands (16): ${COMMANDS[*]}
   Hooks         : every ~/.claude/hooks/*.sh (backed up; user-level entries
                   removed from ~/.claude/settings.json hooks block — plugin
                   provides hooks via \${CLAUDE_PLUGIN_ROOT})

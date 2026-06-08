@@ -1,0 +1,121 @@
+[
+  {
+    "file": "src/discount-engine.js",
+    "line": 49,
+    "severity": "critical",
+    "score": 97,
+    "description": ""
+  },
+  {
+    "file": "src/currency.js",
+    "line": 141,
+    "severity": "critical",
+    "score": 96,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 98,
+    "severity": "important",
+    "score": 88,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 108,
+    "severity": "important",
+    "score": 84,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 62,
+    "severity": "important",
+    "score": 86,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 71,
+    "severity": "important",
+    "score": 82,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 47,
+    "severity": "important",
+    "score": 88,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 59,
+    "severity": "important",
+    "score": 86,
+    "description": ""
+  },
+  {
+    "file": "src/currency.js",
+    "line": 140,
+    "severity": "important",
+    "score": 88,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 90,
+    "severity": "important",
+    "score": 84,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 104,
+    "severity": "important",
+    "score": 82,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 36,
+    "severity": "suggestion",
+    "score": 70,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 70,
+    "severity": "suggestion",
+    "score": 60,
+    "description": ""
+  },
+  {
+    "file": "src/currency.js",
+    "line": 146,
+    "severity": "suggestion",
+    "score": 55,
+    "description": ""
+  },
+  {
+    "file": "src/discount-engine.js",
+    "line": 67,
+    "severity": "important",
+    "score": 85,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 114,
+    "severity": "important",
+    "score": 85,
+    "description": ""
+  },
+  {
+    "file": "src/checkout.js",
+    "line": 109,
+    "severity": "important",
+    "score": 83,
+    "description": ""
+  }
+]

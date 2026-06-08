@@ -104,3 +104,73 @@ jobs:
             exit 1
           fi
           echo "OK: placeholder vocabulary is consistent"
+
+  iterative-review-prose-cap-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard iterative-review prose against re-introduced stopping-rule caps
+        run: |
+          set -euo pipefail
+          # The five stopping rules are ENFORCED IN CODE (M1):
+          #   plugins/.../iterative-review/workflow/stopping-engine.mjs (+ lib/).
+          # This guard keeps the prose from silently becoming an authoritative
+          # rival source of the caps again. It is intentionally PRECISE — it
+          # matches the OLD authoritative pseudocode patterns, not bare numbers
+          # (grepping for "5" would false-positive on prose like "ceiling of 5").
+          DOC='plugins/unifylabs-workflow/skills/iterative-review/references/stopping-rules.md'
+          SKILL='plugins/unifylabs-workflow/skills/iterative-review/SKILL.md'
+          ENGINE='stopping-engine.mjs'
+
+          if [ ! -f "$DOC" ]; then
+            echo "ERROR: expected $DOC to exist"
+            exit 1
+          fi
+          if [ ! -f "$SKILL" ]; then
+            echo "ERROR: expected $SKILL to exist"
+            exit 1
+          fi
+
+          FAIL=0
+
+          # (a) The doc MUST point at the enforced engine.
+          if ! grep -qF "$ENGINE" "$DOC"; then
+            echo "ERROR: $DOC must point at $ENGINE (single source of truth for the stopping rules)"
+            FAIL=1
+          fi
+
+          # (b) The doc must NOT re-introduce authoritative pseudocode/caps. Each
+          # pattern is a fixed string from the old python/JS rule blocks; none of
+          # them legitimately appear in human-orientation prose. The skip-if-clean
+          # / severity-gated / set-based-fixed-point blocks added 'issubset(' and
+          # 'critical_findings_this_iter' to the surface area to catch.
+          FORBIDDEN=(
+            'if iteration_n'
+            'if len(critical_n'
+            'cumulative_tokens >'
+            'MAX_ITERATIONS'
+            'description[:80]'
+            'issubset('
+            'critical_findings_this_iter'
+          )
+          for pat in "${FORBIDDEN[@]}"; do
+            if grep -qF -- "$pat" "$DOC"; then
+              echo "ERROR: $DOC re-introduced authoritative stopping-rule pseudocode: '$pat'"
+              echo "       The rules are enforced in $ENGINE — keep this file pointer-only."
+              FAIL=1
+            fi
+          done
+
+          # (c) SKILL.md must NOT carry an authoritative-cap RULE phrasing. The cap
+          # is clamped in code; prose may POINT at the engine ("see
+          # stopping-engine.mjs") but must not state the numeric rule itself. This
+          # regex matches the rule phrasing ("exceed 3 iterations", "3-iteration
+          # cap") without false-positiving on a pointer to the engine.
+          if grep -nE 'exceed [0-9]+ iteration|[0-9]+-iteration cap' "$SKILL"; then
+            echo "ERROR: $SKILL states an authoritative iteration cap in prose."
+            echo "       The cap is clamped in $ENGINE — point at the engine, do not restate the rule."
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then exit 1; fi
+          echo "OK: iterative-review stopping-rules.md is a pointer stub and SKILL.md carries no authoritative caps"

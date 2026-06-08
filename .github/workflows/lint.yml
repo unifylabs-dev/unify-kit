@@ -34,6 +34,7 @@ jobs:
             scripts/*.sh \
             templates/snippets/ci/*.sh \
             plugins/unifylabs-workflow/hooks/*.sh \
+            plugins/unifylabs-workflow/hooks/test/*.sh \
             plugins/unifylabs-workflow/statusline/*.sh
 
   actionlint:

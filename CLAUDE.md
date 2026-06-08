@@ -35,13 +35,57 @@ kit — one repo, three roles. No runtime, no DB.
   are listed in `docs/curated-plugins.md` with install commands; users add
   their own marketplaces independently. `compound-engineering` is explicitly
   excluded (opted out).
-- **Plugin** (`plugins/unifylabs-workflow/`): ships 9 skills (`work-issue`,
-  `ship`, `review-prototype`, `analyze-comms`, `phasing`,
-  `promote-to-marketplace`, `compliance-research`, `iterative-review`,
-  `humanizer`), 10 commands (9 `phase*` + `iterative-review`), 7 security
-  hooks (resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in statusline. Users
+- **Plugin** (`plugins/unifylabs-workflow/`): ships 13 skills (`work-issue`,
+  `spec-it`, `ship`, `phasing`, `phasing-flow`, `extract-prototype-review`,
+  `integrate-branch`, `analyze-comms`, `promote-to-marketplace`,
+  `compliance-research`, `iterative-review`, `humanizer`, `handoff`), 17 commands
+  (10 `phase*` + `iterative-review` + 5 `handoff*` + `phasing-flow`), 9 hooks (7 security/integrity +
+  `context-awareness` + `verifier-backstop`, resolved via `${CLAUDE_PLUGIN_ROOT}`), an opt-in
+  statusline. Users
   install with `/plugin marketplace add github.com/unifylabs-dev/unify-kit`
-  then `/plugin install unifylabs-workflow` from a Claude session.
+  then `/plugin install unifylabs-workflow` from a Claude session. The plugin
+  also ships a `workflows/` dir — a neutral staging home for self-contained,
+  importer-free Workflow seeds (currently the `planning-brain` seed: a tested
+  `.mjs` kernel + deterministic bundler + committed bundle, mirroring the
+  `iterative-review` precedent). These are NOT skills/commands/hooks (no count
+  ripple); M3 relocates the planning-brain seed under the `phasing-flow` skill
+  (M2 wired `/phasing-flow plan` onto it in place). The `phasing-flow` skill also
+  ships its own `workflow/` execution-engine seed (the third ADR-0003 seed). M3
+  adds a **fourth ADR-0003 seed** under `integrate-branch/workflow/` — the
+  Phase-2 audit re-platformed as a typed `parallel()` over the 6 weighted
+  dimensions (D4 = 6 `pr-review-toolkit` reviewers + consensus; D2 =
+  `resolveVerifier`) reduced by a pure `compute-audit` kernel; the
+  salvage/rebuild/discard route gate stays in the skill session. Also NOT a
+  skill/command/hook (no count ripple); revert = delete the `workflow/` dir +
+  one SKILL pointer block (the D1–D6 prose remains the fallback). ADR 0005.
+  **M3 #2 (skill 2 of 3) re-platforms `work-issue`** onto the framework as a
+  SKILL REWIRE that DRIVES the existing planning-brain + execution-engine seeds
+  by scriptPath — NOT a new seed (work-issue has no parity-lockable arithmetic).
+  Phase 3 → planning-brain (M/L issues, null-guarded); Phase 4 → the engine as
+  the per-AC verify + diff-review gate (Mode B, S/M/L conditional, one AC = one
+  unit); Phase 3.5 + the `--phase`/`--no-phase` flags DELETED; Phase 5.5 stays a
+  human-gated orchestrator check (never the engine's fail-OPEN layer). A 10-block
+  content-anchored frozen-region test (`skills/work-issue/test/`, the new
+  `work-issue-frozen-harness` CI job → **20 CI jobs**) proves the untouched
+  phases stay byte-verbatim; revert = delete the two SKILL pointer blocks (the
+  prose is the fallback). ADR-0004's deferred dead `fixedPointK` is removed from
+  the engine `wrapper.mjs`. No skill/command/hook count ripple. ADR 0006.
+  **M3 #3 (skill 3 of 3, the last) evaluated `spec-it`** — planning-shaped (no
+  execution engine — the engine fail-CLOSED-aborts on a prose spec / `gh` filing),
+  so the only candidate seam was the planning-brain. Per gate-on-decisions the wire
+  was NOT pre-decided: a pre-registered, blind, 3-grader probe drove the seed AS-IS
+  on its strongest framing (Phase-4 decomposition, ARM-SEED `wf_75ec458e-5b9`)
+  against spec-it's single-pass flow, and the seed scored **2/5** dimensions (bar
+  ≥3) → **NO-OP, the wire DECLINED**. The decisive, probe-independent finding: the
+  baseline won the structural dimensions (partition + dependencies) that are
+  Phase-4's actual job (the `steps[]`-vs-unordered shape-mismatch, measured); the
+  seed's wins (completeness + AC-rigor) were largely recovered downstream by the
+  Phase-7 `iterative-review` it already runs, or accepted as a residual gap. Only the floor shipped: the stale `/work-issue` Phase-3.5 refs
+  (`spec-it/SKILL.md:233` + `:523` + `references/decomposition-heuristics.md`)
+  fixed; NO pointer block /
+  frozen guard / new CI job (CI stays **20 jobs**); the `/spec-it` contract is
+  unchanged. **M3 (adoption) COMPLETE** — integrate-branch + work-issue wired;
+  spec-it evaluated-and-declined. ADR 0007.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
   (always applied), `claude-runtime/` (always applied: `.mcp.json` +
   `.claude/settings.json`), `optional/` (opt-in via `--include=`),
@@ -89,9 +133,10 @@ Use `/work-issue <N>` for any GitHub issue with acceptance criteria. The 8-phase
 gated workflow (Phase 0 — Spec Sync — through Phase 7 — PR creation): spec sync
 → analysis → branch → planning → TDD → verification → review prep → PR creation.
 Ships in the `unifylabs-workflow` plugin (this repo's `plugins/unifylabs-workflow/skills/work-issue/`).
-The plugin bundles 9 skills total: `work-issue`, `ship`, `review-prototype`,
-`analyze-comms`, `phasing`, `promote-to-marketplace`, `compliance-research`,
-`iterative-review`, and `humanizer`. Phase 0 reads `<consumer>/docs/specs/`
+The plugin bundles 13 skills total: `work-issue`, `spec-it`, `ship`, `phasing`,
+`phasing-flow`, `extract-prototype-review`, `integrate-branch`, `analyze-comms`,
+`promote-to-marketplace`, `compliance-research`, `iterative-review`,
+`humanizer`, and `handoff`. Phase 0 reads `<consumer>/docs/specs/`
 before any code work; see `docs/methodology.md` §B (Specification-Driven
 Development) and §D (Issue-driven dev) for the contract. See
 `templates/core/cheatsheet.md.template` for the daily command list — this
@@ -124,10 +169,10 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
+- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle + the `integrate-audit-harness` job running `node --test` over the integrate-branch audit seed (the pure `compute-audit` reduce + the `verdict-parity` two-gate harness + the content-anchored Phase-3/4 frozen-region guard) and parity/3-copied-lib-byte-identity/RED-self-test-guarding its bundle + the `work-issue-frozen-harness` job running `node --test` over the 10-block content-anchored frozen-region guard that proves the M3 #2 `work-issue` SKILL rewire kept the untouched phases byte-verbatim (the 2 seed pointers landed + Phase 3.5/flags gone; CI is now **20 jobs**, the honest M3.1 mirror)), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
 - **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `plugin-install-fixture`, `changelog-check`) run automatically on push + PR.
 - **Full local**: `gh workflow run plugin-install-fixture.yml` (runs all structural + init-project + audit-scan + dev-symlink dry-run jobs end-to-end against `$RUNNER_TEMP` targets).
-- **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the unit layer. No traditional unit/integration tests — the scripts are too simple and the workflows ARE the integration.
+- **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the static-lint layer. The `phasing-flow` engine adds a true executed-test layer: `node --test` over the pure, `agent()`-free stopping engine (`loop-harness`) and a `bash` harness that drives the verbatim security hooks with real tool-call envelopes and asserts their `exit 2`/fire enforcement (`security-hook-harness`) — both **red-capable** (gate-the-gate: a deliberately-broken assertion or disabled hook must turn the gate red).
 
 ## 7. Documentation Requirements
 
@@ -146,7 +191,7 @@ behavior changes require which file to update.
 Before merging any PR, complete this checklist:
 
 1. Run the full test suite (`gh workflow run plugin-install-fixture.yml`) — all tests pass (0 failures).
-2. Lint clean (`shellcheck -e SC2086,SC2155,SC2034 scripts/*.sh plugins/unifylabs-workflow/hooks/*.sh plugins/unifylabs-workflow/statusline/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
+2. Lint clean (`shellcheck -e SC2086,SC2155,SC2034 scripts/*.sh plugins/unifylabs-workflow/hooks/*.sh plugins/unifylabs-workflow/hooks/test/*.sh plugins/unifylabs-workflow/statusline/*.sh` + `actionlint .github/workflows/*.yml`) — no warnings.
 3. Feature verification: trace each test-plan item end-to-end; confirm
    the relevant fixtures under `scripts/test-fixtures/` are consistent with
    any script-output changes; confirm CHANGELOG `[Unreleased]` has an entry

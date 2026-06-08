@@ -169,20 +169,21 @@ specific list of living docs is **defined per-project** in the project's
 
 ### G. Context discipline
 
-Threshold table — the reasoning behind the numbers comes from the prompt-cache
-mechanics (5-minute TTL) and observed behavior under context pressure. Pinning at
-70% gives time to `/compact` before quality degrades; mandatory `/clear` at 90%
-prevents the long-tail behavior where the agent starts hallucinating from
-truncated context.
+Threshold table — context % is the fraction of the full context window in use
+(read from the harness-native `context_window.used_percentage`). With a 1M window
+plus native compaction, real pressure is far out, so the bands are intentionally
+generous. Warning around 60% gives time to wrap focused work; suggesting a handoff
+around 75% precedes the urgent band at 85%, before the long-tail behavior where the
+agent starts hallucinating from truncated context.
 
 | Context % | Action |
 |---|---|
-| 0–50% | Work freely |
-| 50–70% | Pay attention; finish current focused work before adding new scope |
-| 70–90% | `/compact` to summarize |
-| 90%+ | `/clear` (mandatory) |
+| <60% | Work freely |
+| 60–74% | Pay attention; finish current focused work before adding new scope |
+| 75–84% | Suggest a handoff |
+| 85%+ | Urgent — hand off or `/clear` |
 
-Plus: `/effort xhigh` for complex work; default to lower for routine work to
+Plus: `/effort ultracode` for complex work; default to lower for routine work to
 control cost.
 
 ### H. Multi-agent review — see `templates/cheatsheet.md.template` Appendix A

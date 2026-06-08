@@ -61,12 +61,16 @@ the project's `<consumer>/CLAUDE.md`, or a kit skill).
 
 | % | Action | Why |
 |---|---|---|
-| 0–50% | Work freely. | Cache warm; no concern. |
-| 50–70% | Pay attention; finish current focused work before adding scope. | The next big jump degrades quality. |
-| 70–90% | `/compact` to summarize. | Brings context back into a usable window without losing the thread. |
-| 90%+ | `/clear` (mandatory). | Past 90%, the agent starts hallucinating from truncated context. |
+| <60% | Work freely. | Cache warm; no concern. |
+| ~60% (60–74) | Pay attention; finish current focused work before adding scope. | Quality stays solid here, but it's the right time to wrap a focused unit before piling on more. |
+| ~75% (75–84) | Consider `/handoff` (LEAN) or `/compact` at a natural break. | A handoff or compaction here keeps the thread crisp without losing state. |
+| ~85%+ | `/handoff` (EMERGENCY) or `/clear`. | The far end of the window; hand off or reset rather than push deeper. |
 
-Rationale: anchored on the prompt-cache 5-minute TTL + observed agent behavior under context pressure (see `docs/methodology.md` §H).
+The % is the fraction of the full context window in use (harness-native `context_window.used_percentage`, the same value the statusline reads).
+
+These bands map to the context-awareness reminder tiers (silent <60 · warn ~60 · suggest-handoff ~75 · urgent ~85) and the `/handoff` doc-detail tiers (FULL <75 · LEAN 75–84 · EMERGENCY ≥85).
+
+Rationale: with a 1M window + native compaction, real pressure is far out, so the bands are intentionally generous — observed agent behavior degrades gradually rather than at a hard cliff (see `docs/methodology.md` §H).
 
 ---
 

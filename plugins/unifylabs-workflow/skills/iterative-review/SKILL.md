@@ -46,7 +46,7 @@ Flags (optional; defaults match recommended behavior):
 
 - `--include-suggestions` — surface Suggestion-severity findings in the loop (default: report-only)
 - `--gate-important` — gate every Important finding instead of auto-fixing
-- `--cap N` — override the 3-iteration cap (max 5)
+- `--cap N` — request a different max-rounds bound; the value is clamped by `workflow/stopping-engine.mjs` (the engine owns the real ceiling)
 - `--no-skip-clean` — disable the skip-if-clean pre-gate (NOT recommended — see Step 4)
 
 ## Architecture
@@ -86,6 +86,8 @@ Probe the project root via `references/verifier-detection.md`. Surface the detec
 
 ## Step 3: Initial review pass
 
+> **Superseded by native EnterWorktree; migration tracked in M0/Theme-4 (not yet landed).** The hand-rolled git-worktree plumbing below remains operational until the native replacement is wired (it cannot yet check out an arbitrary PR head ref).
+
 **PR-mode prelude (required before the review pass for code-PR mode):** create the isolated worktree per `references/modes.md` §"Code mode — PR variant" step 4. All subsequent file reads, Edits, and verifier runs in this loop happen INSIDE the worktree. Cache the worktree path in session state and use absolute paths under it for every tool call. Local-diff and single-file variants do NOT need a worktree — they run against the current working tree.
 
 **Code mode (PR or local diff):**
@@ -119,43 +121,81 @@ if len(Critical) == 0 and len(Important) == 0:
 
 `--no-skip-clean` is available for power users but warn before proceeding.
 
-## Step 5: Loop (max 3 iterations)
+## Step 5: The enforced loop (ceilings live in code)
 
-For each iteration, in this exact order:
+The review → fix → verify → re-review loop is no longer prose the model is asked
+to honor — it is an **enforced loop-until-dry Workflow**. The control flow and
+every ceiling (skip-if-clean, max-rounds clamp, severity gating, fixed-point /
+cycle detection, the token-budget circuit breaker) live in
+`workflow/stopping-engine.mjs` (plus the helpers under `workflow/lib/`), bundled
+into `workflow/iterative-review.workflow.mjs`. **That code is the single source
+of truth for the stopping rules.** This section describes the loop's *behavior*;
+it does not restate authoritative thresholds. (Non-authoritative orientation
+only: the default cap is 3 with a hard ceiling of 5 — see `stopping-engine.mjs`,
+which clamps the value, for the real rule.)
 
-### 5a. Categorize and present findings
+What you, the model, supply are the three injected callbacks the kernel drives:
+the re-review pass, the fixer pass, and the verifier. The kernel owns *when* each
+runs, *when* the loop continues, and *which exit reason* fires. Each callback is
+pure I/O around a single round; none of them decide when to stop.
 
-Group by severity per `references/severity-policy.md`:
+### What the kernel does each round
 
-- **Critical (must gate):** N findings
-- **Important (will auto-fix unless flagged):** N findings
-- **Suggestion (report-only):** N findings
+1. **Categorize** the round's findings by severity (Critical / Important /
+   Suggestion). Severity tiers are defined in `references/severity-policy.md`.
+2. **Auto-fix the Important working set** (the default model). This is the only
+   set the loop tries to shrink in-loop, and shrinkage of this set is the
+   fixed-point signal.
+3. **Collect — never fix — Critical findings.** See the platform behavior change
+   below: Criticals are gathered and returned for the between-runs human gate.
+4. **Run the verifier** for the round; a permanent failure exits with `aborted`.
+5. **Re-review delta scope only** — files touched this round plus files tied to
+   an unresolved prior finding. Untouched files are skipped (keeps each round
+   cheap; prevents the "always finds something new" failure on stable files).
+6. **Classify the exit** via the precedence ladder in `stopping-engine.mjs`
+   (`classifyExit`). The frozen exit-reason vocabulary lives in
+   `workflow/lib/exit-reasons.mjs`.
 
-### 5b. GATE 1 — Critical findings
+### Platform behavior change — no mid-run human input
 
-For each Critical finding, present via AskUserQuestion with options:
+A running Workflow takes **no mid-run human input**. The old per-Critical
+`AskUserQuestion` gate that lived *inside* the loop is therefore gone. Instead:
 
-- **Fix** (default) — dispatch a fixer subagent
-- **Skip** — acknowledge but don't fix this iteration
-- **Edit suggestion** — user proposes an alternate fix
+- **Criticals are COLLECTED, not fixed in-loop.** Fixing a Critical needs a human
+  decision, which a running Workflow cannot solicit, so the loop never attempts
+  it. Residual blocking findings are returned to the caller via the
+  **`criticals-pending-gate`** exit reason, and the human gate happens *between*
+  runs — at the M2 outer-orchestration seam — not inside the kernel.
+- Under `--gate-important`, Important findings are *also* collected (not
+  auto-fixed) and become blocking findings that route through the same
+  `criticals-pending-gate` exit.
+- Suggestions stay report-only unless `--include-suggestions` promotes them to
+  the gate (still never auto-fixed in-loop).
 
-If the Critical list is short (≤3), offer a single "fix all Critical" bulk option.
+### Two-layer enforcement
 
-### 5c. AUTO — Important findings
+Stopping is enforced in **two independent layers**, so a model that "forgets" a
+rule cannot escape it:
 
-Default: queue all Important findings for auto-fix.
+1. **In-loop JS kernel** — `stopping-engine.mjs` deterministically applies the
+   ceilings and routes every exit through the frozen reason set.
+2. **Stop-hook verifier backstop** (added in the next step of this milestone) — a
+   deterministic Stop-hook that re-runs the *real* verifier and **blocks sign-off
+   if it is red**, independent of whatever the loop reported. The kernel decides
+   when to stop; the Stop-hook independently refuses to let a red tree be signed
+   off.
 
-If `--gate-important` is set: treat each like Critical (AskUserQuestion per-finding).
+### `/goal` is reserved for M2
 
-Otherwise surface one AskUserQuestion before fixing: "Gate Important findings this iteration? (No = auto-fix all, Yes = gate all, Mixed = pick per-finding)". Default = No.
+`/goal` is **not** an in-loop "are we done yet?" check. The inner loop is
+deterministic code, not a soft model self-assessment. `/goal` is reserved for the
+**M2 outer orchestration seam** that wraps this kernel; the inner stopping
+decision never asks the model whether it is finished.
 
-### 5d. Suggestions
+### Fixer dispatch (your callback's responsibility)
 
-Do NOT fix Suggestions unless `--include-suggestions` is set. They appear in the final report only.
-
-### 5e. Dispatch fix subagents
-
-For each accepted finding, dispatch a fixer via the Agent tool. The fixer prompt MUST include:
+When the kernel's auto-fix pass runs, dispatch a fixer via the Agent tool per
+accepted Important finding. The fixer prompt MUST include:
 
 - The full finding (file, line, description, suggested fix)
 - Relevant code/doc context (read the file first; pass excerpts)
@@ -174,54 +214,17 @@ Fixer-agent routing:
 | Doc findings | general-purpose Agent with doc-fixer instructions from `prompts/doc-reviewer.md` |
 | **Plan-affecting (phase mode)** | NOT a fixer — write to handoff Open Questions per `references/phasing-integration.md` |
 
-Run fixers in parallel when their target files don't overlap; serialize otherwise.
+Run fixers in parallel when their target files don't overlap; serialize
+otherwise. Critical findings are NOT dispatched here — they are collected for the
+between-runs gate.
 
-### 5f. Run verifier
-
-Run the verifier commands from Step 2 in sequence. Halt on first failure.
-
-On failure:
-
-1. Read the failure output (last 50 lines).
-2. Dispatch a root-cause-fixer subagent (general-purpose Agent) with the failure + this iteration's fixes.
-3. Re-run the verifier ONCE.
-4. Still failing: AskUserQuestion — "Verifier still failing. Continue iterating, abort, or escalate?"
-
-### 5g. Re-review (delta scope only)
-
-Re-review ONLY:
-
-- Files touched by this iteration's fixes
-- Files associated with any unresolved finding from prior iterations
-
-Skip untouched files. This keeps each iteration cheap and prevents the "always finds something new" failure on stable files.
-
-### 5h. Fixed-point check
-
-After re-review, compute the Critical findings set. If `len(critical_n) >= len(critical_n-1)`:
-
-- We're stalled (no shrinkage means our fixes aren't resolving anything).
-- EXIT with `fixed-point` reason; surface residual.
-
-### 5i. Clean-exit check
-
-If `len(critical_n) == 0`:
-
-- EXIT with `clean` reason; emit final report.
-
-Otherwise, continue to iteration N+1 unless the cap is hit.
-
-### Cap hit
-
-After iteration 3 (or `--cap N`), exit with `cap` reason; surface residual findings without further fix attempts.
-
-### Token budget circuit breaker
-
-Track cumulative tokens used in this loop. If cumulative > 5 × initial-review-pass cost, exit with `circuit-breaker` reason immediately.
-
-See `references/stopping-rules.md` for the full rule set and exit-code mapping.
+See `references/stopping-rules.md` for the human-oriented summary of the five
+rules, and `workflow/stopping-engine.mjs` (+ `workflow/lib/`,
+`workflow/test/stopping-engine.test.mjs`) for the enforced, tested definitions.
 
 ## Step 6.5: Push-back gate (PR mode only)
+
+> **Superseded by native EnterWorktree; migration tracked in M0/Theme-4 (not yet landed).** The hand-rolled git-worktree plumbing below remains operational until the native replacement is wired (it cannot yet check out an arbitrary PR head ref).
 
 If mode is PR (or PR + phase-context) AND fixes were applied to files inside the worktree, run this gate before the final report. Skip entirely if mode is not PR, or if no fixes were applied (skip-if-clean exit, all findings skipped, or fixed-point at iter 1).
 
@@ -258,7 +261,7 @@ Even on early exit, emit a structured final report:
 # Iterative Review — Final Report
 
 **Mode:** <mode>  **Target:** <target>  **Verifier:** <commands>
-**Iterations:** N / 3  **Exit reason:** <skip-if-clean | clean | fixed-point | cap | circuit-breaker | aborted>
+**Iterations:** N / 3  **Exit reason:** <skip-if-clean | clean | fixed-point | cap | circuit-breaker | aborted | criticals-pending-gate>
 
 ## Resolved (this run)
 - [Critical] <description> (was at iter 1, fixed at iter 2)
@@ -284,20 +287,22 @@ Optionally invoke the `humanizer` skill on this report so it reads naturally.
 
 - **Never run the loop on already-clean output.** Honor skip-if-clean. The 41pt accuracy drop is documented (Snorkel, Claude Sonnet 4.5).
 - **Never modify the master plan** in phase mode. Surface plan-affecting findings via Open Questions only.
-- **Never exceed 3 iterations** without an explicit `--cap` override.
-- **Never auto-fix Critical findings** without an AskUserQuestion gate.
+- **Never bypass the enforced ceilings** — they live in `workflow/stopping-engine.mjs` (+ `lib/`), not prose; the cap/fixed-point/budget limits are code, not guidance.
+- **Never fix Critical findings in-loop** — a running Workflow takes no mid-run human input, so Criticals are collected and handed to the between-runs human gate via the `criticals-pending-gate` exit reason.
 - **Never re-review untouched files** — wastes tokens, risks the "always finds something" failure.
 - **Never edit `run.json`, `master-plan.md`, or `phase-N-spec.md`.** They're the phasing skill's state, not ours.
 
 ## End state
 
-The skill exits when any of:
+The kernel classifies every exit as exactly one of the 7 frozen reasons in
+`workflow/lib/exit-reasons.mjs`:
 
-- Skip-if-clean triggered (best case)
-- All Critical findings resolved
-- Fixed-point reached
-- 3-iteration cap hit
-- Circuit breaker tripped
-- User aborts at a GATE
+- `skip-if-clean` — the initial pass had nothing worth gating or auto-fixing; the loop is never entered (best case).
+- `clean` — no Critical or Important findings remain and there is no auto-fixable work left.
+- `fixed-point` — the auto-fixable working set stopped shrinking (stall, set-swap, or oscillation).
+- `cap` — ran out of rounds (`maxRounds` reached) with no residual blocking findings.
+- `circuit-breaker` — the token-budget breaker fired.
+- `aborted` — the verifier permanently failed.
+- `criticals-pending-gate` — residual blocking findings (Criticals always; Important under `--gate-important`) handed to the between-runs human gate.
 
 In every case, a final report is emitted. The user's session continues uninterrupted.

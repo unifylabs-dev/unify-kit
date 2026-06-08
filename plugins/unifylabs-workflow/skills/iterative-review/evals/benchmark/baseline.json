@@ -1,0 +1,31 @@
+{
+  "generated_for": "M1 no-regression baseline",
+  "gold_critical_count": 3,
+  "per_run": [
+    {
+      "run_index": 1,
+      "critical_recall": 0.6666666666666666,
+      "caught_criticals": 2,
+      "missed_criticals": 1,
+      "false_positives": 0
+    },
+    {
+      "run_index": 2,
+      "critical_recall": 0.6666666666666666,
+      "caught_criticals": 2,
+      "missed_criticals": 1,
+      "false_positives": 0
+    },
+    {
+      "run_index": 3,
+      "critical_recall": 1.0,
+      "caught_criticals": 3,
+      "missed_criticals": 0,
+      "false_positives": 0
+    }
+  ],
+  "worst_run_critical_recall": 0.6666666666666666,
+  "worst_run_index": 1,
+  "matching_rule": "file + line +/-3 + severity=Critical",
+  "note": "worst-of-N floor; the enforced loop must meet-or-beat this worst run on Critical-recall AND never false-clean"
+}

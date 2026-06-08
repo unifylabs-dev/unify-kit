@@ -15,18 +15,36 @@ IFS=$'\n\t'
 HANDOFF="$1"
 [ -f "$HANDOFF" ] || { echo "handoff not found: $HANDOFF" >&2; exit 2; }
 
+# Resolve every environment probe (git state, load-bearing files, run.json) against
+# the handoff's recorded frontmatter `project_root` — NOT the caller's cwd. A handoff
+# is routinely resumed from a different clone / worktree / sibling repo, and resolving
+# against cwd produced a false `fatal`: every repo-relative load-bearing path resolved
+# to a "missing" file and git HEAD/branch read as "drift" because the probe hit the
+# wrong tree. Fall back to cwd when project_root is absent or is not a directory
+# (older handoffs that predate the field).
+project_root=$(awk '
+  /^---[[:space:]]*$/ { c++; next }
+  c==1 && /^[[:space:]]*project_root:[[:space:]]*/ {
+    sub(/^[[:space:]]*project_root:[[:space:]]*/, ""); sub(/[[:space:]]+$/, ""); print; exit
+  }' "$HANDOFF" 2>/dev/null || true)
+if [ -n "$project_root" ] && [ -d "$project_root" ]; then
+  base_dir="$project_root"
+else
+  base_dir="$(pwd)"
+fi
+
 # ---------- §4.1 Git state ----------
 git_block=$(awk '/^### 4\.1 Git state/{f=1;next} /^### 4\.|^## /{f=0} f' "$HANDOFF" || true)
 expected_branch=$(printf '%s\n' "$git_block" | sed -n 's/^- \*\*Branch:\*\* *//p' | head -1)
 expected_head=$(printf '%s\n' "$git_block" | sed -n 's/^- \*\*HEAD SHA:\*\* *//p' | head -1)
 
-if git rev-parse --git-dir >/dev/null 2>&1; then
-  actual_head=$(git rev-parse HEAD 2>/dev/null || echo "")
-  actual_branch=$(git branch --show-current 2>/dev/null || echo "")
-  if [ -z "$(git status --porcelain 2>/dev/null || true)" ]; then
+if git -C "$base_dir" rev-parse --git-dir >/dev/null 2>&1; then
+  actual_head=$(git -C "$base_dir" rev-parse HEAD 2>/dev/null || echo "")
+  actual_branch=$(git -C "$base_dir" branch --show-current 2>/dev/null || echo "")
+  if [ -z "$(git -C "$base_dir" status --porcelain 2>/dev/null || true)" ]; then
     actual_tree="clean"
   else
-    dirty_files=$(git status --porcelain 2>/dev/null | awk '{print $NF}' | paste -sd, - 2>/dev/null || true)
+    dirty_files=$(git -C "$base_dir" status --porcelain 2>/dev/null | awk '{print $NF}' | paste -sd, - 2>/dev/null || true)
     actual_tree="dirty:${dirty_files}"
   fi
   if [ -z "$expected_head" ] && [ -z "$expected_branch" ]; then
@@ -48,20 +66,37 @@ files_block=$(awk '/^### 4\.2 Files load-bearing/{f=1;next} /^### 4\.|^## /{f=0}
 load_bearing_json="[]"
 while IFS= read -r path; do
   [ -n "$path" ] || continue
-  if [ -f "$path" ]; then
-    status="exists"
-  else
+  # Resolve relative entries against the handoff's project_root; keep absolute as-is.
+  case "$path" in
+    /*) full="$path" ;;
+    *)  full="$base_dir/$path" ;;
+  esac
+  # An entry can name a file, a DIRECTORY (trailing slash), or a GLOB (a `*`/`?`/`[`
+  # pattern). A bare `-f` reports directories and unexpanded globs as "missing" — a
+  # second false-fatal source. Test each by kind, with `-e` for the file case so a
+  # symlink or special file still counts as present.
+  status="missing"
+  case "$path" in
+    */)
+      if [ -d "${full%/}" ]; then status="exists"; fi
+      ;;
+    *[\*\?\[]*)
+      if compgen -G "$full" >/dev/null 2>&1; then status="exists"; fi
+      ;;
+    *)
+      if [ -e "$full" ]; then status="exists"; fi
+      ;;
+  esac
+  if [ "$status" = "missing" ]; then
     base=$(basename "$path")
     moved=""
-    if git rev-parse --git-dir >/dev/null 2>&1; then
-      moved=$(git log --diff-filter=R --follow --name-only --format= -- "$path" 2>/dev/null | head -1 || true)
+    if git -C "$base_dir" rev-parse --git-dir >/dev/null 2>&1; then
+      moved=$(git -C "$base_dir" log --diff-filter=R --follow --name-only --format= -- "$path" 2>/dev/null | head -1 || true)
     fi
     if [ -n "$moved" ]; then
       status="moved"
-    elif [ -n "$base" ] && find . -name "$base" -type f -print -quit 2>/dev/null | grep -q .; then
+    elif [ -n "$base" ] && find "$base_dir" -name "$base" -print -quit 2>/dev/null | grep -q .; then
       status="moved"
-    else
-      status="missing"
     fi
   fi
   load_bearing_json=$(jq -c --arg p "$path" --arg s "$status" '. + [{path:$p,status:$s}]' <<< "$load_bearing_json")
@@ -77,8 +112,14 @@ if printf '%s\n' "$runstate_block" | grep -qE '^[[:space:]]*\| *[0-9]+ *\|'; the
         printf "%s:%s\n", $2, $4
       }')
   run_json_path=$(printf '%s\n' "$runstate_block" | sed -n 's/^[[:space:]]*- \*\*run\.json path:\*\* *//p' | head -1)
-  if [ -n "$run_json_path" ] && [ -f "$run_json_path" ]; then
-    actual_phases=$(jq -r '.phases[] | "\(.n):\(.status)"' "$run_json_path" 2>/dev/null || echo "")
+  # Resolve a relative run.json path against project_root (same reason as §4.2).
+  case "$run_json_path" in
+    "" ) rj_full="" ;;
+    /* ) rj_full="$run_json_path" ;;
+    *  ) rj_full="$base_dir/$run_json_path" ;;
+  esac
+  if [ -n "$rj_full" ] && [ -f "$rj_full" ]; then
+    actual_phases=$(jq -r '.phases[] | "\(.n):\(.status)"' "$rj_full" 2>/dev/null || echo "")
     if [ "$expected_phases" = "$actual_phases" ]; then
       runjson_status="match"
     else
