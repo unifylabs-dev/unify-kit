@@ -33,6 +33,7 @@ node_modules/
 .phasing-flow/
 .phasing-flow-run/
 .claude/handoffs/
+.claude/derisk-scratch/
 
 # Kit's own project manifest from init-project.sh self-bootstrap.
 # The kit IS the kit-version source of truth — tracking the manifest would
