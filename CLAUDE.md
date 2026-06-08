@@ -45,9 +45,11 @@ kit — one repo, three roles. No runtime, no DB.
   install with `/plugin marketplace add github.com/unifylabs-dev/unify-kit`
   then `/plugin install unifylabs-workflow` from a Claude session. The plugin
   also ships a `workflows/` dir — a neutral staging home for self-contained,
-  importer-free Workflow seeds (currently the `planning-brain` seed: a tested
+  importer-free Workflow seeds (the `planning-brain` seed: a tested
   `.mjs` kernel + deterministic bundler + committed bundle, mirroring the
-  `iterative-review` precedent). These are NOT skills/commands/hooks (no count
+  `iterative-review` precedent — plus, since M4, a `workflows/recipes/` dir of
+  general-purpose `/workflow-library` recipes and a `workflows/routines/` dir of
+  detect-only routine recipes). These are NOT skills/commands/hooks (no count
   ripple); M3 relocates the planning-brain seed under the `phasing-flow` skill
   (M2 wired `/phasing-flow plan` onto it in place). The `phasing-flow` skill also
   ships its own `workflow/` execution-engine seed (the third ADR-0003 seed). M3
@@ -86,6 +88,24 @@ kit — one repo, three roles. No runtime, no DB.
   frozen guard / new CI job (CI stays **20 jobs**); the `/spec-it` contract is
   unchanged. **M3 (adoption) COMPLETE** — integrate-branch + work-issue wired;
   spec-it evaluated-and-declined. ADR 0007.
+  **M4 (new capabilities) ships two additive, revert-clean artifacts** (both run
+  live; seed/docs/script shape → NO count ripple, NO version bump): (A) the
+  `review-changed-files` **`/workflow-library` reference recipe** — a read-only
+  ADR-0003 seed at `workflows/recipes/review-changed-files/` (`parallel()`
+  dimension-reviewers over a git diff → Critical-precision consensus via a
+  **recipe-local** `lib/consensus.mjs` [not a copied lib → no `cmp` guard] →
+  adversarial verify) + a curated `docs/workflow-library.md` catalog (this IS the
+  `/workflow-library` surface — seed+docs, NOT a command; D1); proven live run
+  `wf_3c45b7ca-f8c`. (B) the **detect-only `doc-freshness` routine pilot** — a
+  repo-intrinsic, `$HOME`-free, provably read-only `scripts/doc-freshness-scan.sh`
+  (5 deterministic signals) + a `/schedule`-able routine recipe at
+  `workflows/routines/doc-freshness/` that adds LLM judgment and reports via a
+  single idempotent `gh issue` (the one allowed write; NEVER a repo-tree mutation).
+  The front-loaded PROBE hit HTTP 401 on the cloud `RemoteTrigger` API (P-c) →
+  cloud registration is a documented consumer step; the detect script is proven
+  live (baseline-fresh + a true-positive). One new `review-recipe-harness` CI job
+  → **21 jobs**. `drift-check`'s repo-only variant deferred (BACKLOG) —
+  `check-drift.sh` is machine-local. ADR 0008.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
   (always applied), `claude-runtime/` (always applied: `.mcp.json` +
   `.claude/settings.json`), `optional/` (opt-in via `--include=`),
@@ -169,7 +189,7 @@ if existing tests break, fix the implementation, not the tests. If GREEN fails
 
 ## 6. Test Strategy
 
-- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle + the `integrate-audit-harness` job running `node --test` over the integrate-branch audit seed (the pure `compute-audit` reduce + the `verdict-parity` two-gate harness + the content-anchored Phase-3/4 frozen-region guard) and parity/3-copied-lib-byte-identity/RED-self-test-guarding its bundle + the `work-issue-frozen-harness` job running `node --test` over the 10-block content-anchored frozen-region guard that proves the M3 #2 `work-issue` SKILL rewire kept the untouched phases byte-verbatim (the 2 seed pointers landed + Phase 3.5/flags gone; CI is now **20 jobs**, the honest M3.1 mirror)), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
+- **Test surface**: lint (`shellcheck`, `actionlint`, `markdownlint`, `lychee`), `plugin-install-fixture` (plugin structural validation + ephemeral `init-project.sh` smoke tests across compliance profiles + the `loop-harness` job running `node --test` over the iterative-review stopping engine + the `verifier-backstop-harness` job + the `planning-brain-harness` job running `node --test` over the planning-brain seed kernel and parity-checking its bundle + the `security-hook-harness` job running the `bash` hook-enforcement harness + the `phasing-flow-engine-harness` job running `node --test` over the phasing-flow execution-engine kernel and parity/copied-lib-byte-identity/RED-self-test-guarding its bundle + the `integrate-audit-harness` job running `node --test` over the integrate-branch audit seed (the pure `compute-audit` reduce + the `verdict-parity` two-gate harness + the content-anchored Phase-3/4 frozen-region guard) and parity/3-copied-lib-byte-identity/RED-self-test-guarding its bundle + the `work-issue-frozen-harness` job running `node --test` over the 10-block content-anchored frozen-region guard that proves the M3 #2 `work-issue` SKILL rewire kept the untouched phases byte-verbatim (the 2 seed pointers landed + Phase 3.5/flags gone, the honest M3.1 mirror)) + the `review-recipe-harness` job (M4) running `node --test` over the `review-changed-files` `/workflow-library` recipe's recipe-local `consensus` kernel and parity/RED-self-test-guarding its committed bundle (no copied-lib `cmp` — the recipe owns its arithmetic; the `doc-freshness` routine's `scripts/doc-freshness-scan.sh` detector is shellcheck-gated by the lint workflow, not here; **CI is now 21 jobs**)), `scrub-check` (substitution invariant + template-vocabulary contract + forbidden-string scan), `changelog-check` (per-PR `[Unreleased]` discipline).
 - **CI command (PR gate)**: the 4 workflows under `.github/workflows/` (`lint`, `scrub-check`, `plugin-install-fixture`, `changelog-check`) run automatically on push + PR.
 - **Full local**: `gh workflow run plugin-install-fixture.yml` (runs all structural + init-project + audit-scan + dev-symlink dry-run jobs end-to-end against `$RUNNER_TEMP` targets).
 - **Tier discipline**: structural validation + ephemeral installs into `$RUNNER_TEMP` are the kit's e2e layer; shellcheck + actionlint are the static-lint layer. The `phasing-flow` engine adds a true executed-test layer: `node --test` over the pure, `agent()`-free stopping engine (`loop-harness`) and a `bash` harness that drives the verbatim security hooks with real tool-call envelopes and asserts their `exit 2`/fire enforcement (`security-hook-harness`) — both **red-capable** (gate-the-gate: a deliberately-broken assertion or disabled hook must turn the gate red).
