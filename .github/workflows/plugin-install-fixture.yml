@@ -949,3 +949,81 @@ jobs:
           bash "$testdir/test-freshness-check.sh"
           bash "$testdir/test-detect-mode.sh"
           bash "$testdir/test-recreate-tasklist.sh"
+
+  # M4 (new capabilities): the review-changed-files /workflow-library reference
+  # recipe. A read-only ADR-0003 seed with its OWN tested consensus kernel (NOT a
+  # copied lib — so no copied-lib cmp guard; the recipe is self-contained). Guards:
+  # node --check, node --test (the pure kernel), bundle parity (regenerate + git
+  # diff + check-bundle + import-free), and a RED self-test. Zero-dep. The
+  # doc-freshness routine's detect script (scripts/doc-freshness-scan.sh) is covered
+  # by the lint workflow's shellcheck (the maintenance-script precedent), not here.
+  review-recipe-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20 (zero-dep — node --test / node --check only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: review-changed-files .mjs parse cleanly (node --check, exclude bundle)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/workflows/recipes/review-changed-files
+          # Exclude the GENERATED bundle: it ends with a top-level `return await
+          # main(args)` (ADR 0003), illegal in a bare ESM module. check-bundle.mjs
+          # validates it in the parity step instead.
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            node --check "$f"
+          done < <(find "$dir" -name '*.mjs' -type f -not -name 'review-changed-files.workflow.mjs' 2>/dev/null)
+
+      - name: review-changed-files kernel tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          testdir=plugins/unifylabs-workflow/workflows/recipes/review-changed-files/test
+          tests=("$testdir"/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no review-changed-files tests found under $testdir — the gate must have tests"
+            exit 1
+          fi
+          node --test "${tests[@]}"
+
+      # PARITY GUARD: the committed bundle must be a tracked git file, match a fresh
+      # regeneration byte-for-byte, validate for the runtime (check-bundle), and be
+      # import-free. A stale bundle would ship untested code.
+      - name: review-changed-files bundle parity (regenerate + git diff + check-bundle)
+        run: |
+          set -euxo pipefail
+          dir=plugins/unifylabs-workflow/workflows/recipes/review-changed-files
+          bundle="$dir/review-changed-files.workflow.mjs"
+          git ls-files --error-unmatch "$bundle" \
+            || { echo "::error file=$bundle::bundle is not a tracked git file — add it so the parity guard cannot be silently disarmed"; exit 1; }
+          ( cd "$dir" && node build-workflow.mjs )
+          git diff --exit-code -- "$bundle" \
+            || { echo "::error file=$bundle::bundle drift — run 'node build-workflow.mjs' and commit the result"; exit 1; }
+          node "$dir/check-bundle.mjs" "$bundle"
+          if grep -anE '^[[:space:]]*import[[:space:]]' "$bundle"; then
+            echo "::error file=$bundle::bundle contains an import statement — the Workflow VM cannot import"
+            exit 1
+          fi
+          echo "bundle is tracked, in parity with source, valid for the runtime, and import-free"
+
+      # RED GATE-THE-GATE: sabotage the consensus rule (every Critical confirmed
+      # regardless of votes) and assert the suite FAILS. If it PASSED against the
+      # broken rule, the consensus assertions are not binding (vacuous-pass).
+      - name: RED self-test — a broken consensus rule MUST fail the suite
+        run: |
+          set -euo pipefail
+          dir=plugins/unifylabs-workflow/workflows/recipes/review-changed-files
+          cp "$dir/lib/consensus.mjs" "$RUNNER_TEMP/cons.bak"
+          sed 's/>= critVotes/>= 0/' "$RUNNER_TEMP/cons.bak" > "$dir/lib/consensus.mjs"
+          if node --test "$dir"/test/*.test.mjs > /dev/null 2>&1; then
+            cp "$RUNNER_TEMP/cons.bak" "$dir/lib/consensus.mjs"
+            echo "::error::RED self-test PASSED against a sabotaged consensus rule — the demotion assertions are not binding (gate-the-gate failure)"
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/cons.bak" "$dir/lib/consensus.mjs"
+          echo "RED self-test correctly failed — consensus assertions bind to real arithmetic"

@@ -76,6 +76,7 @@ Examples: `0001-hook-bundle-licensing.md`, `0002-some-future-decision.md`.
 | [0005](0005-integrate-branch-audit-seed.md) | The integrate-branch Phase-2 audit seed: reduce-parity acceptance, copy-3-libs, consensus dedup-only for distinct lenses, a synthetic-tsc D2 fallback, and transitive engine adoption | accepted | 2026-06-06 |
 | [0006](0006-work-issue-phasing-flow-rewire.md) | The work-issue phasing-flow rewire: a SKILL-rewire driving the existing seeds (no new kernel), Mode-B Phase-4 engine-gating, S/M/L-conditional host, Phase-3.5 deletion, a 10-block frozen-region guard, and the ADR-0004 fixed-point discharge | accepted | 2026-06-06 |
 | [0007](0007-spec-it-planning-brain-wire-declined.md) | spec-it stays unwired: the planning-brain wire DECLINED by a pre-registered blind probe (2/5 dims, redundant with Phase-7 iterative-review); the matrix:67 engine→planning-brain divergence ratified; floor stale-ref fixes only | accepted | 2026-06-08 |
+| [0008](0008-m4-new-capabilities-recipe-and-routine.md) | M4 new capabilities: a read-only `/workflow-library` reference recipe (seed+docs, not a command) + a detect-only `doc-freshness` routine pilot; cloud `RemoteTrigger` 401 → registration is a consumer step; recipe-local consensus (no copied lib) + the FP-heavy citation signal moved to the routine's LLM layer | accepted | 2026-06-08 |
 
 When you add an ADR, append a row here — keep ADRs in numeric order.
 

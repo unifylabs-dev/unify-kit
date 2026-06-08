@@ -13,6 +13,29 @@ Items surfaced during v2.0.0 design + cutover; not in v2.0.0 scope.
 - **Multi-language compliance translations** (e.g., French versions of breach-response / privacy-policy for Quebec) — pull when a Quebec client demands them.
 - **Hook-firing CI validation** in `plugin-install-fixture.yml` — currently the runner doesn't have the `claude` CLI available, so we structurally validate hook scripts (executable, shebang, `${CLAUDE_PLUGIN_ROOT}` resolution) but don't fire them end-to-end. If Claude Code ships a headless CLI invocation path, wire it into a new CI job that runs `git commit` with a fake `sk-ant-test...` in staged content and asserts the pre-commit-secrets hook blocks.
 
+## phasing-flow initiative — M4 fast-follow (deferred)
+
+M4 (new capabilities) shipped two artifacts — the `review-changed-files`
+`/workflow-library` reference recipe + the detect-only `doc-freshness` routine pilot
+(ADR 0008). These adjacent items were scoped OUT of the pilot and deferred:
+
+- **A second routine: `drift-check` (repo-intrinsic variant).** `check-drift.sh` is
+  verified entirely machine-local (clone-sync + `~/.claude` symlink checks), so a
+  cloud drift-check routine needs a NEW `$HOME`-free variant covering the
+  repo-intrinsic count/version consistency. doc-freshness's count-drift signal
+  already covers the M0 pain, so this is additive, not blocking.
+- **A consumer-template `dep-CVE` routine** (design §14 #4) — ships as a routine in
+  the scaffolded consumer template (consumers have real dependency trees worth
+  scanning), not as a kit-self routine.
+- **A second `/workflow-library` recipe** (e.g. `multi-source-research-synthesize`
+  or `parallel-codemod`) — the catalog grows without count/version ripple.
+- **Live cloud-routine registration in CI/this env** — blocked on claude.ai API auth
+  (the build env returned HTTP 401, PROBE branch P-c in ADR 0008); the detect script
+  is proven live locally and cloud registration is documented as a consumer step.
+- **A `schedule:`-cron GitHub Action variant** of the mechanical doc-freshness
+  signals — a cheaper deterministic alternative for consumers who don't want a cloud
+  routine (the routine earns its place on the judgment-bearing signals; ADR 0008 D5).
+
 ## Pre-existing items (carried forward from v1.x)
 
 ## Stretch hooks
