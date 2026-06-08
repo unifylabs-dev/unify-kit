@@ -230,7 +230,7 @@ Run targeted `AskUserQuestion` rounds. **Only ask what's needed** — skip quest
 
 ## Phase 4 — Decomposition check
 
-**Why.** A feature that spans 4 modules and has 18 ACs is not one issue — it's a small project. Without decomposition, `/work-issue` Phase 3.5 will fire phasing inside it, and the user loses the granularity of independent PRs. Split now while the spec context is fresh.
+**Why.** A feature that spans 4 modules and has 18 ACs is not one issue — it's a small project. Without decomposition, `/work-issue` absorbs the whole thing as one oversized issue, and the user loses the granularity of independent PRs. Split now while the spec context is fresh.
 
 ### Heuristic (read `references/decomposition-heuristics.md` for full rules)
 
@@ -520,7 +520,7 @@ plugins/unifylabs-workflow/skills/spec-it/
 | `superpowers:brainstorming` | Phase 1 dialog. `/spec-it` intercepts the hand-off before brainstorming calls `writing-plans`. |
 | `iterative-review` | Phases 7 + 10 doc-mode review of the draft and the posted issue. |
 | `/work-issue` | The next step after `/spec-it` completes. Phase 11 prints the invocation. `/work-issue` Phase 0 reads "Spec sections affected" and the embedded "Proposed Spec Draft" from the issue body and writes the spec file as the first commit on the work branch. |
-| `phasing` (`/phase`) | Not invoked by `/spec-it`. Phasing is for execution-time decomposition inside `/work-issue`; `/spec-it` Phase 4 does issue-level decomposition. |
+| `phasing` (`/phase`) | Not invoked by `/spec-it`. Execution-time decomposition is handled inside `/work-issue`; `/spec-it` Phase 4 does issue-level decomposition. |
 | `compliance-research` | Phase 2e auto-invokes if the feature touches a regulated domain and `repo_schema.compliance_posture` is empty. Otherwise Phase 2e spot-checks against `docs/compliance/`. |
 | `extract-prototype-review` | Phase 2f may suggest this skill if a relevant `prototype/*` branch already exists. |
 | `context7` MCP | Phase 2d for library/framework docs. Mandatory when a specific library is named (training data may be stale). |

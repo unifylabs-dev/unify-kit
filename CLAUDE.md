@@ -70,6 +70,22 @@ kit — one repo, three roles. No runtime, no DB.
   phases stay byte-verbatim; revert = delete the two SKILL pointer blocks (the
   prose is the fallback). ADR-0004's deferred dead `fixedPointK` is removed from
   the engine `wrapper.mjs`. No skill/command/hook count ripple. ADR 0006.
+  **M3 #3 (skill 3 of 3, the last) evaluated `spec-it`** — planning-shaped (no
+  execution engine — the engine fail-CLOSED-aborts on a prose spec / `gh` filing),
+  so the only candidate seam was the planning-brain. Per gate-on-decisions the wire
+  was NOT pre-decided: a pre-registered, blind, 3-grader probe drove the seed AS-IS
+  on its strongest framing (Phase-4 decomposition, ARM-SEED `wf_75ec458e-5b9`)
+  against spec-it's single-pass flow, and the seed scored **2/5** dimensions (bar
+  ≥3) → **NO-OP, the wire DECLINED**. The decisive, probe-independent finding: the
+  baseline won the structural dimensions (partition + dependencies) that are
+  Phase-4's actual job (the `steps[]`-vs-unordered shape-mismatch, measured); the
+  seed's wins (completeness + AC-rigor) were largely recovered downstream by the
+  Phase-7 `iterative-review` it already runs, or accepted as a residual gap. Only the floor shipped: the stale `/work-issue` Phase-3.5 refs
+  (`spec-it/SKILL.md:233` + `:523` + `references/decomposition-heuristics.md`)
+  fixed; NO pointer block /
+  frozen guard / new CI job (CI stays **20 jobs**); the `/spec-it` contract is
+  unchanged. **M3 (adoption) COMPLETE** — integrate-branch + work-issue wired;
+  spec-it evaluated-and-declined. ADR 0007.
 - **Template tree** (`templates/`): organized into 5 tiers — `core/`
   (always applied), `claude-runtime/` (always applied: `.mcp.json` +
   `.claude/settings.json`), `optional/` (opt-in via `--include=`),
