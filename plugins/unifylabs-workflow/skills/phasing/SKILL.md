@@ -19,6 +19,11 @@ This skill orchestrates large work across multiple fresh `claude` sessions, with
 
 The framework's whole value is harnessing **plan mode in a fresh session**. Each phase opens its own session with clean context, brainstorms/asks/researches, drafts a plan, self-verifies the plan, gets user approval, then executes. The orchestrator session (where `/phase` was invoked) tracks state, polls for completion, and gates progression.
 
+> **Phasing or `phasing-flow`?** The `phasing-flow` framework is a newer sibling for cross-session orchestration; the two coexist and you choose per the work's shape (see ADR 0009 for the routing rationale):
+>
+> - **Prefer `phasing-flow` when** the work is verifiable (a real deterministic verifier — `npm test` / `pytest` / etc. — exists), plan-quality is the main risk, you want a small number of high-signal gates, and serial single-session-with-Workflow execution suffices.
+> - **Keep `phasing` when** the work is unverifiable / judgment-shaped (docs / research / design), you need multi-terminal / parallel isolation, you want a human gate at every transition, you need the checkpoint / retry / abort / archive recovery surface, or your workflow lives in GitHub-issue-per-phase tracking + status cards.
+
 ## §4. When to use (three trigger paths)
 
 ### §4.1 Auto-offer after a plan is presented

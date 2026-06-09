@@ -554,6 +554,8 @@ After 30 days, consumed handoffs in `.claude/handoffs/` eligible for archival to
 
 ## 9. Phase-checkpoint extension to phasing skill
 
+> **Design-time artifact.** This section specifies `phasing`'s checkpoint surface, which **survives** the M5 `phasing` ↔ `phasing-flow` coexistence model (see [ADR 0009](../docs/decisions/0009-phasing-phasing-flow-coexistence.md)) — `phasing` remains the tool for the mid-flight checkpoint/resume use-case.
+
 ### 9.1 Executor decision: checkpoint vs handoff
 
 A phase executor writes ONE of two artifacts at exit:

@@ -1,5 +1,7 @@
 # Current Stack Inventory
 
+> **Historical snapshot** (pre-phasing-flow-initiative). Retained as-is; not updated for the `phasing` ↔ `phasing-flow` coexistence model — see [ADR 0009](../decisions/0009-phasing-phasing-flow-coexistence.md).
+
 A factual enumeration of the Claude Code surfaces we run today, as the input for the
 gap analysis. No opinions in this file — only what exists and where.
 

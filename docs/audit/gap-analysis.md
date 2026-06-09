@@ -1,5 +1,7 @@
 # Gap Analysis — Framework vs. Current Stack
 
+> **Historical snapshot** (pre-phasing-flow-initiative). Retained as-is; not updated for the `phasing` ↔ `phasing-flow` coexistence model — see [ADR 0009](../decisions/0009-phasing-phasing-flow-coexistence.md).
+
 Two tables. Table A is "framework offerings → what we already have" (where they
 contribute). Table B is "what we have → framework equivalent" (where we're ahead).
 

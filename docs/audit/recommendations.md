@@ -1,5 +1,7 @@
 # Recommendations — what to actually adopt
 
+> **Historical snapshot** (pre-phasing-flow-initiative). Retained as-is; not updated for the `phasing` ↔ `phasing-flow` coexistence model — see [ADR 0009](../decisions/0009-phasing-phasing-flow-coexistence.md).
+
 Tiered against the three stated goals:
 
 - 🎯 **Onboarding** — getting two new devs productive on `optics-management` quickly.

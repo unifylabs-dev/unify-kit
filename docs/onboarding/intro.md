@@ -90,7 +90,11 @@ your machine.
   a fresh Claude session with mandatory plan-mode gating. Use it when a
   plan touches multiple subsystems or has natural break points and you
   want re-grounded context between chunks. Backed by the `/phase*`
-  command family (see below).
+  command family (see below). For verifiable multi-file code builds where
+  plan quality is the main risk, the newer **`phasing-flow`** skill
+  (`/phasing-flow`) is the better fit; keep `phasing` for judgment/non-code
+  work, multi-terminal isolation, a human gate at every transition, or
+  crash/checkpoint recovery (see ADR 0009 for the routing rationale).
 - **`handoff`** — Write a structured session-handoff doc so a fresh
   Claude session resumes cold — same decisions, task state, world state,
   and do-not-re-litigate guardrails. Also drives the resume side

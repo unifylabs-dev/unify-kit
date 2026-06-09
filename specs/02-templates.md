@@ -96,7 +96,7 @@ Standard `llms.txt` (≤1K tokens). The standard is a pattern; we author content
 ## How to ask for help
 - Use /work-issue <N> for issue-tracked work
 - Use /brainstorm for ambiguous features
-- Use /phase for cross-cutting changes
+- Use /phase for cross-cutting changes — or /phasing-flow for verifiable code builds; keep /phase for judgment/non-code or multi-terminal work
 ```
 
 ### 3. `templates/ai-usage-charter.md.template` — sourcing mode: `customization`
@@ -187,7 +187,7 @@ reference; they do not redefine these lists.
   `{{TEST_FULL_CMD}}`, `{{LINT_CMD}}`, `{{TYPECHECK_CMD}}`
 - **Context thresholds** (window-fraction of the full context window): <60% free /
   ~60% warn / ~75% suggest `/handoff` / ~85%+ urgent `/handoff`
-- **Plan mode + phasing trigger** — 1-line each
+- **Plan mode + phasing trigger** (incl. the `/phasing-flow` routing note) — 1-line each
 
 **Reviewer-agent mapping** — moved out of the cheatsheet body into an appendix at
 the end (`## Appendix A — Which reviewer when`). The appendix is the kit's canonical

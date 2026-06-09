@@ -77,6 +77,7 @@ Examples: `0001-hook-bundle-licensing.md`, `0002-some-future-decision.md`.
 | [0006](0006-work-issue-phasing-flow-rewire.md) | The work-issue phasing-flow rewire: a SKILL-rewire driving the existing seeds (no new kernel), Mode-B Phase-4 engine-gating, S/M/L-conditional host, Phase-3.5 deletion, a 10-block frozen-region guard, and the ADR-0004 fixed-point discharge | accepted | 2026-06-06 |
 | [0007](0007-spec-it-planning-brain-wire-declined.md) | spec-it stays unwired: the planning-brain wire DECLINED by a pre-registered blind probe (2/5 dims, redundant with Phase-7 iterative-review); the matrix:67 engine→planning-brain divergence ratified; floor stale-ref fixes only | accepted | 2026-06-08 |
 | [0008](0008-m4-new-capabilities-recipe-and-routine.md) | M4 new capabilities: a read-only `/workflow-library` reference recipe (seed+docs, not a command) + a detect-only `doc-freshness` routine pilot; cloud `RemoteTrigger` 401 → registration is a consumer step; recipe-local consensus (no copied lib) + the FP-heavy citation signal moved to the routine's LLM layer | accepted | 2026-06-08 |
+| [0009](0009-phasing-phasing-flow-coexistence.md) | M5 migrate + coexist: a soft, per-use-case `phasing` ↔ `phasing-flow` routing pointer (à-la-carte-by-primitive; deprecate-or-keep deferred per-use-case), NOT a wholesale deprecation; count-neutral + no version bump | accepted | 2026-06-09 |
 
 When you add an ADR, append a row here — keep ADRs in numeric order.
 

@@ -186,6 +186,8 @@ The defining shift is **Phase 0**. Before any code is touched, the change is gro
 
 For cross-cutting work that touches more than ~8 files, spans more than 2 subsystems, has more than ~12 task bullets, or naturally breaks into milestones: invoke `/phase`. The user-level `phasing` skill at `~/.claude/skills/phasing` decomposes the work into a master plan + per-phase specs + handoffs, gates each phase with plan-mode self-verification, and tracks state in GitHub issues automatically when GitHub mode is selected (the default when a `github.com` remote is present).
 
+**`/phase` or `/phasing-flow`?** For verifiable multi-file **code** builds where plan quality is the main risk, prefer the newer `phasing-flow` framework (`/phasing-flow`) — its planning-brain hardens decomposition and its execution engine runs a deterministic verify + adversarial diff-review per unit, behind a small number of high-signal gates. Keep `/phase` for judgment/non-code work (docs, research, design), multi-terminal/parallel isolation, a human gate at every transition, crash/checkpoint recovery, or GitHub-issue-per-phase tracking (see ADR 0009 for the routing rationale).
+
 **Skip when**: single file, fewer than 5 task bullets, refactor with no new logic, "just do it." Phasing has real overhead — master-plan generation, per-phase specs, verification gates, handoffs. That overhead pays back when the work is genuinely large enough that single-execution risks context rot, and not before.
 
 ## F. Verification before completion
