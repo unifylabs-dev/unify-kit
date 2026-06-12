@@ -1,5 +1,7 @@
 # Framework Deep Dive — `claude-code-ultimate-guide`
 
+> **Historical snapshot** (pre-phasing-flow-initiative). Retained as-is; not updated for the `phasing` ↔ `phasing-flow` coexistence model — see [ADR 0009](../decisions/0009-phasing-phasing-flow-coexistence.md).
+>
 > Source: [github.com/FlorianBruniaux/claude-code-ultimate-guide](https://github.com/FlorianBruniaux/claude-code-ultimate-guide)
 > Author: Florian Bruniaux • Latest version observed: v3.40.0 (May 3, 2026)
 > Licensing: **CC BY-SA 4.0** for content (attribution + share-alike) • **CC0** for templates (public domain — lift freely)

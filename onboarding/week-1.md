@@ -15,7 +15,7 @@ The kit's canonical command list lives in `templates/core/cheatsheet.md.template
 
 - `/work-issue <N>` — issue-tracked work with acceptance criteria. Default for any GitHub issue with checkbox ACs.
 - `/brainstorm` → `writing-plans` → `executing-plans` — for ambiguous features and "we should probably…" requests. Brainstorm to surface intent, plan to make implementation reviewable, execute under hard gates.
-- `/phase` — cross-cutting work (>8 files, >2 subsystems, >12 task bullets, or natural milestones). Decomposes into a master plan + per-phase specs with verification gates per phase.
+- `/phase` — cross-cutting work (>8 files, >2 subsystems, >12 task bullets, or natural milestones). Decomposes into a master plan + per-phase specs with verification gates per phase. For verifiable multi-file code builds where plan quality is the main risk, `/phasing-flow` is the newer sibling; keep `/phase` for judgment/non-code work, multi-terminal isolation, or a human gate at every transition.
 - `/lfg` — autonomous mode on well-scoped work where you've already aligned on the approach. Continuous execution; you can interrupt with course corrections.
 - `/ship` — final commit + push + PR in one step. Wraps up an end-of-task flow.
 

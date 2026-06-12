@@ -39,4 +39,4 @@ audience and the problem it solves; skip the marketing.
 
 - Use `/work-issue <N>` for issue-tracked work.
 - Use `/brainstorm` for ambiguous features.
-- Use `/phase` for cross-cutting changes.
+- Use `/phase` for cross-cutting changes — or `/phasing-flow` for verifiable multi-file code builds where plan quality is the main risk; keep `/phase` for judgment/non-code work or multi-terminal isolation.

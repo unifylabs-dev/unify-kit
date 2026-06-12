@@ -1,5 +1,7 @@
 # Spec Review — `unify-kit` v0.1 Specs
 
+> **Historical snapshot** (pre-phasing-flow-initiative). Retained as-is; not updated for the `phasing` ↔ `phasing-flow` coexistence model — see [ADR 0009](../decisions/0009-phasing-phasing-flow-coexistence.md).
+>
 > Date: 2026-05-03
 > Reviewers (parallel): `dhh-rails-reviewer`, `kieran-rails-reviewer`,
 > `code-simplicity-reviewer`

@@ -133,8 +133,8 @@ Pair with Next.js projects. The full Vercel-published plugin set:
 Tomer tried `compound-engineering` and bounced. Its phasing / reviewer
 roster doesn't compose well with this kit's preferred workflow
 (`unifylabs-workflow:work-issue` + `superpowers:brainstorming` +
-`superpowers:test-driven-development` + this kit's `phasing` skill
-together cover the same ground with less ceremony).
+`superpowers:test-driven-development` + this kit's `phasing` and
+`phasing-flow` skills together cover the same ground with less ceremony).
 
 The kit's `templates/claude-runtime/.claude-settings.json.template` could
 list `compound-engineering` under a `disabledPlugins` block to prevent

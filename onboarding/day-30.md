@@ -13,7 +13,7 @@ After 30 days, share with your lead what slowed you down — anything from the k
 
 These are descriptive, not gated. By day 30, you should generally:
 
-- Be comfortable with `/phase` for medium features, OR be able to articulate why none of your recent work has fit the phasing trigger (small project, slow ticket cadence, mostly-bug-fix queue — all valid).
+- Be comfortable with `/phase` for medium features — or `/phasing-flow` for verifiable multi-file code builds where plan quality is the main risk; keep `/phase` for judgment/non-code work, multi-terminal phases, or a human gate at every step — OR be able to articulate why none of your recent work has fit the phasing trigger (small project, slow ticket cadence, mostly-bug-fix queue — all valid).
 - Know when to escalate: TDD GREEN failing three times in a row on a single AC, ambiguous AC the lead needs to clarify, an unfamiliar cross-cutting subsystem you don't yet have a mental model for. The cheatsheet calls these out; recognize them in the moment.
 - Have merged at least one PR that updated `<consumer>/CLAUDE.md` or another living doc — the living-doc check. If every PR you've shipped has only touched code, you've been skipping the doc-on-ship rule.
 

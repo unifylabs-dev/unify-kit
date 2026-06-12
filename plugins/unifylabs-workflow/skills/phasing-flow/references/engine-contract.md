@@ -31,8 +31,8 @@ execute already-approved plans" true: nothing new is decided here.
 - `instruction` is the approved step, phrased as a self-contained directive an
   executor sub-agent can act on without the rest of the plan.
 - Keep each unit a **single, verifiable** piece of work. For M2 the common path is
-  `units.length === 1`; the kernel supports N and runs them serially (M3 adds
-  parallel fan-out).
+  `units.length === 1`; the kernel supports N and runs them serially (parallel fan-out is
+  deferred — see BACKLOG "phasing-flow initiative — M5 follow-up").
 
 ## Invoking the engine
 
@@ -77,7 +77,7 @@ Workflow({
 | `circuit-breaker` | cumulative spend blew past 5× the first unit's cost | runaway guard — re-scope or raise the budget |
 | `cap` | processed the `cap` ceiling with units still pending | intentional partial run — continue with another `run` |
 | `skip-if-clean` | there were no units to run | nothing to do |
-| `fixed-point` | **reserved for M3** (parallel/retry stall). M2's serial loop never emits it. | n/a in M2 |
+| `fixed-point` | **reserved for a deferred parallel/retry milestone** (see BACKLOG "phasing-flow initiative — M5 follow-up"). The serial loop never emits it. | n/a today |
 
 `unitsResidual` counts the blocking/aborting unit plus everything after it (the
 loop stops at the first blocking unit — gates between units). The `truncationLog`

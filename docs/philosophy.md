@@ -36,7 +36,7 @@ Tools encoding this: `superpowers:verification-before-completion` skill, `/work-
 
 TDD, brainstorming, planning, phasing aren't friction — they're the discipline that makes AI assistance compound. Skipping them in the name of speed makes the work *look* fast and *be* worse. AI amplifies whatever discipline you have, including the bad: a sloppy plan executed by an agent produces sloppy code at scale. The corollary holds too — a careful plan executed by an agent produces careful code at scale, which is a result no individual contributor reaches solo.
 
-Tools encoding this: `superpowers:brainstorming`, `superpowers:writing-plans` + `superpowers:executing-plans`, `superpowers:test-driven-development`, the user-level `phasing` skill at `~/.claude/skills/phasing`.
+Tools encoding this: `superpowers:brainstorming`, `superpowers:writing-plans` + `superpowers:executing-plans`, `superpowers:test-driven-development`, the user-level `phasing` skill at `~/.claude/skills/phasing` (with its newer sibling `phasing-flow` for verifiable multi-file code builds where plan quality is the risk; `phasing` remains the tool for judgment/non-code work, multi-terminal isolation, and a human gate at every transition — see ADR 0009).
 
 ### 3. Living documents over frozen specs
 

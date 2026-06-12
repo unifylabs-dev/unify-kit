@@ -48,7 +48,7 @@ as bundled redistribution.
 `plugins/unifylabs-workflow/` is the installable artifact. When you run
 `/plugin install unifylabs-workflow` you get all of its skills, commands,
 hooks, and the statusline registered on your machine. The plugin is
-versioned independently in `CHANGELOG.md` — we're on v2.0.3.
+versioned independently in `CHANGELOG.md` — we're on v2.1.0.
 
 ### Templates
 
@@ -68,7 +68,7 @@ your machine.
 
 ## 3. What the plugin actually gives you
 
-### Twelve skills, grouped by purpose
+### Thirteen skills, grouped by purpose
 
 **Daily workflow (what you'll use every day)**
 
@@ -90,7 +90,17 @@ your machine.
   a fresh Claude session with mandatory plan-mode gating. Use it when a
   plan touches multiple subsystems or has natural break points and you
   want re-grounded context between chunks. Backed by the `/phase*`
-  command family (see below).
+  command family (see below). For verifiable multi-file code builds where
+  plan quality is the main risk, the newer **`phasing-flow`** skill
+  (`/phasing-flow`) is the better fit; keep `phasing` for judgment/non-code
+  work, multi-terminal isolation, a human gate at every transition, or
+  crash/checkpoint recovery (see ADR 0009 for the routing rationale).
+- **`phasing-flow`** — The newer sibling for verifiable multi-file code
+  builds: a planning-brain Workflow decomposes the work, then an execution
+  engine runs each unit through a deterministic verify + an adversarial
+  diff-review, behind three high-signal gates (direction, plan approval,
+  sign-off). One `/phasing-flow` command with start / plan / run / verify /
+  status / resume verbs.
 - **`handoff`** — Write a structured session-handoff doc so a fresh
   Claude session resumes cold — same decisions, task state, world state,
   and do-not-re-litigate guardrails. Also drives the resume side
@@ -134,14 +144,16 @@ your machine.
   or hook from `~/.claude/` into the plugin so the rest of the team gets
   it. Pairs with the `marketplace-drift-check` hook below.
 
-### Sixteen commands
+### Seventeen commands
 
 Ten are the `/phase*` family that supports the `phasing` skill — start,
 resume, continue, retry, list, next, abort, archive, execute, and check
 status of multi-phase runs. One is `/iterative-review`, which kicks off
-the review loop directly. The remaining five are the `/handoff*` family
+the review loop directly. Five are the `/handoff*` family
 (`/handoff`, `/handoff-resume`, `/handoff-list`, `/handoff-revive`,
-`/handoff-done`) for cross-session transfer. You won't type most of these
+`/handoff-done`) for cross-session transfer. The last is `/phasing-flow`,
+the verb-style entry point (start / plan / run / verify / status / resume)
+to the `phasing-flow` skill. You won't type most of these
 by hand; the skills invoke them when needed.
 
 ### Seven security hooks (fail-closed)
@@ -315,8 +327,9 @@ Some of these are subtle; all of them bite people.
   missing.
 - **`compound-engineering` is explicitly excluded.** We opted out. Don't
   add it. If you see references to it in old docs, treat them as stale.
-- **Skill set is 12.** (Older docs said 9 or 10 — that drift was
-  reconciled in the v2.0.3 stabilization pass.) The authoritative
+- **Skill set is 13.** (Older docs said 9, 10, or 12 — that drift was
+  reconciled in the v2.0.3 stabilization pass and again when
+  `phasing-flow` landed in v2.1.0.) The authoritative
   source is `plugins/unifylabs-workflow/skills/` — list it directly if
   in doubt.
 - **`dev-symlink-skills.sh` is kit-author only.** It's a one-time

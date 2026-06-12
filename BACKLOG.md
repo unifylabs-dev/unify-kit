@@ -36,6 +36,29 @@ M4 (new capabilities) shipped two artifacts — the `review-changed-files`
   signals — a cheaper deterministic alternative for consumers who don't want a cloud
   routine (the routine earns its place on the judgment-bearing signals; ADR 0008 D5).
 
+## phasing-flow initiative — M5 follow-up (deferred)
+
+M5 (migrate + coexist) shipped the soft, per-use-case `phasing` ↔ `phasing-flow`
+routing pointer — NOT a wholesale deprecation; `phasing` survives intact (ADR 0009).
+The actual per-use-case retirement decisions were explicitly deferred to after real
+migration experience:
+
+- **The per-use-case deprecate-or-keep decision.** ADR 0009 routes (prefer
+  `phasing-flow` for UC-1 verifiable code builds; keep `phasing` for UC-2..UC-10) but
+  does not retire any `phasing` use-case. Once real projects have migrated their
+  code-build orchestration onto `phasing-flow`, revisit each phasing use-case and
+  decide deprecate-or-keep with evidence. A use-case actually retired then earns its
+  own CHANGELOG deprecation entry + its own ADR (the spec-08 governance rule for
+  marking something for removal binds at that point, not now).
+- **Retiring `phasing`'s multi-terminal machinery** (`launch-terminal.sh`,
+  `archive-run.sh`, the OSC-2 pill ceremony) — contingent on the above: retire only
+  if/when the multi-terminal/attended-session use-cases (UC-4) are themselves retired.
+  `phasing-flow`'s engine is serial today; parallel fan-out + worktree isolation would
+  need to land first.
+- **A migration guide** ("moving a code-build orchestration from `/phase` to
+  `/phasing-flow`") — write once a real project has done the migration and the rough
+  edges are known; would seed an `UPGRADING.md` section if a future bump warrants one.
+
 ## Pre-existing items (carried forward from v1.x)
 
 ## Stretch hooks

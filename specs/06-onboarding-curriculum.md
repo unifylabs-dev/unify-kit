@@ -96,7 +96,9 @@ pyramid, and knows which skills/reviewers to invoke when.
    - `/work-issue <N>` for issue-tracked work
    - `/brainstorm` → `writing-plans` → `executing-plans` for ambiguous features
    - `/phase` for cross-cutting work (8+ files, multiple subsystems, natural break
-     points)
+     points) — or `/phasing-flow` for verifiable multi-file code builds where plan
+     quality is the main risk; keep `/phase` for judgment/non-code work,
+     multi-terminal phases, or a human gate at every transition
    - `/lfg` for autonomous mode on well-scoped work
    - `/ship` for the final commit/push/PR step
 2. **Skills you invoke** — references
@@ -132,7 +134,9 @@ one paragraph in writing. No structured form.
 
 **Autonomy markers** (descriptive, not gated):
 
-- Comfortable with `/phase` for medium features OR can articulate why none of their
+- Comfortable with `/phase` for medium features — or `/phasing-flow` for verifiable
+  multi-file code builds; keep `/phase` for judgment/non-code work, multi-terminal
+  phases, or a human gate at every step — OR can articulate why none of their
   recent work fit the phasing trigger (small projects, slow ticket cadence — both
   pass).
 - Knows when to escalate (TDD GREEN failing 3×, ambiguous AC, unfamiliar
@@ -202,3 +206,7 @@ R-026 (week-1 references cheatsheet rather than restating), R-027 (day-30 retro
 reduced to one-sentence guideline; bulleted prompts and "filed at least one
 improvement issue" cut), R-028 (gating reversed: day-1 hard, week-1 soft, day-30
 soft).
+
+**M5 revision (2026-06-09):** the command list and the day-30 autonomy marker
+gained `/phase`-vs-`/phasing-flow` routing clauses per
+[ADR 0009](../docs/decisions/0009-phasing-phasing-flow-coexistence.md).

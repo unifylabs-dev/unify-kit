@@ -142,6 +142,12 @@ per-phase specs + handoffs + verification gates per phase. The kit's user-level
 phasing skill (`~/.claude/skills/phasing`) handles GitHub-issue tracking
 automatically when GitHub mode is selected.
 
+**`/phase` or `/phasing-flow`?** For verifiable multi-file **code** builds where
+plan quality is the main risk, prefer the newer `phasing-flow` framework; keep
+`/phase` for judgment/non-code work, multi-terminal/parallel isolation, a human
+gate at every transition, crash/checkpoint recovery, or GitHub-issue-per-phase
+tracking (see ADR 0009 for the routing rationale).
+
 **Skip when:** single file, <5 task bullets, refactor with no new logic, "just do
 it."
 
@@ -250,3 +256,7 @@ abstracted; project-specific doc list moved to clearly-labeled illustrative exam
 R-033 (§G thresholds get a paragraph of rationale referencing prompt-cache
 mechanics and observed agent behavior), R-034 (decision #5 about philosophy poster
 removed).
+
+**M5 revision (2026-06-09):** §D gained the `/phase`-vs-`/phasing-flow` routing
+subsection, in lockstep with `docs/methodology.md` §E, per
+[ADR 0009](../docs/decisions/0009-phasing-phasing-flow-coexistence.md).
