@@ -73,7 +73,8 @@ kit — one repo, three roles. No runtime, no DB.
   prose is the fallback). ADR-0004's deferred dead `fixedPointK` is removed from
   the engine `wrapper.mjs`. No skill/command/hook count ripple. ADR 0006.
   **M3 #3 (skill 3 of 3, the last) evaluated `spec-it`** — planning-shaped (no
-  execution engine — the engine fail-CLOSED-aborts on a prose spec / `gh` filing),
+  execution engine — it resolves no verifier on a prose spec / `gh` filing and
+  silent-passes),
   so the only candidate seam was the planning-brain. Per gate-on-decisions the wire
   was NOT pre-decided: a pre-registered, blind, 3-grader probe drove the seed AS-IS
   on its strongest framing (Phase-4 decomposition, ARM-SEED `wf_75ec458e-5b9`)

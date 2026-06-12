@@ -96,7 +96,7 @@ Standard `llms.txt` (≤1K tokens). The standard is a pattern; we author content
 ## How to ask for help
 - Use /work-issue <N> for issue-tracked work
 - Use /brainstorm for ambiguous features
-- Use /phase for cross-cutting changes — or /phasing-flow for verifiable code builds; keep /phase for judgment/non-code or multi-terminal work
+- Use /phase for cross-cutting changes — or /phasing-flow for verifiable multi-file code builds where plan quality is the main risk; keep /phase for judgment/non-code work or multi-terminal isolation
 ```
 
 ### 3. `templates/ai-usage-charter.md.template` — sourcing mode: `customization`
@@ -187,7 +187,7 @@ reference; they do not redefine these lists.
   `{{TEST_FULL_CMD}}`, `{{LINT_CMD}}`, `{{TYPECHECK_CMD}}`
 - **Context thresholds** (window-fraction of the full context window): <60% free /
   ~60% warn / ~75% suggest `/handoff` / ~85%+ urgent `/handoff`
-- **Plan mode + phasing trigger** (incl. the `/phasing-flow` routing note) — 1-line each
+- **Plan mode + phasing trigger** — 1-line each (the `/phasing-flow` routing note ships as an in-row clause in the `/phase` row of the Daily slash-commands table, per ADR 0009)
 
 **Reviewer-agent mapping** — moved out of the cheatsheet body into an appendix at
 the end (`## Appendix A — Which reviewer when`). The appendix is the kit's canonical
@@ -256,3 +256,8 @@ in the file's HTML comment header. See
 [`docs/decisions/0001-hook-bundle-licensing.md`](../docs/decisions/0001-hook-bundle-licensing.md)
 — ADR 0001 scope is extended to cover this reclassification (the third batch
 under the same precedent).
+
+**M5 revision (2026-06-09):** the llms.txt skeleton excerpt and the cheatsheet
+layout bullet gained `/phasing-flow` routing clauses per
+[ADR 0009](../docs/decisions/0009-phasing-phasing-flow-coexistence.md); no count
+enumeration touched.

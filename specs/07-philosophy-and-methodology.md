@@ -256,3 +256,7 @@ abstracted; project-specific doc list moved to clearly-labeled illustrative exam
 R-033 (§G thresholds get a paragraph of rationale referencing prompt-cache
 mechanics and observed agent behavior), R-034 (decision #5 about philosophy poster
 removed).
+
+**M5 revision (2026-06-09):** §D gained the `/phase`-vs-`/phasing-flow` routing
+subsection, in lockstep with `docs/methodology.md` §E, per
+[ADR 0009](../docs/decisions/0009-phasing-phasing-flow-coexistence.md).

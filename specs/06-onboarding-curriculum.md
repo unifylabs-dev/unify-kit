@@ -206,3 +206,7 @@ R-026 (week-1 references cheatsheet rather than restating), R-027 (day-30 retro
 reduced to one-sentence guideline; bulleted prompts and "filed at least one
 improvement issue" cut), R-028 (gating reversed: day-1 hard, week-1 soft, day-30
 soft).
+
+**M5 revision (2026-06-09):** the command list and the day-30 autonomy marker
+gained `/phase`-vs-`/phasing-flow` routing clauses per
+[ADR 0009](../docs/decisions/0009-phasing-phasing-flow-coexistence.md).
