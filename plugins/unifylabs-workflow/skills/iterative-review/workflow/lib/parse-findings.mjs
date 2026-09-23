@@ -49,7 +49,7 @@ function resolveTier(tag, score) {
 /**
  * Normalize a single object-form finding.
  * @param {object} f
- * @returns {{file:string,line:number|null,severity:string,score:number|null,description:string}}
+ * @returns {{file:string,line:number|null,severity:string,score:number|null,description:string,sourceLine?:number}}
  */
 function normalizeOne(f) {
   const scoreNum = Number(f?.score ?? f?.confidence);
@@ -57,13 +57,19 @@ function normalizeOne(f) {
   const severity = resolveTier(f?.severity, score);
   const lineNum = Number(f?.line);
   const line = Number.isFinite(lineNum) ? lineNum : null;
-  return {
+  const finding = {
     file: String(f?.file ?? f?.location ?? ''),
     line,
     severity,
     score,
     description: String(f?.description ?? f?.title ?? f?.issue ?? ''),
   };
+  // `line` stays in whatever coordinates the reviewer was handed (diff text for a
+  // diff target — the scorer's contract). `sourceLine`, when given, is the same
+  // spot in the working-tree file, for fixers. Present only when valid.
+  const sourceLineNum = Number(f?.sourceLine);
+  if (Number.isInteger(sourceLineNum) && sourceLineNum > 0) finding.sourceLine = sourceLineNum;
+  return finding;
 }
 
 /**

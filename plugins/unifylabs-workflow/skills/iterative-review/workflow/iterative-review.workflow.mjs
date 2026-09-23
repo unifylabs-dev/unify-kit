@@ -699,7 +699,7 @@ function resolveTier(tag, score) {
 /**
  * Normalize a single object-form finding.
  * @param {object} f
- * @returns {{file:string,line:number|null,severity:string,score:number|null,description:string}}
+ * @returns {{file:string,line:number|null,severity:string,score:number|null,description:string,sourceLine?:number}}
  */
 function normalizeOne(f) {
   const scoreNum = Number(f?.score ?? f?.confidence);
@@ -707,13 +707,19 @@ function normalizeOne(f) {
   const severity = resolveTier(f?.severity, score);
   const lineNum = Number(f?.line);
   const line = Number.isFinite(lineNum) ? lineNum : null;
-  return {
+  const finding = {
     file: String(f?.file ?? f?.location ?? ''),
     line,
     severity,
     score,
     description: String(f?.description ?? f?.title ?? f?.issue ?? ''),
   };
+  // `line` stays in whatever coordinates the reviewer was handed (diff text for a
+  // diff target — the scorer's contract). `sourceLine`, when given, is the same
+  // spot in the working-tree file, for fixers. Present only when valid.
+  const sourceLineNum = Number(f?.sourceLine);
+  if (Number.isInteger(sourceLineNum) && sourceLineNum > 0) finding.sourceLine = sourceLineNum;
+  return finding;
 }
 
 /**
@@ -1579,8 +1585,10 @@ const FINDINGS_SCHEMA = {
           line: { type: 'integer' },
           severity: { type: 'string', enum: ['critical', 'important', 'suggestion'] },
           score: { type: 'integer' },
+          description: { type: 'string' },
+          sourceLine: { type: 'integer' },
         },
-        required: ['file', 'line', 'severity'],
+        required: ['file', 'line', 'severity', 'description'],
       },
     },
   },
@@ -1624,6 +1632,7 @@ function reviewPrompt({ mode, target, workingDir, lens, scope }) {
     '- suggestion: confidence < 80, or style / refactor / duplication / naming / cosmetic.',
     '',
     'Cite each finding as <file>:<line>. <file> MUST be the source file the defect lives in — for a unified diff, the path from that hunk\'s `+++ b/<file>` header (e.g. src/checkout.js), NOT the patch/container file you happened to open. <line> is the line where the issue appears as shown to you (for a diff, the displayed line of the relevant `+` line).',
+    'For each finding also give: description — one or two sentences naming the defect and the fix it needs, specific enough that someone who has not seen your review can act on it; and, when the target is a diff and you can read the file in the working directory, sourceLine — the line number of the same spot in that working-directory file (keep <line> as above).',
   ];
   if (Array.isArray(scope) && scope.length > 0) {
     lines.push(`Focus this pass on these files (delta re-review): ${scope.join(', ')}.`);
@@ -1637,6 +1646,7 @@ function fixPrompt(group, workingDir) {
     `Apply the MINIMAL fix for ONLY the findings listed below, in the working directory: ${workingDir ?? '(current)'}.`,
     'Constraints: fix ONLY these findings; do NOT refactor surrounding code; do NOT change anything not required by a listed finding.',
     `Findings (JSON): ${JSON.stringify(group)}`,
+    'Locate each finding by sourceLine when present — it is the line in the working-directory file. Otherwise `line` may be a diff-text coordinate, not a file line: find the spot from the description instead.',
     'After editing, briefly state what you changed.',
   ].join('\n');
 }
