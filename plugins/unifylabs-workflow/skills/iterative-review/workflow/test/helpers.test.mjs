@@ -225,3 +225,26 @@ test('normalizeFindings: null / unparseable input yields an empty array', () => 
   assert.deepEqual(normalizeFindings(undefined), []);
   assert.deepEqual(normalizeFindings('not json and not a finding heading'), []);
 });
+
+test('normalizeFindings: keeps the description and a working-tree sourceLine next to the cited line', () => {
+  // A diff-text review cites `line` in diff coordinates (the scorer's contract);
+  // `sourceLine` is the same spot in the working-tree file, which is what a fixer
+  // needs. Both survive normalization.
+  const out = normalizeFindings({
+    findings: [
+      { file: 'db/undo.sql', line: 2685, sourceLine: 124, severity: 'important', score: 85, description: 'undo leaves archived_at null' },
+    ],
+  });
+  assert.equal(out[0].line, 2685);
+  assert.equal(out[0].sourceLine, 124);
+  assert.equal(out[0].description, 'undo leaves archived_at null');
+});
+
+test('normalizeFindings: omits sourceLine when it is absent or not a positive integer', () => {
+  const out = normalizeFindings([
+    { file: 'a', line: 1, severity: 'important', description: 'x' },
+    { file: 'b', line: 2, sourceLine: 'n/a', severity: 'important', description: 'y' },
+    { file: 'c', line: 3, sourceLine: 0, severity: 'important', description: 'z' },
+  ]);
+  for (const f of out) assert.equal('sourceLine' in f, false);
+});
