@@ -4,8 +4,8 @@
 //   locate <run-id>
 //   mark-verified <run-dir> <n>
 //   show <run-dir>
-import { existsSync, mkdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync, realpathSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 
 import { cli, parseFlags } from './lib/deps.mjs'
 import { mainRoot, newRun, phaseOf, readRun, validateRun, writeRun } from './lib/run-state.mjs'
@@ -22,12 +22,20 @@ export function main(argv, deps) {
         if (typeof flags[key] !== 'string') throw new Error(`init needs --${key}`)
       }
       if (runDir === undefined) throw new Error('init needs <run-dir>')
-      if (existsSync(join(runDir, 'run.json'))) throw new Error(`run.json already exists in ${runDir}`)
-      const run = newRun({ runId: flags['run-id'], repo: flags.repo, baseBranch: flags.base, phases: JSON.parse(flags.phases) }, deps.now())
+      // Stored absolute and real: worktree paths derive from it, and agent view reports real cwds.
+      if (!existsSync(flags.repo)) throw new Error(`no such repo folder: ${flags.repo}`)
+      const repo = realpathSync(resolve(flags.repo))
+      // The executor finds its run as <repo>/.claude/phasing/<run-id>, so no other place works.
+      const expected = join(repo, '.claude', 'phasing', flags['run-id'])
+      // Accept the run dir spelled through the repo path as given or as resolved (/var vs /private/var).
+      const spellings = [expected, join(resolve(flags.repo), '.claude', 'phasing', flags['run-id'])]
+      if (!spellings.includes(resolve(runDir))) throw new Error(`run dir must be ${expected}`)
+      if (existsSync(join(expected, 'run.json'))) throw new Error(`run.json already exists in ${expected}`)
+      const run = newRun({ runId: flags['run-id'], repo, baseBranch: flags.base, phases: JSON.parse(flags.phases) }, deps.now())
       const errors = validateRun(run)
       if (errors.length > 0) throw new Error(errors.join('; '))
-      mkdirSync(runDir, { recursive: true })
-      return writeRun(runDir, run, deps.now())
+      mkdirSync(expected, { recursive: true })
+      return writeRun(expected, run, deps.now())
     }
     case 'locate': {
       const [runId] = positional

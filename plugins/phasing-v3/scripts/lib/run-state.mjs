@@ -1,7 +1,7 @@
 // run.json and the handoff frontmatter: the machine state of one run. run.json holds observed facts
 // only (no prose), so commands can rebuild it from git, GitHub and the run folder at any time.
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, isAbsolute, join } from 'node:path'
 
 export const RUN_SCHEMA = 'phasing-v3/1'
 export const PHASE_STATUS = ['pending', 'running', 'partial', 'complete', 'failed']
@@ -20,6 +20,8 @@ export function newRun({ runId, repo, baseBranch, phases }, now) {
     base_branch: baseBranch,
     status: 'in_progress',
     reason: null,
+    // Bumped on every write, so a writer holding a stale copy is refused instead of losing an update.
+    rev: 0,
     phases: phases.map(({ n, slug, type }) => ({
       n, slug, type, status: 'pending', verified: false, branch: null, worktree: null,
       pr: null, pr_state: null, ci: null, sessions: [], auto_continuations: 0,
@@ -34,8 +36,9 @@ export function validateRun(run) {
   const errors = []
   if (run.schema !== RUN_SCHEMA) errors.push(`schema must be ${RUN_SCHEMA}`)
   if (!NAME_RE.test(String(run.run_id ?? ''))) errors.push(`run_id "${run.run_id}" must be lowercase letters, digits and dashes`)
-  if (typeof run.repo !== 'string' || run.repo === '') errors.push('repo is missing')
+  if (typeof run.repo !== 'string' || !isAbsolute(run.repo)) errors.push(`repo "${run.repo}" must be an absolute path`)
   if (typeof run.base_branch !== 'string' || run.base_branch === '') errors.push('base_branch is missing')
+  if (!Number.isInteger(run.rev) || run.rev < 0) errors.push('rev must be a whole number')
   if (!RUN_STATUS.includes(run.status)) errors.push(`status "${run.status}" is not one of ${RUN_STATUS.join(', ')}`)
   if (!Array.isArray(run.phases) || run.phases.length === 0) return [...errors, 'phases must be a non-empty array']
   const ns = run.phases.map(p => p.n)
@@ -66,13 +69,23 @@ export function readRun(runDir) {
   return run
 }
 
-// Temp file then rename, so a reader never sees half a file. Refuses to write an invalid run:
-// a bad write would poison every later command.
+// Temp file then rename, so a reader never sees half a file. Refuses to write an invalid run (a bad
+// write would poison every later command) and a stale one: reconcile can spend seconds gathering
+// facts while a continuation records its new session, and that session must not be lost.
 export function writeRun(runDir, run, now) {
-  const out = { ...run, updated_at: now.toISOString() }
+  const out = { ...run, rev: run.rev + 1, updated_at: now.toISOString() }
   const errors = validateRun(out)
   if (errors.length > 0) throw new Error(`refusing to write an invalid run.json: ${errors.join('; ')}`)
   const path = runFile(runDir)
+  if (existsSync(path)) {
+    let onDisk
+    try {
+      onDisk = JSON.parse(readFileSync(path, 'utf8')).rev
+    } catch {
+      onDisk = undefined
+    }
+    if (onDisk !== run.rev) throw new Error(`run.json changed on disk since it was read (rev ${onDisk}, expected ${run.rev}); read it again and retry`)
+  }
   const tmp = `${path}.${process.pid}.tmp`
   writeFileSync(tmp, `${JSON.stringify(out, null, 2)}\n`)
   renameSync(tmp, path)
@@ -92,26 +105,29 @@ const unquote = v => v.replace(/^(["'])(.*)\1$/, '$2')
 // The frontmatter is the machine-readable part of a handoff; the body is for people. A handoff
 // the model wrote wrong comes back as `invalid`, never as a guess: a wrong guess could launch a
 // continuation past an open question.
-export function readHandoff(runDir, n) {
+export function readHandoff(runDir, phaseNumber) {
+  const n = Number(phaseNumber)
   const path = handoffPath(runDir, n)
   if (!existsSync(path)) return null
   const block = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(readFileSync(path, 'utf8'))
   if (block === null) return { status: 'invalid', error: 'no frontmatter block' }
+  // Top-level keys only: an indented key belongs to a nested block and never overrides one.
   const fields = {}
   for (const line of block[1].split(/\r?\n/)) {
-    const kv = /^([a-z_]+):\s*(.*)$/.exec(line.trim())
-    if (kv !== null) fields[kv[1]] = unquote(kv[2].trim())
+    const kv = /^([a-z_]+):[ \t]*(.*?)\s*$/.exec(line)
+    if (kv === null) continue
+    if (kv[1] in fields) return { status: 'invalid', error: `duplicate key ${kv[1]}` }
+    fields[kv[1]] = unquote(kv[2])
   }
+  const whole = v => typeof v === 'string' && /^\d+$/.test(v)
+  if (!whole(fields.phase)) return { status: 'invalid', error: 'phase must be a whole number' }
   const phase = Number(fields.phase)
-  const blocking = Number(fields.blocking_questions)
-  if (!Number.isInteger(phase)) return { status: 'invalid', error: 'phase must be a whole number' }
   if (phase !== n) return { status: 'invalid', error: `phase ${phase} does not match the file's phase ${n}` }
   if (!HANDOFF_STATUS.includes(fields.status)) {
     return { status: 'invalid', error: `status "${fields.status}" is not one of ${HANDOFF_STATUS.join(', ')}` }
   }
-  if (!Number.isInteger(blocking) || blocking < 0 || fields.blocking_questions === '') {
-    return { status: 'invalid', error: 'blocking_questions must be a whole number' }
-  }
+  if (!whole(fields.blocking_questions)) return { status: 'invalid', error: 'blocking_questions must be a whole number' }
+  const blocking = Number(fields.blocking_questions)
   if (!fields.session) return { status: 'invalid', error: 'session is missing' }
   return { phase, status: fields.status, blocking_questions: blocking, session: fields.session }
 }

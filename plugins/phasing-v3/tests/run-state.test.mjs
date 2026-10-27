@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readdirSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { test } from 'node:test'
 
 import { realDeps } from '../scripts/lib/deps.mjs'
@@ -69,4 +69,39 @@ test('CLI locate finds the run dir from a phase worktree', () => {
   const wt = join(dir, '.claude', 'worktrees', 'demo-run-p1')
   git('worktree', 'add', '-q', '-b', 'phase/demo-run/p1-setup', wt)
   assert.deepEqual(main(['locate', 'demo-run'], { ...realDeps, cwd: wt }), { runDir: join(dir, '.claude', 'phasing', 'demo-run') })
+})
+
+test('init stores an absolute repo and refuses a run dir off the standard path', () => {
+  const repo = tmpDir()
+  const phases = JSON.stringify([{ n: 1, slug: 'setup', type: 'setup' }])
+  const args = runDir => ['init', runDir, '--run-id', 'demo-run', '--base', 'main', '--phases', phases]
+  assert.throws(() => main([...args(join(repo, 'elsewhere')), '--repo', repo], fakeDeps()), /\.claude\/phasing\/demo-run/)
+  const out = main([...args(join(repo, '.claude', 'phasing', 'demo-run')), '--repo', relative(process.cwd(), repo)], fakeDeps())
+  assert.equal(out.repo, repo)
+  assert.match(validateRun({ ...out, repo: '.' }).join('\n'), /absolute/)
+})
+
+test('readHandoff reads top-level keys only and rejects duplicates and blank numbers', () => {
+  const runDir = seedRun(tmpDir())
+  const file = join(runDir, 'phase-1-handoff.md')
+  writeFileSync(file, '---\nphase: 1\nstatus: partial\nblocking_questions: 0\nsession: phase-1-setup\nnotes:\n  status: complete\n---\n')
+  assert.equal(readHandoff(runDir, 1).status, 'partial')
+  writeFileSync(file, '---\nphase: 1\nstatus: partial\nstatus: complete\nblocking_questions: 0\nsession: phase-1-setup\n---\n')
+  assert.match(readHandoff(runDir, 1).error, /duplicate/)
+  writeFileSync(file, '---\nphase: 1\nstatus: partial\nblocking_questions: " "\nsession: phase-1-setup\n---\n')
+  assert.equal(readHandoff(runDir, 1).status, 'invalid')
+})
+
+test('readHandoff accepts the phase number as a string', () => {
+  const runDir = seedRun(tmpDir())
+  writeHandoff(runDir, 3, { phase: 3, status: 'partial', blocking_questions: 0, session: 'phase-3-api' })
+  assert.equal(readHandoff(runDir, '3').status, 'partial')
+})
+
+test('writeRun refuses a run that changed on disk since it was read', () => {
+  const runDir = seedRun(tmpDir())
+  const a = readRun(runDir)
+  const b = readRun(runDir)
+  writeRun(runDir, a, NOW)
+  assert.throws(() => writeRun(runDir, b, NOW), /changed on disk/)
 })

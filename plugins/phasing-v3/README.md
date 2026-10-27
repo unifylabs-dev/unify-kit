@@ -11,9 +11,8 @@ in its own git worktree, and ends with a pushed branch and a pull request.
 
 ## Status
 
-This is a pilot. It lives beside the `phasing` skill in `unifylabs-workflow` under its own
-names, so the current `/phase*` commands keep working. After the pilot, v3 takes the
-`phasing` names and this plugin folds into `unifylabs-workflow`.
+A pilot beside the `phasing` skill, under its own names, so `/phase*` keeps working.
+After the pilot, v3 takes the `phasing` names and folds into `unifylabs-workflow`.
 
 ## Loading it
 
@@ -25,8 +24,7 @@ ln -s <checkout>/plugins/phasing-v3 ~/.claude/skills/phasing-v3
 
 ## Tests
 
-The scripts have no dependencies. From this folder:
-
+No dependencies. From this folder:
 ```bash
 node --test tests/*.test.mjs
 ```
