@@ -2,6 +2,8 @@
 // launch: start a phase as a background session in its worktree, confirm it appears in agent
 // view, and record it. The command is always returned for manual use too, as the fallback.
 //   <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <name,name>]
+import { resolve } from 'node:path'
+
 import { cli, parseFlags } from './lib/deps.mjs'
 import { phaseOf, readRun, writeRun } from './lib/run-state.mjs'
 import { liveSessions, readAgents } from './reconcile.mjs'
@@ -12,8 +14,15 @@ const POLL_MS = 2000
 // in the same one. Executors run at xhigh effort: long agentic work.
 const SETTINGS = '{"worktree":{"bgIsolation":"none"}}'
 
-export const sessionName = phase =>
-  phase.sessions.length === 0 ? `phase-${phase.n}-${phase.slug}` : `phase-${phase.n}-${phase.slug}-c${phase.sessions.length}`
+// The next name in the phase's chain, skipping names already in agent view for this worktree
+// (an unrecorded session may hold one), so a new session is never confused with an old one.
+export function sessionName(phase, taken = []) {
+  const base = `phase-${phase.n}-${phase.slug}`
+  let k = phase.sessions.length
+  const at = i => (i === 0 ? base : `${base}-c${i}`)
+  while (taken.includes(at(k))) k++
+  return at(k)
+}
 
 export const launchArgs = (run, phase, runDir, name) =>
   ['--bg', '--name', name, '--effort', 'xhigh', '--add-dir', runDir, '--settings', SETTINGS, `/ph3-execute ${run.run_id} ${phase.n}`]
@@ -26,28 +35,37 @@ export const manualCommand = (phase, args) => `cd ${quote(phase.worktree)} && cl
 // `exclude` names sessions that have handed over (they idle as `blocked`). `count`, when given, is
 // saved as the phase's auto-continuation count whenever `claude --bg` ran, confirmed or not, so the
 // cap holds even when agent view is slow to list the new session.
-export function launch(runDir, n, { continuation = false, dryRun = false, force = false, exclude = [], count = null } = {}, deps) {
+export function launch(runDirArg, n, { continuation = false, dryRun = false, force = false, exclude = [], count = null } = {}, deps) {
+  // Absolute: --add-dir is resolved against the session's cwd, which is the worktree.
+  const runDir = resolve(runDirArg)
   const run = readRun(runDir)
   const phase = phaseOf(run, Number(n))
-  const name = sessionName(phase)
-  if (phase.worktree === null) return { name, confirmed: false, id: null, manual: null, refused: 'no-worktree' }
-  const args = launchArgs(run, phase, runDir, name)
-  const manual = manualCommand(phase, args)
-  if (dryRun) return { name, args, confirmed: false, id: null, manual }
+  const plan = name => {
+    const args = launchArgs(run, phase, runDir, name)
+    return { name, args, manual: manualCommand(phase, args) }
+  }
+  if (phase.worktree === null) return { name: sessionName(phase), started: false, confirmed: false, id: null, manual: null, refused: 'no-worktree' }
+  if (dryRun) return { ...plan(sessionName(phase)), started: false, confirmed: false, id: null }
 
   // Without agent view the launch can be neither guarded nor confirmed, so hand the command to the user.
   const before = readAgents(deps)
-  if (before === null) return { name, confirmed: false, id: null, manual, refused: 'agents-unavailable' }
+  if (before === null) return { ...plan(sessionName(phase)), started: false, confirmed: false, id: null, refused: 'agents-unavailable' }
+  const { name, args, manual } = plan(sessionName(phase, before.filter(a => a.cwd === phase.worktree).map(a => a.name)))
   const others = liveSessions(before, phase).filter(a => !exclude.includes(a.name))
-  if (others.length > 0 && !force) return { name, confirmed: false, id: null, manual, refused: 'live-session', live: others.map(a => a.name) }
+  if (others.length > 0 && !force) {
+    return { name, started: false, confirmed: false, id: null, manual, refused: 'live-session', live: others.map(a => a.name) }
+  }
 
-  const started = deps.exec('claude', args, { cwd: phase.worktree, timeoutMs: 60_000 })
-  if (started.code !== 0) return { name, confirmed: false, id: null, manual, error: started.stderr.trim() }
+  const result = deps.exec('claude', args, { cwd: phase.worktree, timeoutMs: 60_000 })
+  if (result.code !== 0) return { name, started: false, confirmed: false, id: null, manual, error: result.stderr.trim() }
 
+  // Only a session that was not there before the launch confirms it.
+  const seen = new Set(before.map(a => a.id))
   let match
   for (let i = 0; i < POLLS && match === undefined; i++) {
     if (i > 0) deps.sleep(POLL_MS)
-    match = (readAgents(deps) ?? []).find(a => a.name === name && a.cwd === phase.worktree && !['failed', 'stopped'].includes(a.state))
+    match = (readAgents(deps) ?? []).find(a =>
+      a.name === name && a.cwd === phase.worktree && !seen.has(a.id) && !['failed', 'stopped'].includes(a.state))
   }
   if (match !== undefined || count !== null) {
     // Read again before writing: the run may have changed while the session started.
@@ -60,7 +78,8 @@ export function launch(runDir, n, { continuation = false, dryRun = false, force 
     if (count !== null) target.auto_continuations = count
     writeRun(runDir, fresh, deps.now())
   }
-  return { name, confirmed: match !== undefined, id: match?.id ?? null, manual }
+  // started without confirmed: a session may be starting. Check agent view before using the manual line.
+  return { name, started: true, confirmed: match !== undefined, id: match?.id ?? null, manual }
 }
 
 export function main(argv, deps) {

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { relative } from 'node:path'
 import { test } from 'node:test'
 
 import { launch, launchArgs, sessionName } from '../scripts/launch.mjs'
@@ -88,4 +89,23 @@ test('dry run returns the command without running anything', () => {
   const r = launch(runDir, 2, { dryRun: true }, deps)
   assert.equal(r.args[0], '--bg')
   assert.deepEqual(deps.calls, [])
+})
+
+test('confirmation needs a session that is new since the launch, under a free name', () => {
+  // An unrecorded writer already holds the base name: the launch takes the next name, and the old
+  // session is never mistaken for the new one.
+  const runDir = seed()
+  const writer = agent('phase-2-api', 'blocked', 'old00000')
+  const r = launch(runDir, 2, { exclude: ['phase-2-api'] }, agentsDeps([writer], [writer]))
+  assert.equal(r.name, 'phase-2-api-c1')
+  assert.deepEqual([r.started, r.confirmed], [true, false])
+  const ok = launch(runDir, 2, { exclude: ['phase-2-api'] }, agentsDeps([writer], [writer, agent('phase-2-api-c1', 'working', 'new11111')]))
+  assert.deepEqual([ok.confirmed, ok.id], [true, 'new11111'])
+})
+
+test('a relative run dir is made absolute for --add-dir', () => {
+  const runDir = seed()
+  const rel = relative(process.cwd(), runDir)
+  const r = launch(rel, 2, { dryRun: true }, fakeDeps())
+  assert.equal(r.args[r.args.indexOf('--add-dir') + 1], runDir)
 })
