@@ -5,16 +5,21 @@
 // that made no progress, and while a blocking question to the user is open.
 //   <run-dir> <n> [--had-input] [--human-launch]
 import { cli, parseFlags } from './lib/deps.mjs'
-import { phaseOf, readHandoff, readRun, writeRun } from './lib/run-state.mjs'
+import { phaseOf, readHandoff, readRun } from './lib/run-state.mjs'
 import { launch } from './launch.mjs'
 
 export const CAP = 2
 
+// commitsSinceStart is null when the writer of the handoff is not in run.json, so its start time
+// (and with it the progress check) is unknown. A launch the user asked for skips the unattended
+// guards: the cap, the progress check, and a question the user has just answered.
 export function decide({ phase, handoff, commitsSinceStart, hadInput, humanLaunch }) {
   const stop = reason => ({ action: 'stop', reason, count: phase.auto_continuations })
+  if (handoff?.status === 'invalid') return stop('handoff-unreadable')
   if (handoff?.status !== 'partial') return stop('not-partial')
-  if (handoff.blocking_questions > 0) return stop('blocking-question-open')
   if (humanLaunch) return { action: 'launch', reason: 'ok', count: 0 }
+  if (handoff.blocking_questions > 0) return stop('blocking-question-open')
+  if (commitsSinceStart === null) return stop('writer-unrecorded')
   if (commitsSinceStart === 0) return stop('no-progress')
   const base = hadInput ? 0 : phase.auto_continuations
   if (base >= CAP) return stop('cap-reached')
@@ -36,19 +41,21 @@ export function main(argv, deps) {
   const run = readRun(runDir)
   const phase = phaseOf(run, n)
   const handoff = readHandoff(runDir, n)
-  const last = phase.sessions.at(-1)
-  const commitsSinceStart = last === undefined || phase.worktree === null ? 0 : commitsSince(phase.worktree, last.started_at, deps)
+  // The writer and every session before it have handed over; they may still idle in agent view.
+  const writerAt = phase.sessions.findIndex(s => s.name === handoff?.session)
+  const handedOver = writerAt === -1 ? [handoff?.session].filter(Boolean) : phase.sessions.slice(0, writerAt + 1).map(s => s.name)
+  const commitsSinceStart = writerAt === -1 || phase.worktree === null ? null : commitsSince(phase.worktree, phase.sessions[writerAt].started_at, deps)
   const d = decide({ phase, handoff, commitsSinceStart, hadInput: flags['had-input'] === true, humanLaunch })
   const { manual } = launch(runDir, n, { dryRun: true }, deps)
   if (d.action === 'stop') return { action: 'stop', reason: d.reason, manual }
 
-  const launched = launch(runDir, n, { continuation: !humanLaunch, excludeSession: handoff.session }, deps)
-  if (launched.confirmed) {
-    const fresh = readRun(runDir)
-    phaseOf(fresh, n).auto_continuations = d.count
-    writeRun(runDir, fresh, deps.now())
+  const launched = launch(runDir, n, { continuation: !humanLaunch, exclude: handedOver, count: d.count }, deps)
+  // Anything short of a confirmed handover is a stop, so the caller asks the user instead of going quiet.
+  if (!launched.confirmed) {
+    const reason = launched.refused !== undefined ? `launch-refused-${launched.refused}` : launched.error !== undefined ? 'launch-failed' : 'launch-unconfirmed'
+    return { action: 'stop', reason, launched, manual: launched.manual ?? manual }
   }
-  return { action: 'launch', reason: d.reason, launched, manual: launched.manual ?? manual }
+  return { action: 'launch', reason: d.reason, launched, manual: launched.manual }
 }
 
 cli(import.meta.url, main)

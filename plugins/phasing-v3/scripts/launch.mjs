@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // launch: start a phase as a background session in its worktree, confirm it appears in agent
 // view, and record it. The command is always returned for manual use too, as the fallback.
-//   <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <session-name>]
+//   <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <name,name>]
 import { cli, parseFlags } from './lib/deps.mjs'
 import { phaseOf, readRun, writeRun } from './lib/run-state.mjs'
 import { liveSessions, readAgents } from './reconcile.mjs'
@@ -23,7 +23,10 @@ const shellWord = s => (/^[A-Za-z0-9_\/.:=@%+-]+$/.test(s) ? s : quote(s))
 
 export const manualCommand = (phase, args) => `cd ${quote(phase.worktree)} && claude ${args.map(shellWord).join(' ')}`
 
-export function launch(runDir, n, { continuation = false, dryRun = false, force = false, excludeSession = null } = {}, deps) {
+// `exclude` names sessions that have handed over (they idle as `blocked`). `count`, when given, is
+// saved as the phase's auto-continuation count whenever `claude --bg` ran, confirmed or not, so the
+// cap holds even when agent view is slow to list the new session.
+export function launch(runDir, n, { continuation = false, dryRun = false, force = false, exclude = [], count = null } = {}, deps) {
   const run = readRun(runDir)
   const phase = phaseOf(run, Number(n))
   const name = sessionName(phase)
@@ -35,7 +38,7 @@ export function launch(runDir, n, { continuation = false, dryRun = false, force 
   // Without agent view the launch can be neither guarded nor confirmed, so hand the command to the user.
   const before = readAgents(deps)
   if (before === null) return { name, confirmed: false, id: null, manual, refused: 'agents-unavailable' }
-  const others = liveSessions(before, phase).filter(a => a.name !== excludeSession)
+  const others = liveSessions(before, phase).filter(a => !exclude.includes(a.name))
   if (others.length > 0 && !force) return { name, confirmed: false, id: null, manual, refused: 'live-session', live: others.map(a => a.name) }
 
   const started = deps.exec('claude', args, { cwd: phase.worktree, timeoutMs: 60_000 })
@@ -46,15 +49,18 @@ export function launch(runDir, n, { continuation = false, dryRun = false, force 
     if (i > 0) deps.sleep(POLL_MS)
     match = (readAgents(deps) ?? []).find(a => a.name === name && a.cwd === phase.worktree && !['failed', 'stopped'].includes(a.state))
   }
-  if (match === undefined) return { name, confirmed: false, id: null, manual }
-
-  // Read again before writing: the run may have changed while the session started.
-  const fresh = readRun(runDir)
-  const target = phaseOf(fresh, Number(n))
-  target.sessions.push({ name, id: match.id ?? null, started_at: deps.now().toISOString(), auto: continuation })
-  target.status = 'running'
-  writeRun(runDir, fresh, deps.now())
-  return { name, confirmed: true, id: match.id ?? null, manual }
+  if (match !== undefined || count !== null) {
+    // Read again before writing: the run may have changed while the session started.
+    const fresh = readRun(runDir)
+    const target = phaseOf(fresh, Number(n))
+    if (match !== undefined) {
+      target.sessions.push({ name, id: match.id ?? null, started_at: deps.now().toISOString(), auto: continuation })
+      target.status = 'running'
+    }
+    if (count !== null) target.auto_continuations = count
+    writeRun(runDir, fresh, deps.now())
+  }
+  return { name, confirmed: match !== undefined, id: match?.id ?? null, manual }
 }
 
 export function main(argv, deps) {
@@ -65,7 +71,7 @@ export function main(argv, deps) {
     continuation: flags.continuation === true,
     dryRun: flags['dry-run'] === true,
     force: flags.force === true,
-    excludeSession: typeof flags.exclude === 'string' ? flags.exclude : null,
+    exclude: typeof flags.exclude === 'string' ? flags.exclude.split(',').filter(Boolean) : [],
   }, deps)
 }
 

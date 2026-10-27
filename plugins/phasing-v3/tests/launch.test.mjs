@@ -64,7 +64,7 @@ test('launch refuses a second live session for the phase', () => {
   const refused = launch(runDir, 2, {}, deps)
   assert.equal(refused.refused, 'live-session')
   assert.equal(deps.calls.some(c => c.startsWith('claude --bg')), false)
-  const handover = launch(runDir, 2, { excludeSession: 'phase-2-api', continuation: true }, deps)
+  const handover = launch(runDir, 2, { exclude: ['phase-2-api'], continuation: true }, deps)
   assert.equal(handover.confirmed, true)
   assert.deepEqual(phaseOf(readRun(runDir), 2).sessions.map(x => [x.name, x.auto]), [['phase-2-api', false], ['phase-2-api-c1', true]])
 })

@@ -61,3 +61,61 @@ test('main stops without launching and still returns the manual command', () => 
   assert.equal(d.calls.some(c => c.startsWith('claude --bg')), false)
   assert.equal(phaseOf(readRun(runDir), 2).auto_continuations, 0)
 })
+
+function seedTwo(writer = 'phase-2-api-c1') {
+  const runDir = seed()
+  const run = readRun(runDir)
+  const phase = phaseOf(run, 2)
+  phase.sessions.push({ name: 'phase-2-api-c1', id: 'c1000000', started_at: '2026-11-01T09:30:00.000Z', auto: true })
+  phase.auto_continuations = 1
+  writeRun(runDir, run, NOW)
+  writeHandoff(runDir, 2, { phase: 2, status: 'partial', blocking_questions: 0, session: writer })
+  return runDir
+}
+
+function depsWith(before, after, { commits = 2 } = {}) {
+  let launched = false
+  return fakeDeps({ rules: [
+    [/^git -C \/wt\/demo-run-p2 rev-list --count --since=2026-11-01T09:30:00.000Z HEAD/, { stdout: `${commits}\n` }],
+    [/^git -C \/wt\/demo-run-p2 rev-list/, { stdout: '0\n' }],
+    [/^claude --bg/, () => { launched = true; return { stdout: 'x\n' } }],
+    [/^claude agents --json/, () => ({ stdout: JSON.stringify(launched ? after : before) })],
+  ] })
+}
+
+test('the second continuation excludes every handed-over session', () => {
+  const runDir = seedTwo()
+  const idle = [agent('phase-2-api', 'blocked', 'old00000'), agent('phase-2-api-c1', 'blocked', 'c1000000')]
+  const result = main([runDir, '2'], depsWith(idle, [...idle, agent('phase-2-api-c2', 'working', 'c2000000')]))
+  assert.equal(result.action, 'launch', JSON.stringify(result))
+  const phase = phaseOf(readRun(runDir), 2)
+  assert.equal(phase.sessions[2].name, 'phase-2-api-c2')
+  assert.equal(phase.auto_continuations, 2)
+})
+
+test('a refused launch is a stop the mod can ask about', () => {
+  const runDir = seedTwo()
+  const stray = [agent('phase-2-api-c1', 'blocked', 'c1000000'), agent('someone-else', 'working', 'zz000000')]
+  const result = main([runDir, '2'], depsWith(stray, stray))
+  assert.deepEqual([result.action, result.reason], ['stop', 'launch-refused-live-session'])
+})
+
+test('the count is saved even when agent view never confirms the launch', () => {
+  const runDir = seedTwo()
+  const idle = [agent('phase-2-api-c1', 'blocked', 'c1000000')]
+  const result = main([runDir, '2'], depsWith(idle, idle))
+  assert.deepEqual([result.action, result.reason], ['stop', 'launch-unconfirmed'])
+  assert.equal(phaseOf(readRun(runDir), 2).auto_continuations, 2)
+})
+
+test('progress is counted from the writer session, and an unrecorded writer stops the automatic path', () => {
+  assert.equal(decide({ ...base, commitsSinceStart: null }).reason, 'writer-unrecorded')
+  const runDir = seedTwo('phase-2-api-c9')
+  assert.equal(main([runDir, '2'], depsWith([], [])).reason, 'writer-unrecorded')
+})
+
+test('a launch the user asked for goes ahead despite a held question', () =>
+  assert.equal(decide({ ...base, handoff: { ...h('partial'), blocking_questions: 1 }, humanLaunch: true }).action, 'launch'))
+
+test('an unreadable handoff is its own reason', () =>
+  assert.equal(decide({ ...base, handoff: { status: 'invalid', error: 'x' } }).reason, 'handoff-unreadable'))
