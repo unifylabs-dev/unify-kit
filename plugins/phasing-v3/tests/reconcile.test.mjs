@@ -1,0 +1,112 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+
+import { readRun } from '../scripts/lib/run-state.mjs'
+import { ciFromRollup, derivePhase, gatherFacts, liveSessions, nextAction, reconcile } from '../scripts/reconcile.mjs'
+import { NOW, fakeDeps, seedRun, tmpDir } from './helpers.mjs'
+
+const s = name => ({ name, id: null, started_at: NOW.toISOString(), auto: false })
+const ph = overrides => ({ n: 1, slug: 'setup', type: 'setup', status: 'pending', verified: false, branch: null,
+  worktree: '/wt/p1', pr: null, pr_state: null, ci: null, sessions: [], auto_continuations: 0, ...overrides })
+const pf = overrides => ({ handoff: null, live: 'no', liveName: null, liveState: null, unpushed: null, pr: null, ...overrides })
+const h = (status, session = 'phase-1-setup') => ({ phase: 1, status, blocking_questions: 0, session })
+// 'complete:v' is a complete, verified phase.
+const run = specs => ({ schema: 'phasing-v3/1', run_id: 'demo-run', repo: '/r', base_branch: 'main', status: 'in_progress', reason: null,
+  phases: specs.map((spec, i) => {
+    const [status, v] = spec.split(':')
+    return ph({ n: i + 1, slug: `p${i + 1}`, status, verified: v === 'v', sessions: status === 'pending' ? [] : [s(`phase-${i + 1}-p${i + 1}`)] })
+  }), created_at: NOW.toISOString(), updated_at: NOW.toISOString() })
+
+function runWithBranch() {
+  const runDir = seedRun(tmpDir())
+  const r = readRun(runDir)
+  r.phases[0] = { ...r.phases[0], branch: 'phase/demo-run/p1-setup', worktree: '/wt/p1', status: 'running', sessions: [s('phase-1-setup')] }
+  return { runDir, r }
+}
+
+test('ciFromRollup', () => {
+  assert.equal(ciFromRollup([]), null)
+  assert.equal(ciFromRollup([{ status: 'COMPLETED', conclusion: 'SUCCESS' }, { state: 'SUCCESS' }]), 'pass')
+  assert.equal(ciFromRollup([{ status: 'COMPLETED', conclusion: 'FAILURE' }]), 'fail')
+  assert.equal(ciFromRollup([{ state: 'ERROR' }]), 'fail')
+  assert.equal(ciFromRollup([{ status: 'IN_PROGRESS', conclusion: '' }]), 'pending')
+})
+
+test('handoff complete wins over an idle live session', () => {
+  assert.deepEqual(derivePhase(ph({ status: 'running' }), pf({ handoff: h('complete'), live: 'yes', liveName: 'phase-1-setup' })),
+    { status: 'complete', flags: [] })
+})
+
+test('partial handoff plus a different live session is a running continuation', () => {
+  assert.equal(derivePhase(ph({}), pf({ handoff: h('partial', 'phase-1-setup'), live: 'yes', liveName: 'phase-1-setup-c1' })).status, 'running')
+  assert.equal(derivePhase(ph({}), pf({ handoff: h('partial', 'phase-1-setup'), live: 'yes', liveName: 'phase-1-setup' })).status, 'partial')
+})
+
+test('session gone without a handoff is failed and flagged', () => {
+  assert.deepEqual(derivePhase(ph({ status: 'running', sessions: [s('phase-1-setup')] }), pf({ live: 'no' })),
+    { status: 'failed', flags: ['session-ended-without-handoff'] })
+})
+
+test('agents unavailable keeps the status', () => {
+  assert.deepEqual(derivePhase(ph({ status: 'running', sessions: [s('phase-1-setup')] }), pf({ live: 'unknown' })),
+    { status: 'running', flags: ['agents-unavailable'] })
+})
+
+test('unreadable handoff keeps the status', () => {
+  assert.deepEqual(derivePhase(ph({ status: 'running' }), pf({ handoff: { status: 'invalid', error: 'x' } })),
+    { status: 'running', flags: ['handoff-unreadable'] })
+})
+
+test('gatherFacts survives a missing gh', () => {
+  const { runDir, r } = runWithBranch()
+  const deps = fakeDeps({ rules: [[/^git remote/, { stdout: 'origin\n' }], [/^git rev-list/, { stdout: '0\n' }],
+    [/^gh /, { code: 127, stderr: 'not found: gh' }], [/^claude agents/, { stdout: '[]' }]] })
+  const facts = gatherFacts(r, runDir, deps)
+  assert.equal(facts.gh, 'unavailable')
+  assert.equal(facts.phases[1].pr, 'unknown')
+  assert.equal(reconcile(r, facts).flags.filter(f => f.code === 'gh-unavailable').length, 1)
+})
+
+test('no PR for the branch is null, not unknown', () => {
+  const { runDir, r } = runWithBranch()
+  const deps = fakeDeps({ rules: [[/^git remote/, { stdout: 'origin\n' }], [/^git rev-list/, { stdout: '2\n' }],
+    [/^gh pr view/, { code: 1, stderr: 'no pull requests found for branch "phase/demo-run/p1-setup"' }], [/^claude agents/, { stdout: '[]' }]] })
+  const facts = gatherFacts(r, runDir, deps)
+  assert.equal(facts.gh, 'ok')
+  assert.equal(facts.phases[1].pr, null)
+  assert.equal(facts.phases[1].unpushed, 2)
+})
+
+test('live sessions match on name and worktree cwd', () => {
+  const { runDir, r } = runWithBranch()
+  r.phases[0].branch = null
+  const elsewhere = [{ name: 'phase-1-setup', cwd: '/other', state: 'working', startedAt: 1 }]
+  const deps = fakeDeps({ rules: [[/^git remote/, { stdout: '' }], [/^claude agents/, { stdout: JSON.stringify(elsewhere) }]] })
+  assert.equal(gatherFacts(r, runDir, deps).phases[1].live, 'no')
+  assert.deepEqual(liveSessions([...elsewhere, { name: 'phase-1-setup', cwd: '/wt/p1', state: 'blocked', startedAt: 2 }], r.phases[0]).map(a => a.cwd), ['/wt/p1'])
+})
+
+test('reconcile flags drift and stranded work', () => {
+  const r = run(['running', 'pending', 'complete'])
+  r.phases[0].branch = 'phase/demo-run/p1-p1'
+  const facts = { gh: 'ok', agents: 'ok', remote: true, phases: {
+    1: pf({ handoff: h('complete', 'phase-1-p1'), unpushed: 3, pr: null }),
+    2: pf({ pr: { number: 7, state: 'MERGED', ci: 'pass' } }),
+    3: pf({ handoff: { ...h('complete', 'phase-3-p3'), phase: 3 }, unpushed: 0, pr: { number: 9, state: 'OPEN', ci: 'fail' } }),
+  } }
+  const { run: after, flags } = reconcile(r, facts)
+  const has = (n, code) => flags.some(f => f.n === n && f.code === code)
+  assert.ok(has(1, 'status-changed') && flags.find(f => f.code === 'status-changed').detail === 'running→complete')
+  assert.ok(has(1, 'unpushed-commits') && has(1, 'complete-without-pr') && has(2, 'merged-outside-run') && has(3, 'ci-failing'))
+  assert.deepEqual([after.phases[2].pr, after.phases[2].pr_state, after.phases[2].ci], [9, 'OPEN', 'fail'])
+  assert.equal(r.phases[0].status, 'running', 'reconcile does not mutate its input')
+})
+
+test('nextAction covers every kind', () => {
+  assert.deepEqual(nextAction(run(['complete:v', 'running'])), { kind: 'wait', n: 2 })
+  assert.deepEqual(nextAction(run(['complete'])), { kind: 'verify', n: 1 })
+  assert.deepEqual(nextAction(run(['complete:v', 'partial'])), { kind: 'continue', n: 2 })
+  assert.deepEqual(nextAction(run(['failed'])), { kind: 'relaunch', n: 1 })
+  assert.deepEqual(nextAction(run(['complete:v', 'pending'])), { kind: 'launch', n: 2 })
+  assert.deepEqual(nextAction(run(['complete:v', 'complete:v'])), { kind: 'closeout', n: null })
+})
