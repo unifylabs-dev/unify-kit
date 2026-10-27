@@ -110,3 +110,55 @@ test('nextAction covers every kind', () => {
   assert.deepEqual(nextAction(run(['complete:v', 'pending'])), { kind: 'launch', n: 2 })
   assert.deepEqual(nextAction(run(['complete:v', 'complete:v'])), { kind: 'closeout', n: null })
 })
+
+test('partial handoff with agents unavailable keeps the status', () => {
+  assert.deepEqual(derivePhase(ph({ status: 'running', sessions: [s('phase-1-setup'), s('phase-1-setup-c1')] }),
+    pf({ handoff: h('partial', 'phase-1-setup'), live: 'unknown' })), { status: 'running', flags: ['agents-unavailable'] })
+})
+
+test('a background session in the worktree is live even if never recorded; interactive ones are not', () => {
+  const p = ph({ worktree: '/wt/p1', sessions: [] })
+  assert.equal(liveSessions([{ name: 'phase-1-setup', cwd: '/wt/p1', state: 'working', kind: 'background', startedAt: 5 }], p).length, 1)
+  assert.equal(liveSessions([{ name: 'look-around', cwd: '/wt/p1', state: 'working', kind: 'interactive', startedAt: 5 }], p).length, 0)
+})
+
+test('reconcile adopts an unrecorded live session', () => {
+  const r = run(['pending'])
+  const agent = { name: 'phase-1-p1', id: 'abc12345', state: 'working', startedAt: Date.parse('2026-11-01T09:00:00Z') }
+  const facts = { gh: 'ok', agents: 'ok', remote: true, phases: { 1: pf({ live: 'yes', liveName: agent.name, liveState: 'working', liveId: agent.id, liveAgents: [agent] }) } }
+  const { run: after, flags } = reconcile(r, facts)
+  assert.deepEqual(after.phases[0].sessions, [{ name: 'phase-1-p1', id: 'abc12345', started_at: '2026-11-01T09:00:00.000Z', auto: false }])
+  assert.equal(after.phases[0].status, 'running')
+  assert.ok(flags.some(f => f.code === 'session-adopted'))
+})
+
+test('a blocked session with no handoff is running and flagged as waiting for input', () => {
+  assert.deepEqual(derivePhase(ph({ status: 'running', sessions: [s('phase-1-setup')] }), pf({ live: 'yes', liveName: 'phase-1-setup', liveState: 'blocked' })),
+    { status: 'running', flags: ['session-waiting-for-input'] })
+})
+
+test('a newer live session outranks an older final handoff', () => {
+  assert.equal(derivePhase(ph({ sessions: [s('phase-1-setup'), s('phase-1-setup-c1')] }),
+    pf({ handoff: h('failed', 'phase-1-setup'), live: 'yes', liveName: 'phase-1-setup-c1', liveState: 'working' })).status, 'running')
+})
+
+test('ciFromRollup keeps the latest run of each check and ignores stale ones', () => {
+  assert.equal(ciFromRollup([
+    { name: 'test', status: 'COMPLETED', conclusion: 'FAILURE', completedAt: '2026-11-01T09:00:00Z' },
+    { name: 'test', status: 'COMPLETED', conclusion: 'SUCCESS', completedAt: '2026-11-01T09:10:00Z' },
+  ]), 'pass')
+  assert.equal(ciFromRollup([{ name: 'lint', status: 'COMPLETED', conclusion: 'STALE' }, { name: 'test', status: 'COMPLETED', conclusion: 'SUCCESS' }]), 'pass')
+})
+
+test('agents unavailable does not flag phases that never started', () => {
+  assert.deepEqual(derivePhase(ph({ sessions: [] }), pf({ live: 'unknown' })), { status: 'pending', flags: [] })
+})
+
+test('no remote is one flag, and PRs read as none', () => {
+  const { runDir, r } = runWithBranch()
+  const facts = gatherFacts(r, runDir, fakeDeps({ rules: [[/^git remote/, { stdout: '' }], [/^claude agents/, { stdout: '[]' }]] }))
+  assert.equal(facts.remote, false)
+  const { flags } = reconcile(r, facts)
+  assert.equal(flags.filter(f => f.code === 'no-remote' && f.n === null).length, 1)
+  assert.equal(flags.some(f => f.code === 'gh-unavailable'), false)
+})

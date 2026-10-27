@@ -10,25 +10,40 @@ const FAILED_CONCLUSIONS = ['FAILURE', 'TIMED_OUT', 'CANCELLED', 'ACTION_REQUIRE
 const PASSED_CONCLUSIONS = ['SUCCESS', 'NEUTRAL', 'SKIPPED']
 const LIVE_STATES = ['working', 'blocked']
 
-// gh's statusCheckRollup mixes check runs (status + conclusion) and commit statuses (state).
+// gh's statusCheckRollup mixes check runs (name, status, conclusion) and commit statuses (context,
+// state). A re-run check appears once per run, so only the latest run of each check counts, and a
+// check GitHub marked STALE has been superseded.
 export function ciFromRollup(rollup) {
-  if (!Array.isArray(rollup) || rollup.length === 0) return null
+  if (!Array.isArray(rollup)) return null
+  const latest = new Map()
+  for (const c of rollup) {
+    if (c.conclusion === 'STALE') continue
+    const key = c.name ?? c.context ?? JSON.stringify(c)
+    const at = c.completedAt ?? c.startedAt ?? ''
+    const prev = latest.get(key)
+    if (prev === undefined || at >= (prev.completedAt ?? prev.startedAt ?? '')) latest.set(key, c)
+  }
+  const checks = [...latest.values()]
+  if (checks.length === 0) return null
   const failed = c => FAILED_CONCLUSIONS.includes(c.conclusion) || c.state === 'FAILURE' || c.state === 'ERROR'
   const passed = c => PASSED_CONCLUSIONS.includes(c.conclusion) || c.state === 'SUCCESS'
-  if (rollup.some(failed)) return 'fail'
-  if (rollup.every(passed)) return 'pass'
+  if (checks.some(failed)) return 'fail'
+  if (checks.every(passed)) return 'pass'
   return 'pending'
 }
 
-// A phase's live background sessions: one of its own session names, in its own worktree (names
-// repeat across runs and repos), and not finished.
+// A phase's live sessions: background sessions working in the phase's own worktree, newest first.
+// The worktree path is unique to the run and phase, so a session counts even when it was never
+// recorded (an unconfirmed launch, or the printed command run by hand). Interactive sessions are
+// the user looking around, not the phase's work.
 export function liveSessions(agents, phase) {
   if (phase.worktree === null) return []
-  const names = new Set(phase.sessions.map(s => s.name))
-  return agents.filter(a => names.has(a.name) && a.cwd === phase.worktree && LIVE_STATES.includes(a.state))
+  return agents
+    .filter(a => a.cwd === phase.worktree && LIVE_STATES.includes(a.state) && (a.kind ?? 'background') === 'background')
+    .sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
 }
 
-function readAgents(deps) {
+export function readAgents(deps) {
   const r = deps.exec('claude', ['agents', '--json'])
   if (r.code !== 0) return null
   try {
@@ -40,7 +55,7 @@ function readAgents(deps) {
 }
 
 // One gh call per phase branch. The first failure that is not "no PR" marks gh unavailable for
-// the rest of the run of this command: no remote, no auth, or no gh at all.
+// the rest of this command: no auth, or no gh at all.
 function readPr(branch, repo, deps) {
   const r = deps.exec('gh', ['pr', 'view', branch, '--json', 'number,state,statusCheckRollup'], { cwd: repo })
   if (r.code === 0) {
@@ -61,7 +76,7 @@ export function gatherFacts(run, runDir, deps) {
   let gh = 'ok'
   const phases = {}
   for (const phase of run.phases) {
-    const live = agents === null ? [] : liveSessions(agents, phase).sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
+    const live = agents === null ? [] : liveSessions(agents, phase)
     let unpushed = null
     let pr = null
     if (phase.branch !== null && remote) {
@@ -77,6 +92,8 @@ export function gatherFacts(run, runDir, deps) {
       live: agents === null ? 'unknown' : live.length > 0 ? 'yes' : 'no',
       liveName: live[0]?.name ?? null,
       liveState: live[0]?.state ?? null,
+      liveId: live[0]?.id ?? null,
+      liveAgents: live,
       unpushed,
       pr,
     }
@@ -84,17 +101,21 @@ export function gatherFacts(run, runDir, deps) {
   return { gh, agents: agents === null ? 'unavailable' : 'ok', remote, phases }
 }
 
+// The newest live session decides: a session other than the handoff's writer is newer work (a
+// continuation or a relaunch). A finished writer idles as `blocked`, so its own handoff stands.
+// A live session that is `blocked` with no newer handoff is waiting for the user.
 export function derivePhase(phase, f) {
   const h = f.handoff
+  const waiting = f.liveState === 'blocked' ? ['session-waiting-for-input'] : []
   if (h?.status === 'invalid') return { status: phase.status, flags: ['handoff-unreadable'] }
-  // A finished session idles as `blocked` in agent view, so a final handoff outranks liveness.
+  if (h !== null && f.live === 'yes' && f.liveName !== h.session) return { status: 'running', flags: waiting }
   if (h?.status === 'complete' || h?.status === 'failed') return { status: h.status, flags: [] }
   if (h?.status === 'partial') {
-    return { status: f.live === 'yes' && f.liveName !== h.session ? 'running' : 'partial', flags: [] }
+    return f.live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'partial', flags: [] }
   }
-  if (f.live === 'yes') return { status: 'running', flags: [] }
-  if (f.live === 'unknown') return { status: phase.status, flags: ['agents-unavailable'] }
+  if (f.live === 'yes') return { status: 'running', flags: waiting }
   if (phase.sessions.length === 0) return { status: 'pending', flags: [] }
+  if (f.live === 'unknown') return { status: phase.status, flags: ['agents-unavailable'] }
   return { status: 'failed', flags: ['session-ended-without-handoff'] }
 }
 
@@ -102,13 +123,23 @@ const DETAIL = {
   'handoff-unreadable': (p, f) => `phase ${p.n}: handoff frontmatter is unreadable (${f.handoff.error})`,
   'agents-unavailable': p => `phase ${p.n}: claude agents --json failed, so live sessions are unknown`,
   'session-ended-without-handoff': p => `phase ${p.n}: session ${p.sessions.at(-1)?.name} is gone and wrote no handoff`,
+  'session-waiting-for-input': (p, f) =>
+    `phase ${p.n}: session ${f.liveName} is waiting for input; answer it in agent view, or stop it (claude stop ${f.liveId}) to relaunch`,
 }
+
+const isoFromMs = ms => new Date(typeof ms === 'number' ? ms : 0).toISOString()
 
 export function reconcile(run, facts) {
   const next = structuredClone(run)
   const flags = []
   for (const phase of next.phases) {
     const f = facts.phases[phase.n]
+    // Record live sessions nobody recorded, so names keep counting up and the progress check has a start time.
+    for (const a of f.liveAgents ?? []) {
+      if (phase.sessions.some(s => s.name === a.name)) continue
+      phase.sessions.push({ name: a.name, id: a.id ?? null, started_at: isoFromMs(a.startedAt), auto: false })
+      flags.push({ n: phase.n, code: 'session-adopted', detail: `phase ${phase.n}: recorded live session ${a.name} that was not in run.json` })
+    }
     const { status, flags: codes } = derivePhase(phase, f)
     for (const code of codes) flags.push({ n: phase.n, code, detail: DETAIL[code](phase, f) })
     if (status !== phase.status) flags.push({ n: phase.n, code: 'status-changed', detail: `${phase.status}→${status}` })
@@ -129,6 +160,7 @@ export function reconcile(run, facts) {
       if (f.pr?.ci === 'fail') flags.push({ n: phase.n, code: 'ci-failing', detail: `phase ${phase.n}: CI fails on PR #${f.pr.number}` })
     }
   }
+  if (facts.remote === false) flags.push({ n: null, code: 'no-remote', detail: 'the repo has no git remote, so there are no PRs or CI' })
   if (facts.gh === 'unavailable') flags.push({ n: null, code: 'gh-unavailable', detail: 'gh failed, so PR and CI state are unknown' })
   return { run: next, flags }
 }
