@@ -6,7 +6,7 @@
 //   <run-dir> <n> [--had-input] [--human-launch]
 import { cli, parseFlags } from './lib/deps.mjs'
 import { phaseOf, readHandoff, readRun } from './lib/run-state.mjs'
-import { launch } from './launch.mjs'
+import { handedOver, launch } from './launch.mjs'
 
 export const CAP = 2
 
@@ -41,15 +41,13 @@ export function main(argv, deps) {
   const run = readRun(runDir)
   const phase = phaseOf(run, n)
   const handoff = readHandoff(runDir, n)
-  // The writer and every session before it have handed over; they may still idle in agent view.
   const writerAt = phase.sessions.findIndex(s => s.name === handoff?.session)
-  const handedOver = writerAt === -1 ? [handoff?.session].filter(Boolean) : phase.sessions.slice(0, writerAt + 1).map(s => s.name)
   const commitsSinceStart = writerAt === -1 || phase.worktree === null ? null : commitsSince(phase.worktree, phase.sessions[writerAt].started_at, deps)
   const d = decide({ phase, handoff, commitsSinceStart, hadInput: flags['had-input'] === true, humanLaunch })
   const { manual } = launch(runDir, n, { dryRun: true }, deps)
   if (d.action === 'stop') return { action: 'stop', reason: d.reason, manual }
 
-  const launched = launch(runDir, n, { continuation: !humanLaunch, exclude: handedOver, count: d.count }, deps)
+  const launched = launch(runDir, n, { continuation: !humanLaunch, exclude: handedOver(phase, handoff), count: d.count }, deps)
   // Anything short of a confirmed handover is a stop, so the caller asks the user instead of going quiet.
   if (!launched.confirmed) {
     const reason = launched.refused !== undefined ? `launch-refused-${launched.refused}` : launched.error !== undefined ? 'launch-failed' : 'launch-unconfirmed'

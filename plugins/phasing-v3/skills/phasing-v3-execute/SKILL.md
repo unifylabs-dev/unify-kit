@@ -39,6 +39,8 @@ Each rule below says why it exists, so it can be dropped when the reason goes aw
   already agreed; users asked again and again to resume without ceremony.
 - **A relaunch** (the phase handoff says `failed`): start from why it failed, and do not repeat
   the approach that failed.
+- **A fix** (the phase handoff says `complete`, and the brief has a `## Fix after verify`
+  section): fix those gaps only, then finish as usual. The rest of the phase was already checked.
 - **A new phase:** investigate first (the code and files the brief points to). Then ask one
   batched round of questions with `AskUserQuestion`, only for what blocks you and what the brief
   and `decisions.md` do not answer. Use plain language and give your recommendation first. With

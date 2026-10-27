@@ -78,26 +78,41 @@ Without a run id, use the one in-flight run that `status.mjs` lists for this rep
 ask which. `/ph3-next` is a command, not a long-running session: each call reads the state fresh.
 
 1. **Reconcile.** Run `reconcile.mjs <run-dir> --write`. Report its flags in one short list, then
-   act on `next.kind`.
+   act on `next.kind`. Settle a `handoff-unreadable` flag first: while a handoff cannot be read,
+   the phase keeps its old status and `next` does not move. Fix the frontmatter field the flag
+   names, from the handoff's body and the [handoff shape](../phasing-v3-execute/references/handoff.md).
+   Ask the user when the body does not settle it. Then reconcile again.
 2. **Act on the next step:**
    - `wait`: a session is working on phase `next.n`. If a flag says it is waiting for input, tell
      the user to answer it in agent view. Report and stop.
    - `verify`: phase `next.n` says it is complete. Check it as a second pair of eyes, without
      redoing it:
-     1. `acceptance.mjs check <run-dir> <N>` shows every row met or dropped, with evidence.
-     2. CI on its pull request passes (the reconciled `ci`).
+     1. `acceptance.mjs check <run-dir> <N>` gives `complete: true`. It lists row ids only, so
+        read those rows in `acceptance.json` for their evidence. When `valid` is false, the rows
+        are broken, and each of its `errors` is a gap.
+     2. CI on its pull request passes: the reconciled `ci` is `pass`. With `pending`, say so and
+        stop; the user runs `/ph3-next` again when the checks finish. `null` means there is
+        nothing to read (no remote, no pull request, or no checks). A missing pull request is a
+        gap when the repo has a remote.
      3. Two or three claims in the handoff match the diff (`git diff <base>...<branch>`).
      4. For a high-stakes phase (data, auth, migrations, money), re-run the key commands.
 
-     When it holds, run `run-state.mjs mark-verified <run-dir> <N>`, then curate, ask, and launch
-     the next phase. When it does not, show the gaps and ask: fix in a fresh session of this phase,
-     accept as is, or amend the plan.
+     When it holds, run `run-state.mjs mark-verified <run-dir> <N>`, then curate (step 3) and ask
+     (step 4). Then launch the next phase (step 5), or follow closeout after the last phase.
+     When it does not hold, show the gaps and ask: fix in a fresh session of this phase, accept as
+     is, or amend the plan. For a fix, add the gaps to the brief under a `## Fix after verify`
+     heading. Then run `launch.mjs <run-dir> <N> --exclude-handed-over` and report it as in step 5.
    - `continue`: phase `next.n` paused (`partial`) and nothing is running. Show the handoff summary
-     and the reason it stopped. Ask whether to start a fresh session now; on yes, run
-     `continue.mjs <run-dir> <N> --human-launch`.
+     and the reason it stopped. Its open questions, and whether to start a fresh session now, go
+     into the one batch of step 4. Write the answers to `decisions.md`, where the next session
+     looks for them. On yes, run `continue.mjs <run-dir> <N> --human-launch` and report its
+     `launched` as in step 5. A `stop` names its `reason`: `launch-unconfirmed`, `launch-failed`
+     and `launch-refused-*` are the step 5 cases; `not-partial` or `handoff-unreadable` means the
+     handoff changed, so reconcile again.
    - `relaunch`: phase `next.n` failed, or its session ended without a handoff. Show the flags and
-     the handoff. Ask: relaunch with the same brief, amend the brief first, or stop the run. Relaunch
-     with `launch.mjs <run-dir> <N>`.
+     the handoff. Ask: relaunch with the same brief, amend the brief first, or stop the run.
+     Relaunch with `launch.mjs <run-dir> <N> --exclude-handed-over` and report it as in step 5.
+     Why the flag: the sessions that wrote handoffs idle in agent view, and would block the new one.
    - `launch`: phase `next.n` has not started. Go to step 5.
    - `closeout`: every phase is verified. Follow [closeout](references/closeout.md).
 3. **Curate** after a verify:
@@ -113,7 +128,10 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
    - amendments to the master plan (copy it to `master-plan.md.bak` first);
    - whether to merge the finished phase's pull request, unless the master plan sets a merge rule.
 
-   Merging is outward-facing, so it happens only on the user's yes (`gh pr merge`).
+   Merging is outward-facing, so it happens only on the user's yes:
+   `gh pr merge <pr> --merge`, or the method the master plan names. A merge commit keeps a phase
+   stacked on this one clean. Then run `reconcile.mjs <run-dir> --write` again, so the next
+   worktree starts from the merged base branch, not from the merged phase branch.
 5. **Launch the next phase:**
    1. Run `worktree.mjs create <run-dir> <N>`. By default it starts from the base branch when the
       previous pull request is merged (fetched fresh from the remote), and stacks on the previous
@@ -124,10 +142,11 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
    3. Run `launch.mjs <run-dir> <N>`. Always show its `manual` line as well.
       - `confirmed`: say the phase started, under which name. Agent view notifies the user when it
         needs them or finishes.
-      - `started` but not `confirmed`: a session may be starting. Ask the user to check agent view
-        before they use the manual line.
-      - `refused` `live-session`: a session is already working in that worktree. Report and stop.
-      - `refused` `agents-unavailable`, or an `error`: give the manual line.
+      - `started` but not `confirmed` (`launch-unconfirmed`): a session may be starting. Ask the
+        user to check agent view before they use the manual line.
+      - `refused` `live-session`: another session is live in that worktree (`live` names it).
+        Report and stop.
+      - `refused` `agents-unavailable`, or an `error` (`launch-failed`): give the manual line.
 6. **End with the table** from `status.mjs <run-id>`.
 
 The next phase never starts on its own. The user runs `/ph3-next` when agent view says a phase

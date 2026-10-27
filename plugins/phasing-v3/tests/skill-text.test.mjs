@@ -130,3 +130,58 @@ test('the brief names the PR base, and a continuation settles open questions fir
   assert.match(read(EXECUTOR), /blocking_questions/)
   assert.match(read(EXECUTOR).split('## Start')[1].split('\n## ')[0], /decisions\.md/)
 })
+
+// The orchestrator text has to match what the scripts do (Task 10 review).
+const bullet = (t, k) => t.split(`- \`${k}\`:`)[1].split('\n   - `')[0]
+
+test('every flag the skills pass to a script is one the script documents', () => {
+  for (const f of md()) {
+    for (const [, script, args] of read(f).matchAll(/`(?:node \S*?)?([a-z-]+\.mjs)\b([^`]*)`/g)) {
+      const src = read(join(ROOT, 'scripts', script))
+      for (const [, flag] of args.matchAll(/--([a-z][a-z-]*)/g)) assert.match(src, new RegExp(`--${flag}(?![a-z-])`), `${f}: ${script} --${flag}`)
+    }
+  }
+})
+
+test('a relaunch and a fix session exclude the sessions that handed over', () => {
+  const t = read(ORCH)
+  for (const k of ['relaunch', 'verify']) assert.match(bullet(t, k), /launch\.mjs <run-dir> <N> --exclude-handed-over/, k)
+  // The fix note the orchestrator writes is one the executor reads.
+  assert.match(bullet(t, 'verify'), /## Fix after verify/)
+  assert.match(read(EXECUTOR).split('## Start')[1].split('\n## ')[0], /## Fix after verify/)
+})
+
+test('after a merge, the run is reconciled again before the next worktree', () => {
+  const t = read(ORCH)
+  const merge = t.indexOf('gh pr merge')
+  assert.ok(merge >= 0)
+  const again = t.indexOf('reconcile.mjs <run-dir> --write', merge)
+  assert.ok(again > merge && again < t.indexOf('worktree.mjs create', merge), 'reconcile after the merge, before worktree.mjs create')
+})
+
+test('an unreadable handoff is repaired before acting on next', () => {
+  const step = read(ORCH).split('1. **Reconcile.**')[1].split('\n2. ')[0]
+  assert.match(step, /`handoff-unreadable`/)
+  assert.match(step.split('handoff-unreadable')[1], /reconcile again/i)
+})
+
+test('a continuation asks in the one batch and reports its launch like a launch', () => {
+  const t = read(ORCH)
+  const cont = bullet(t, 'continue')
+  assert.match(cont, /step 4/)
+  assert.match(cont, /decisions\.md/)
+  for (const r of ['launch-unconfirmed', 'launch-failed', 'not-partial']) assert.ok(t.includes(`\`${r}\``), r)
+})
+
+test('verify handles broken rows, CI that is not a pass, and the last phase', () => {
+  const v = bullet(read(ORCH), 'verify')
+  for (const s of ['`valid`', 'acceptance.json', '`pending`', '`null`', 'last phase']) assert.ok(v.includes(s), s)
+})
+
+test('closeout finds the run pull requests by prefix and commits from its own worktree', () => {
+  const t = read(join(ROOT, 'skills', 'phasing-v3', 'references', 'closeout.md'))
+  assert.match(t, /--search "head:phase\/<run-id>\/"/)
+  assert.doesNotMatch(t, /--head phase\//)
+  assert.match(t, /git worktree add/)
+  assert.doesNotMatch(t, /git (switch|checkout)\b/)
+})

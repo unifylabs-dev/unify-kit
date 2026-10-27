@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import { relative } from 'node:path'
 import { test } from 'node:test'
 
-import { launch, launchArgs, sessionName } from '../scripts/launch.mjs'
+import { launch, launchArgs, main, sessionName } from '../scripts/launch.mjs'
 import { phaseOf, readRun, writeRun } from '../scripts/lib/run-state.mjs'
-import { NOW, fakeDeps, seedRun, tmpDir } from './helpers.mjs'
+import { NOW, fakeDeps, seedRun, tmpDir, writeHandoff } from './helpers.mjs'
 
 const WT = '/wt/demo-run-p2'
 const s = name => ({ name, id: 'old00000', started_at: NOW.toISOString(), auto: false })
@@ -108,4 +108,17 @@ test('a relative run dir is made absolute for --add-dir', () => {
   const rel = relative(process.cwd(), runDir)
   const r = launch(rel, 2, { dryRun: true }, fakeDeps())
   assert.equal(r.args[r.args.indexOf('--add-dir') + 1], runDir)
+})
+
+test('a relaunch excludes the sessions that handed over, and still refuses a newer one', () => {
+  // The failed writer idles in agent view; a fresh session for the phase replaces it. A session
+  // started after the handoff (a second /ph3-next) has not handed over, so it still blocks.
+  const runDir = seed({ sessions: [s('phase-2-api')] })
+  writeHandoff(runDir, 2, { phase: 2, status: 'failed', blocking_questions: 0, session: 'phase-2-api' })
+  const writer = agent('phase-2-api', 'blocked', 'old00000')
+  const ok = main([runDir, '2', '--exclude-handed-over'], agentsDeps([writer], [writer, agent('phase-2-api-c1', 'working', 'new11111')]))
+  assert.deepEqual([ok.confirmed, ok.name], [true, 'phase-2-api-c1'])
+  const newer = agent('phase-2-api-c1', 'working', 'new11111')
+  const again = main([runDir, '2', '--exclude-handed-over'], agentsDeps([writer, newer], [writer, newer]))
+  assert.deepEqual([again.refused, again.live], ['live-session', ['phase-2-api-c1']])
 })

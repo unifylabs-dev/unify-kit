@@ -1,12 +1,21 @@
 #!/usr/bin/env node
 // launch: start a phase as a background session in its worktree, confirm it appears in agent
 // view, and record it. The command is always returned for manual use too, as the fallback.
-//   <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <name,name>]
+//   <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <name,name>] [--exclude-handed-over]
 import { resolve } from 'node:path'
 
 import { cli, parseFlags } from './lib/deps.mjs'
-import { phaseOf, readRun, writeRun } from './lib/run-state.mjs'
+import { phaseOf, readHandoff, readRun, writeRun } from './lib/run-state.mjs'
 import { liveSessions, readAgents } from './reconcile.mjs'
+
+// The handoff's writer and every session before it have handed over. They idle in agent view and
+// do not block the session that replaces them. A session started after the handoff has not handed
+// over, so a second launch racing this one is still refused.
+export function handedOver(phase, handoff) {
+  if (typeof handoff?.session !== 'string') return []
+  const at = phase.sessions.findIndex(s => s.name === handoff.session)
+  return at === -1 ? [handoff.session] : phase.sessions.slice(0, at + 1).map(s => s.name)
+}
 
 const POLLS = 5
 const POLL_MS = 2000
@@ -85,12 +94,15 @@ export function launch(runDirArg, n, { continuation = false, dryRun = false, for
 export function main(argv, deps) {
   const { positional, flags } = parseFlags(argv)
   const [runDir, n] = positional
-  if (runDir === undefined || n === undefined) throw new Error('usage: launch.mjs <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <name>]')
+  if (runDir === undefined || n === undefined) throw new Error('usage: launch.mjs <run-dir> <n> [--continuation] [--dry-run] [--force] [--exclude <name>] [--exclude-handed-over]')
+  const exclude = typeof flags.exclude === 'string' ? flags.exclude.split(',').filter(Boolean) : []
+  // A relaunch, or a fix after verify, replaces the sessions that wrote the phase's handoff.
+  if (flags['exclude-handed-over'] === true) exclude.push(...handedOver(phaseOf(readRun(runDir), Number(n)), readHandoff(runDir, Number(n))))
   return launch(runDir, Number(n), {
     continuation: flags.continuation === true,
     dryRun: flags['dry-run'] === true,
     force: flags.force === true,
-    exclude: typeof flags.exclude === 'string' ? flags.exclude.split(',').filter(Boolean) : [],
+    exclude,
   }, deps)
 }
 
