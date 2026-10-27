@@ -221,3 +221,9 @@ test('merges go in phase order, and a stacked PR is retargeted before it merges'
   assert.match(step, /oldest first/)
   assert.ok(step.indexOf('gh pr edit <pr> --base') >= 0 && step.indexOf('gh pr edit <pr> --base') < step.indexOf('reconcile.mjs'))
 })
+
+test('the pause stops this session\'s background work before the fresh session can start', () => {
+  const pause = read(EXECUTOR).split('## Pause at about half the context')[1].split('\n## ')[0]
+  const stop = pause.indexOf('background')
+  assert.ok(stop >= 0 && stop < pause.indexOf('End the turn'), 'background work stops before the turn ends')
+})

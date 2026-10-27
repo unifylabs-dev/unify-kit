@@ -93,7 +93,10 @@ When context-watch says context is at about 50%, or when the user asks for a pau
 2. If `phase-N-handoff.md` already exists, move it to `phase-N-audit/handoff-<k>.md`.
 3. Write a `partial` handoff (`references/handoff.md`) with concrete Next steps.
 4. Commit the work in the worktree.
-5. End the turn. A fresh session for this phase starts on its own in the same worktree.
+5. Stop the background shells, servers and monitors you started, by PID, and let your subagents
+   finish. Why: the fresh session starts only once none run, so two sessions never edit one
+   worktree at once.
+6. End the turn. A fresh session for this phase starts on its own in the same worktree.
 
 Why: past half the window, quality drops, and the next session inherits what this one does.
 
