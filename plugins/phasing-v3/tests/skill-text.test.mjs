@@ -89,3 +89,25 @@ test('the executor command names the executor skill', () => {
   assert.match(read(join(ROOT, 'commands', 'ph3-execute.md')), /phasing-v3-execute/)
 })
 
+
+const ORCH = join(ROOT, 'skills', 'phasing-v3', 'SKILL.md')
+
+test('orchestrator SKILL.md stays short', () => assert.ok(lines(ORCH) <= 275, `${lines(ORCH)} lines`))
+
+test('/ph3-next handles every next action', () => {
+  const t = read(ORCH)
+  for (const k of ['wait', 'verify', 'continue', 'relaunch', 'launch', 'closeout']) assert.match(t, new RegExp(`\`${k}\``), k)
+})
+
+test('every script the skills name exists', () => {
+  const named = new Set(md().flatMap(f => [...read(f).matchAll(/\b([a-z-]+\.mjs)\b/g)].map(m => m[1])))
+  assert.ok(named.size >= 6, [...named].join(', '))
+  for (const s of named) assert.ok(existsSync(join(ROOT, 'scripts', s)), s)
+})
+
+test('the master-plan template has the required headings', () => {
+  const t = read(join(ROOT, 'skills', 'phasing-v3', 'references', 'master-plan.md'))
+  for (const h of ['TL;DR', 'Phases', 'Decisions', 'Facts', 'Out of scope', 'Run success criteria']) assert.ok(t.includes(h), h)
+})
+
+test('four commands exist', () => assert.deepEqual(readdirSync(join(ROOT, 'commands')).sort(), ['ph3-execute.md', 'ph3-next.md', 'ph3-status.md', 'ph3.md']))
