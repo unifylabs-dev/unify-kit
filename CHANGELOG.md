@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+### Added (phasing-v3 pilot plugin)
+- **`plugins/phasing-v3/`: a pilot of phasing v3 beside the current `phasing` skill**, under its own names (`/ph3`, `/ph3-next`, `/ph3-execute`, `/ph3-status`; skills `phasing-v3` and `phasing-v3-execute`), so `/phase*` keeps working. Not in the marketplace; loaded locally through a skills-dir symlink during the pilot. After the pilot it takes the `phasing` names inside `unifylabs-workflow`.
+- **What changes from v2:** each phase runs as a background session (`claude --bg`) in its own git worktree and ends with a pushed branch and a PR; `/ph3-next` is a stateless between-phases command that reads state from git, GitHub, agent view and the run folder; briefs are written just in time; requirements live in `acceptance.json` with a one-phase carry limit; no plan mode inside phases; reversible calls are made and reported; a paused phase continues on its own at most twice in a row; runs close out or park on purpose.
+- **Deterministic core:** eight zero-dependency Node scripts (`run-state`, `acceptance`, `reconcile`, `worktree`, `launch`, `continue`, `status`, `closeout`) with `node:test` suites, plus skill-text checks (calm wording, no client names, uploadable executor frontmatter, resolvable links). CI: two steps added to the existing `loop-harness` job; no new job, no count ripple (plugin `unifylabs-workflow` unchanged at 13 skills / 17 commands).
+
 Stabilize-on-4.8 (M0) for the `phasing-flow` initiative — additive; no consumer migration required.
 
 ### Fixed (iterative-review — reviewer findings reached fixers with no description and no usable location)
