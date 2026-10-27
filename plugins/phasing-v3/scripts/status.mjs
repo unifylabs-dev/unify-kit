@@ -27,25 +27,30 @@ export function listRuns(repo) {
     .filter(d => d.isDirectory() && d.name !== 'archive' && existsSync(join(root, d.name, 'run.json')))
     .map(d => {
       const runDir = join(root, d.name)
-      let schema = null
+      let raw = {}
       try {
-        schema = JSON.parse(readFileSync(join(runDir, 'run.json'), 'utf8')).schema ?? null
+        raw = JSON.parse(readFileSync(join(runDir, 'run.json'), 'utf8'))
       } catch {
-        // An unreadable run.json is listed as old format; the old commands own it.
+        // Unparseable: listed as old format, which the old commands own.
       }
-      return { runId: d.name, runDir, format: schema === RUN_SCHEMA ? 'v3' : 'old' }
+      const format = raw.schema === RUN_SCHEMA ? 'v3' : 'old'
+      // v3 runs say `status`; old-format runs say `overall_status`.
+      return { runId: d.name, runDir, format, status: (format === 'v3' ? raw.status : raw.overall_status) ?? null }
     })
 }
 
 export function lastActivity(run, runDir) {
   const times = [Date.parse(run.updated_at)]
-  for (const f of readdirSync(runDir, { withFileTypes: true })) if (f.isFile()) times.push(statSync(join(runDir, f.name)).mtimeMs)
+  for (const f of readdirSync(runDir, { withFileTypes: true })) {
+    // A temp file can be renamed away between listing and stat during a concurrent write.
+    if (f.isFile()) times.push(statSync(join(runDir, f.name), { throwIfNoEntry: false })?.mtimeMs ?? NaN)
+  }
   return new Date(Math.max(...times.filter(Number.isFinite)))
 }
 
 export const isStale = (last, now) => now.getTime() - last.getTime() > STALE_DAYS * DAY_MS
 
-export function renderRun(run, flags, next) {
+export function renderRun(run, flags, next = nextAction(run)) {
   const codes = n => flags.filter(f => f.n === n).map(f => f.code)
   const rows = run.phases.map(p => {
     const pr = p.pr === null ? '—' : `#${p.pr} ${p.ci ?? '—'}`
@@ -59,14 +64,15 @@ export function renderRun(run, flags, next) {
     '| phase | type | status | PR/CI | waiting on |',
     '|---|---|---|---|---|',
     ...rows,
-    ...(flags.length > 0 ? ['', ...flags.map(f => `- ${f.detail}`)] : []),
+    ...(flags.length > 0 ? ['', ...flags.map(f => `- ${f.n === null || f.detail.startsWith('phase ') ? '' : `phase ${f.n}: `}${f.detail}`)] : []),
   ].join('\n')
 }
 
 export function renderList(entries, now) {
   const lines = entries
-    .filter(e => e.format === 'old' || e.run?.status === 'in_progress')
+    .filter(e => e.status === 'in_progress' || (e.format === 'old' && e.status === null) || e.error !== undefined)
     .map(e => {
+      if (e.error !== undefined) return `- ${e.runId}: unreadable run.json (${e.error})`
       if (e.format === 'old') return `- ${e.runId}: old format: use /phase-status`
       const days = Math.floor((now.getTime() - e.last.getTime()) / DAY_MS)
       const next = e.next.n === null ? e.next.kind : `${e.next.kind} ${e.next.n}`
@@ -83,16 +89,26 @@ function view(runDir, deps) {
 
 export function main(argv, deps) {
   const { positional, flags } = parseFlags(argv)
+  if (flags.repo === true) throw new Error('--repo needs a path')
   const repo = typeof flags.repo === 'string' ? flags.repo : mainRoot(deps.cwd ?? process.cwd(), deps)
   const [runId] = positional
   if (runId !== undefined) {
-    const { run, flags: found, next } = view(join(repo, '.claude', 'phasing', runId), deps)
+    const entry = listRuns(repo).find(e => e.runId === runId)
+    if (entry === undefined) return { text: `no run ${runId} in ${repo} (archived runs live under .claude/phasing/archive/)` }
+    if (entry.format === 'old') return { text: `${runId}: old format: use /phase-status` }
+    const { run, flags: found, next } = view(entry.runDir, deps)
     return { text: renderRun(run, found, next) }
   }
+  // Only in-flight v3 runs are reconciled: each costs agent-view and GitHub calls. A broken run
+  // is reported by name and never hides the others.
   const entries = listRuns(repo).map(e => {
-    if (e.format === 'old') return e
-    const { run, next } = view(e.runDir, deps)
-    return { ...e, run, next, last: lastActivity(run, e.runDir) }
+    if (e.format === 'old' || e.status !== 'in_progress') return e
+    try {
+      const { run, next } = view(e.runDir, deps)
+      return { ...e, run, next, last: lastActivity(run, e.runDir) }
+    } catch (err) {
+      return { ...e, error: err.message }
+    }
   })
   return { text: renderList(entries, deps.now()) }
 }

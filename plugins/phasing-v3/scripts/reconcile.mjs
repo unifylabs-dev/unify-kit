@@ -138,7 +138,7 @@ export function reconcile(run, facts) {
     for (const a of f.liveAgents ?? []) {
       if (phase.sessions.some(s => s.name === a.name)) continue
       phase.sessions.push({ name: a.name, id: a.id ?? null, started_at: isoFromMs(a.startedAt), auto: false })
-      flags.push({ n: phase.n, code: 'session-adopted', detail: `phase ${phase.n}: recorded live session ${a.name} that was not in run.json` })
+      flags.push({ n: phase.n, code: 'session-adopted', detail: `phase ${phase.n}: live session ${a.name} was not in run.json` })
     }
     const { status, flags: codes } = derivePhase(phase, f)
     for (const code of codes) flags.push({ n: phase.n, code, detail: DETAIL[code](phase, f) })

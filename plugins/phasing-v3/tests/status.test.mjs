@@ -43,7 +43,7 @@ test('listRuns skips archive and marks old-format runs', () => {
 test('stale after 7 days idle', () => {
   assert.equal(isStale(new Date('2026-10-24T09:59:00Z'), NOW), true)
   assert.equal(isStale(new Date('2026-10-26T10:00:00Z'), NOW), false)
-  const text = renderList([{ runId: 'demo-run', format: 'v3', run: { status: 'in_progress' }, next: { kind: 'verify', n: 1 }, last: new Date('2026-10-20T10:00:00Z') }], NOW)
+  const text = renderList([{ runId: 'demo-run', format: 'v3', status: 'in_progress', run: { status: 'in_progress' }, next: { kind: 'verify', n: 1 }, last: new Date('2026-10-20T10:00:00Z') }], NOW)
   assert.ok(text.includes('stale (idle 12d)'), text)
 })
 
@@ -56,3 +56,43 @@ test('status never writes run.json', () => {
   assert.ok(out.text.includes('| 1 | setup | pending |'))
   assert.deepEqual([readFileSync(file, 'utf8'), statSync(file).mtimeMs], before)
 })
+
+const quiet = () => fakeDeps({ rules: [[/^git remote/, { stdout: '' }], [/^claude agents/, { stdout: '[]' }]] })
+
+test('one broken run does not hide the others', () => {
+  const repo = tmpDir()
+  seedRun(repo)
+  const bad = join(repo, '.claude', 'phasing', 'bad-run')
+  mkdirSync(bad, { recursive: true })
+  writeFileSync(join(bad, 'run.json'), JSON.stringify({ schema: 'phasing-v3/1', run_id: 'bad-run', status: 'in_progress' }))
+  const out = main(['--repo', repo], quiet())
+  assert.ok(out.text.includes('demo-run: next launch 1'), out.text)
+  assert.match(out.text, /bad-run: unreadable run\.json/)
+})
+
+test('finished old-format runs drop out; an old or missing run id gets a pointer', () => {
+  const repo = tmpDir()
+  for (const [id, status] of [['legacy-live', 'in_progress'], ['legacy-done', 'complete']]) {
+    mkdirSync(join(repo, '.claude', 'phasing', id), { recursive: true })
+    writeFileSync(join(repo, '.claude', 'phasing', id, 'run.json'), JSON.stringify({ overall_status: status }))
+  }
+  const list = main(['--repo', repo], quiet()).text
+  assert.ok(list.includes('legacy-live') && !list.includes('legacy-done'), list)
+  assert.match(main(['legacy-live', '--repo', repo], quiet()).text, /old format: use \/phase-status/)
+  assert.match(main(['gone-run', '--repo', repo], quiet()).text, /no run gone-run/)
+})
+
+test('parked runs are not reconciled', () => {
+  const repo = tmpDir()
+  seedRun(repo, { status: 'parked', reason: 'waiting' })
+  assert.equal(main(['--repo', repo], fakeDeps()).text, 'No runs in flight in this repo.')
+})
+
+test('flag lines name their phase, and next is optional', () => {
+  const run = readRun(seedRun(tmpDir()))
+  const text = renderRun(run, [{ n: 2, code: 'status-changed', detail: 'pending→complete' }])
+  assert.ok(text.includes('- phase 2: pending→complete'), text)
+  assert.ok(text.includes('next: launch 1'))
+})
+
+test('bare --repo is a usage error', () => assert.throws(() => main(['--repo'], quiet()), /--repo/))
