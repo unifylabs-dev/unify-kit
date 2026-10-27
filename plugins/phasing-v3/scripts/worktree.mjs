@@ -79,7 +79,8 @@ export function createPhaseWorktree(runDir, n, base, deps) {
     phase.worktree = path
     writeRun(runDir, run, deps.now())
   }
-  return { branch, path, created }
+  // base is the branch the phase's pull request targets: the base branch, or the stacked branch.
+  return { branch, path, created, base }
 }
 
 export function main(argv, deps) {

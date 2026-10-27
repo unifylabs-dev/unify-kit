@@ -115,11 +115,12 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
 
    Merging is outward-facing, so it happens only on the user's yes (`gh pr merge`).
 5. **Launch the next phase:**
-   1. Write `phase-N-brief.md` from the [brief template](references/brief.md). Write it now, not
-      earlier: in past runs, specs written up front were stale by the time their phase started.
-   2. Run `worktree.mjs create <run-dir> <N>`. By default it starts from the base branch when the
+   1. Run `worktree.mjs create <run-dir> <N>`. By default it starts from the base branch when the
       previous pull request is merged (fetched fresh from the remote), and stacks on the previous
-      branch when it is not.
+      branch when it is not. Its `base` is the branch the phase's pull request targets.
+   2. Write `phase-N-brief.md` from the [brief template](references/brief.md), with that PR base.
+      Write it now, not earlier: in past runs, specs written up front were stale by the time their
+      phase started.
    3. Run `launch.mjs <run-dir> <N>`. Always show its `manual` line as well.
       - `confirmed`: say the phase started, under which name. Agent view notifies the user when it
         needs them or finishes.

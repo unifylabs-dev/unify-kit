@@ -22,7 +22,7 @@ test('createPhaseWorktree makes the branch and worktree, records them, and is id
   const runDir = seedRun(repo)
   const deps = gitDeps()
   const first = createPhaseWorktree(runDir, 1, 'main', deps)
-  assert.deepEqual(first, { branch: 'phase/demo-run/p1-setup', path: `${repo}/.claude/worktrees/demo-run-p1`, created: true })
+  assert.deepEqual(first, { branch: 'phase/demo-run/p1-setup', path: `${repo}/.claude/worktrees/demo-run-p1`, created: true, base: 'main' })
   assert.equal(readRun(runDir).phases[0].worktree, first.path)
   assert.equal(readRun(runDir).phases[0].branch, first.branch)
   assert.equal(createPhaseWorktree(runDir, 1, 'main', deps).created, false)
@@ -92,4 +92,11 @@ test('a leftover plain folder is reported; a stale registration is pruned', () =
 test('--base with no value is a usage error', () => {
   const { dir: repo } = tmpRepo()
   assert.throws(() => main(['create', seedRun(repo), '1', '--base'], gitDeps()), /--base/)
+})
+
+test('createPhaseWorktree reports the PR base: the base branch, or the stacked branch', () => {
+  const { dir: repo } = tmpRepo()
+  const runDir = seedRun(repo)
+  assert.equal(createPhaseWorktree(runDir, 1, 'main', gitDeps()).base, 'main')
+  assert.equal(createPhaseWorktree(runDir, 2, 'phase/demo-run/p1-setup', gitDeps()).base, 'phase/demo-run/p1-setup')
 })

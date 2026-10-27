@@ -111,3 +111,22 @@ test('the master-plan template has the required headings', () => {
 })
 
 test('four commands exist', () => assert.deepEqual(readdirSync(join(ROOT, 'commands')).sort(), ['ph3-execute.md', 'ph3-next.md', 'ph3-status.md', 'ph3.md']))
+
+test('the executor pushes and opens the PR before the checks, and writes the final handoff last', () => {
+  const finish = read(EXECUTOR).split('## Finish')[1].split('\n## ')[0]
+  const at = s => { const i = finish.indexOf(s); assert.ok(i >= 0, s); return i }
+  assert.ok(at('git push') < at('review round'))
+  assert.ok(at('review round') < at('final `phase-N-handoff.md`'))
+})
+
+test('the handoff session name comes from agent view first', () => {
+  const t = read(join(ROOT, 'skills', 'phasing-v3-execute', 'references', 'handoff.md'))
+  const bullet = t.split('- `session`:')[1].split('\n\n')[0]
+  assert.ok(bullet.indexOf('claude agents --json') >= 0 && bullet.indexOf('claude agents --json') < bullet.indexOf('run.json'), bullet)
+})
+
+test('the brief names the PR base, and a continuation settles open questions first', () => {
+  assert.match(read(join(ROOT, 'skills', 'phasing-v3', 'references', 'brief.md')), /PR base/)
+  assert.match(read(EXECUTOR), /blocking_questions/)
+  assert.match(read(EXECUTOR).split('## Start')[1].split('\n## ')[0], /decisions\.md/)
+})

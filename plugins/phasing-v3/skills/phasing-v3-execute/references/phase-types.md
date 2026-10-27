@@ -1,7 +1,7 @@
 # Phase types
 
-The master plan gives each phase a type. The type sets how hands-on the user is and how the
-work is checked.
+Each phase has a type, named in the brief's title. The type sets how hands-on the user is and
+how the work is checked.
 
 ## build
 

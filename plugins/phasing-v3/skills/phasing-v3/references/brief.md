@@ -10,6 +10,10 @@ brief: briefs written far ahead went stale in past runs.
 ## Do these first (human-only steps)
 - [ ] <account, key, sign-in or approval only the user can do>
 
+## Branch
+Branch `phase/<run-id>/p<N>-<slug>`. PR base: `<base>` (the base branch, or the previous phase's
+branch while its pull request is open).
+
 ## Outcome
 What is true when this phase is done, in two or three lines.
 

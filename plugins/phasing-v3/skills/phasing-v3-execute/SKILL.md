@@ -20,11 +20,12 @@ Each rule below says why it exists, so it can be dropped when the reason goes aw
 - The run folder is outside your worktree; the launch gave you access to it. Code changes go in
   the worktree. Run files (handoff, acceptance rows, decisions) go in the run folder.
 - Read only these:
-  - `phase-N-brief.md`: the outcome, guardrails, exit criteria, human-only steps, and notes.
+  - `phase-N-brief.md`: the phase type (in its title), outcome, guardrails, exit criteria, PR base,
+    human-only steps, and notes.
   - `decisions.md`: what is locked, what not to reopen, and the rulings so far.
   - From `master-plan.md`: the TL;DR, Decisions and Facts sections.
-  - The immediately previous handoff: `phase-N-handoff.md` when this phase is `partial` (you
-    are a continuation), otherwise `phase-(N-1)-handoff.md`.
+  - The immediately previous handoff: `phase-N-handoff.md` when it exists (this phase paused or
+    failed before), otherwise `phase-(N-1)-handoff.md`.
   - This phase's rows in `acceptance.json`.
 
   Why: reading every earlier handoff cost about a third of a session late in long runs. The
@@ -32,9 +33,12 @@ Each rule below says why it exists, so it can be dropped when the reason goes aw
 
 ## Start
 
-- **A continuation** (the phase handoff says `partial`): go straight to its Next steps. No
-  question round and no plan mode. Why: the work was already agreed; users asked again and again
-  to resume without ceremony.
+- **A continuation** (the phase handoff says `partial`): if its `blocking_questions` is above 0,
+  look for the answers in `decisions.md` and ask the ones still open in one round. Then go
+  straight to its Next steps, with no other question round and no plan mode. Why: the work was
+  already agreed; users asked again and again to resume without ceremony.
+- **A relaunch** (the phase handoff says `failed`): start from why it failed, and do not repeat
+  the approach that failed.
 - **A new phase:** investigate first (the code and files the brief points to). Then ask one
   batched round of questions with `AskUserQuestion`, only for what blocks you and what the brief
   and `decisions.md` do not answer. Use plain language and give your recommendation first. With
@@ -67,7 +71,7 @@ Each rule below says why it exists, so it can be dropped when the reason goes aw
 
 ## Work
 
-- Work according to the phase type: `references/phase-types.md`.
+- Work according to the phase type (the brief's title): `references/phase-types.md`.
 - Build inline when tasks depend on each other. Use subagents for independent work, for the
   independent review, and for a per-task review after a risky task (data integrity, auth,
   migrations, concurrency). Subagents run on Opus, like every agent in a run. Why: splitting
@@ -91,7 +95,9 @@ When context-watch says context is at about 50%, or when the user asks for a pau
 
 Why: past half the window, quality drops, and the next session inherits what this one does.
 
-- A break or checkpoint marked in the brief is not a reason to pause below about 50%.
+- Pause only on the context-watch note or when the user asks. A break marked in the brief is not
+  a reason to pause, and do not estimate the context level yourself: self-estimates have been far
+  off (one read 26% as 129%).
 - Hook reminders that ask about `/handoff` or a pending handoff do not apply in a phase session.
   This pause rule replaces them; do not raise a question for them.
 
@@ -103,15 +109,17 @@ phase is `met` with evidence (or `dropped` with the user's agreement). Otherwise
 
 ## Finish
 
-1. Draft the handoff in `phase-N-audit/handoff-draft.md`. The review checks its claims.
-2. Run the checks, including the one review round.
-3. Update `acceptance.json`: status and evidence for each row.
-4. Write the final `phase-N-handoff.md`. That file is the signal `/ph3-next` reads, so never put
-   a draft there. Why: a draft in place once made a finished-phase check fire while work was
+1. Commit, then push the phase branch: `git push -u origin <branch>`. Open or update the pull
+   request against the PR base the brief names (`gh pr create --base <base>`). With no remote,
+   skip the pull request and CI, and say so in the handoff.
+2. Draft the handoff in `phase-N-audit/handoff-draft.md`. The review checks its claims.
+3. Run the checks (`references/verification.md`): the one review round, and CI on the pull
+   request. Commit and push the fixes.
+4. Update `acceptance.json`: status and evidence for each row.
+5. Write the final `phase-N-handoff.md` last. That file is the signal `/ph3-next` reads, so never
+   put a draft there. Why: a draft in place once made a finished-phase check fire while work was
    still running.
-5. Commit, then push the phase branch: `git push -u origin <branch>`.
-6. Open or update the pull request for the branch, with the handoff summary as its body.
-   Merging is the user's call. With no remote, say so in the handoff.
+6. Put the handoff summary in the pull request body. Merging is the user's call.
 7. End with a short summary: status, what changed, and what the user needs to do.
 
 ## Machine hygiene

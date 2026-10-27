@@ -21,9 +21,9 @@ session: phase-3-api-c1
 - `status`: `complete`, `partial` or `failed`. Nothing else, and never a draft.
 - `blocking_questions`: how many questions to the user are still open and block the work. Above
   0, no fresh session starts on its own.
-- `session`: this session's name. Take the last entry in run.json's `sessions` for this phase
-  (the launch records it). If that list is empty, run `claude agents --json` and use the name of
-  the background session whose `cwd` is this worktree.
+- `session`: this session's name. Run `claude agents --json` and take the newest background
+  session whose `cwd` is this worktree. Only if that fails, use the last entry in run.json's
+  `sessions` for this phase. A wrong name stops the next session from starting on its own.
 
 A handoff with broken frontmatter is treated as unreadable: nothing continues until it is fixed.
 
