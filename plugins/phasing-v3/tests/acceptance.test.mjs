@@ -24,7 +24,7 @@ test('isPhaseComplete needs rows, all met or dropped', () => {
 
 test('phaseSummary groups one phase by status', () => {
   const rows = [row({ id: 'A1', status: 'met', evidence: 'test' }), row({ id: 'A2' }), row({ id: 'A3', status: 'dropped' }), row({ id: 'B1', phase: 2 })]
-  assert.deepEqual(phaseSummary(rows, 1), { met: ['A1'], open: ['A2'], dropped: ['A3'] })
+  assert.deepEqual(phaseSummary(rows, 1), { met: ['A1'], open: ['A2'], dropped: ['A3'], carried: [] })
 })
 
 test('due lists overdue carries and uncarried leftovers', () => {
@@ -43,8 +43,36 @@ test('CLI check and carry work on the run folder', () => {
   const runDir = seedRun(tmpDir())
   writeRows(runDir, [row({ id: 'A1', status: 'met', evidence: 'ci #4' }), row({ id: 'A2' })])
   assert.deepEqual(main(['check', runDir, '1'], fakeDeps()),
-    { valid: true, errors: [], summary: { met: ['A1'], open: ['A2'], dropped: [] }, complete: false })
+    { valid: true, errors: [], summary: { met: ['A1'], open: ['A2'], dropped: [], carried: [] }, complete: false })
   main(['carry', runDir, 'A2', '2'], fakeDeps())
   assert.equal(readRows(runDir)[1].phase, 2)
   assert.deepEqual(main(['due', runDir, '2'], fakeDeps()), { overdue: [], uncarried: [] })
+})
+
+test('CLI rejects a missing or non-numeric phase', () => {
+  const runDir = seedRun(tmpDir())
+  writeRows(runDir, [row({ id: 'A1' })])
+  assert.throws(() => main(['due', runDir], fakeDeps()), /phase/)
+  assert.throws(() => main(['check', runDir, 'x'], fakeDeps()), /phase/)
+})
+
+test('a carried row must sit exactly one phase after its origin', () => {
+  const errors = validateRows([row({ id: 'C1', phase: 1, carried_from: 7, deadline_phase: 8 }),
+    row({ id: 'C2', phase: 3, carried_from: 1, deadline_phase: 2 })]).join('\n')
+  assert.ok(errors.includes('C1: carried_from 7 must be phase - 1'), errors)
+  assert.ok(errors.includes('C2: carried_from 1 must be phase - 1'), errors)
+})
+
+test('nothing carries past the last phase', () => {
+  assert.throws(() => carry([row({ id: 'A1', phase: 2 })], 'A1', 3, 2), /last phase/)
+  assert.ok(validateRows([row({ id: 'A1', phase: 3 })], 2).join('\n').includes('A1: phase 3 is past the last phase 2'))
+  const runDir = seedRun(tmpDir())
+  writeRows(runDir, [row({ id: 'A1', phase: 2 })])
+  assert.throws(() => main(['carry', runDir, 'A1', '3'], fakeDeps()), /last phase/)
+})
+
+test('a phase with an open carried-out row is not complete', () => {
+  const rows = [row({ id: 'A1', status: 'met', evidence: 'ci' }), row({ id: 'A2', phase: 2, carried_from: 1, deadline_phase: 2 })]
+  assert.equal(isPhaseComplete(rows, 1), false)
+  assert.deepEqual(phaseSummary(rows, 1), { met: ['A1'], open: [], dropped: [], carried: ['A2'] })
 })
