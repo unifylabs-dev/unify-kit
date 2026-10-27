@@ -13,6 +13,18 @@ are less likely to rewrite or drop rows in JSON than in Markdown.
 | `carried_from` | The phase the row came from if it was carried, otherwise `null`. |
 | `deadline_phase` | The last phase by which the row must be met, or `null`. |
 
+A new row, as `/ph3` writes it:
+
+```json
+[
+  { "id": "P1-01", "requirement": "The app deploys to its preview URL from the base branch.", "phase": 1,
+    "status": "open", "evidence": "", "carried_from": null, "deadline_phase": null }
+]
+```
+
+`evidence` is always a string, empty while the row is open. Every phase owns at least one row, so
+every phase has something to check.
+
 ## Rules
 
 - "Deferred" is not a status. A row is open, met, or dropped.

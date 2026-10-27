@@ -14,7 +14,7 @@ test('newRun seeds pending phases', () => {
   assert.equal(run.schema, 'phasing-v3/1')
   assert.equal(run.status, 'in_progress')
   assert.deepEqual(run.phases[1], { n: 2, slug: 'api', type: 'build', status: 'pending', verified: false,
-    branch: null, worktree: null, pr: null, pr_state: null, ci: null, sessions: [], auto_continuations: 0 })
+    branch: null, worktree: null, pr: null, pr_state: null, pr_base: null, ci: null, sessions: [], auto_continuations: 0 })
   assert.equal(run.created_at, '2026-11-01T10:00:00.000Z')
 })
 

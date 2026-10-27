@@ -9,6 +9,12 @@ import { readHandoff, readRun, writeRun } from './lib/run-state.mjs'
 const FAILED_CONCLUSIONS = ['FAILURE', 'TIMED_OUT', 'CANCELLED', 'ACTION_REQUIRED', 'STARTUP_FAILURE']
 const PASSED_CONCLUSIONS = ['SUCCESS', 'NEUTRAL', 'SKIPPED']
 const LIVE_STATES = ['working', 'blocked']
+// Every background state the scripts know. Agent view is a research preview: a renamed field or a new
+// state would make live sessions look dead, so anything else reads as "unavailable", never as "no".
+const KNOWN_STATES = [...LIVE_STATES, 'failed', 'stopped']
+const isBackground = a => (a.kind ?? 'background') === 'background'
+const knownShape = a => a !== null && typeof a === 'object' && (!isBackground(a) ||
+  (['id', 'name', 'cwd'].every(k => typeof a[k] === 'string') && KNOWN_STATES.includes(a.state)))
 
 // gh's statusCheckRollup mixes check runs (name, status, conclusion) and commit statuses (context,
 // state). A re-run check appears once per run, so only the latest run of each check counts, and a
@@ -39,7 +45,7 @@ export function ciFromRollup(rollup) {
 export function liveSessions(agents, phase) {
   if (phase.worktree === null) return []
   return agents
-    .filter(a => a.cwd === phase.worktree && LIVE_STATES.includes(a.state) && (a.kind ?? 'background') === 'background')
+    .filter(a => a.cwd === phase.worktree && LIVE_STATES.includes(a.state) && isBackground(a))
     .sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0))
 }
 
@@ -48,7 +54,7 @@ export function readAgents(deps) {
   if (r.code !== 0) return null
   try {
     const agents = JSON.parse(r.stdout)
-    return Array.isArray(agents) ? agents : null
+    return Array.isArray(agents) && agents.every(knownShape) ? agents : null
   } catch {
     return null
   }
@@ -57,11 +63,11 @@ export function readAgents(deps) {
 // One gh call per phase branch. The first failure that is not "no PR" marks gh unavailable for
 // the rest of this command: no auth, or no gh at all.
 function readPr(branch, repo, deps) {
-  const r = deps.exec('gh', ['pr', 'view', branch, '--json', 'number,state,statusCheckRollup'], { cwd: repo })
+  const r = deps.exec('gh', ['pr', 'view', branch, '--json', 'number,state,baseRefName,statusCheckRollup'], { cwd: repo })
   if (r.code === 0) {
     try {
       const pr = JSON.parse(r.stdout)
-      return { number: pr.number, state: pr.state, ci: ciFromRollup(pr.statusCheckRollup ?? []) }
+      return { number: pr.number, state: pr.state, base: pr.baseRefName ?? null, ci: ciFromRollup(pr.statusCheckRollup ?? []) }
     } catch {
       return 'unknown'
     }
@@ -103,12 +109,18 @@ export function gatherFacts(run, runDir, deps) {
 
 // The newest live session decides: a session other than the handoff's writer is newer work (a
 // continuation or a relaunch). A finished writer idles as `blocked`, so its own handoff stands.
-// A live session that is `blocked` with no newer handoff is waiting for the user.
+// A live session that is `blocked` with no newer handoff is waiting for the user. A session recorded
+// after the writer (a fix or a relaunch) is not described by the writer's handoff: when it is not
+// the newest live session, it is gone, or agent view cannot tell.
 export function derivePhase(phase, f) {
   const h = f.handoff
   const waiting = f.liveState === 'blocked' ? ['session-waiting-for-input'] : []
   if (h?.status === 'invalid') return { status: phase.status, flags: ['handoff-unreadable'] }
   if (h !== null && f.live === 'yes' && f.liveName !== h.session) return { status: 'running', flags: waiting }
+  const writerAt = h === null ? -1 : phase.sessions.findIndex(s => s.name === h.session)
+  if (writerAt !== -1 && writerAt < phase.sessions.length - 1) {
+    return f.live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'failed', flags: ['session-ended-without-handoff'] }
+  }
   if (h?.status === 'complete' || h?.status === 'failed') return { status: h.status, flags: [] }
   if (h?.status === 'partial') {
     return f.live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'partial', flags: [] }
@@ -149,7 +161,11 @@ export function reconcile(run, facts) {
     if (f.pr !== 'unknown') {
       phase.pr = f.pr?.number ?? null
       phase.pr_state = f.pr?.state ?? null
+      phase.pr_base = f.pr?.base ?? null
       phase.ci = f.pr?.ci ?? null
+    } else if (phase.pr !== null) {
+      // The last CI result may belong to an older commit, so it does not count as current.
+      phase.ci = 'unknown'
     }
     if (f.pr?.state === 'MERGED' && (status === 'pending' || status === 'running')) {
       flags.push({ n: phase.n, code: 'merged-outside-run', detail: `phase ${phase.n}: PR #${f.pr.number} is merged but the phase is ${status}` })
@@ -167,6 +183,7 @@ export function reconcile(run, facts) {
 
 // What /ph3-next does now. Phases run in order; a finished phase is verified before the next starts.
 export function nextAction(run) {
+  if (run.status !== 'in_progress') return { kind: 'inactive', n: null }
   const running = run.phases.find(p => p.status === 'running')
   if (running !== undefined) return { kind: 'wait', n: running.n }
   const p = run.phases.find(x => !(x.status === 'complete' && x.verified))

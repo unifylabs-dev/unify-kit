@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 
+import { validateRows } from '../scripts/acceptance.mjs'
 import { readHandoff } from '../scripts/lib/run-state.mjs'
 import { tmpDir } from './helpers.mjs'
 
@@ -96,7 +97,7 @@ test('orchestrator SKILL.md stays short', () => assert.ok(lines(ORCH) <= 275, `$
 
 test('/ph3-next handles every next action', () => {
   const t = read(ORCH)
-  for (const k of ['wait', 'verify', 'continue', 'relaunch', 'launch', 'closeout']) assert.match(t, new RegExp(`\`${k}\``), k)
+  for (const k of ['wait', 'verify', 'continue', 'relaunch', 'launch', 'closeout', 'inactive']) assert.match(t, new RegExp(`\`${k}\``), k)
 })
 
 test('every script the skills name exists', () => {
@@ -184,4 +185,39 @@ test('closeout finds the run pull requests by prefix and commits from its own wo
   assert.doesNotMatch(t, /--head phase\//)
   assert.match(t, /git worktree add/)
   assert.doesNotMatch(t, /git (switch|checkout)\b/)
+})
+
+// Final review, skill-text seat.
+test('/ph3 uses brainstorming for the conversation only, and checks the rows before the run starts', () => {
+  const start = read(ORCH).split('## `/ph3 [task]`')[1].split('\n## ')[0]
+  assert.match(start.split('1. **Intent.**')[1].split('\n2. ')[0], /writing-plans/)
+  assert.match(start, /acceptance\.mjs check <run-dir> 1/)
+})
+
+test('the acceptance reference shows a row that validates, and asks for a row in every phase', () => {
+  const t = read(join(ROOT, 'skills', 'phasing-v3-execute', 'references', 'acceptance.md'))
+  const block = /```json\n([\s\S]*?)\n```/.exec(t)
+  assert.ok(block, 'acceptance.md shows an example in a fenced json block')
+  assert.deepEqual(validateRows(JSON.parse(block[1])), [])
+  assert.match(t, /at least one row/)
+})
+
+test('a run that is not in progress, or that the user stops, goes to park or abandon', () => {
+  const t = read(ORCH)
+  assert.match(bullet(t, 'inactive').split('\n3. ')[0], /references\/closeout\.md/)
+  assert.match(bullet(t, 'relaunch'), /references\/closeout\.md/)
+})
+
+test('verify follows through on accept or amend, and treats unknown CI like pending', () => {
+  const v = bullet(read(ORCH), 'verify')
+  const at = v.indexOf('**Accept as is:**')
+  assert.ok(at >= 0 && v.indexOf('mark-verified', at) > at, 'accept as is runs mark-verified')
+  assert.match(v, /\*\*Amend the plan:\*\*/)
+  assert.match(v, /`unknown`/)
+})
+
+test('merges go in phase order, and a stacked PR is retargeted before it merges', () => {
+  const step = read(ORCH).split('4. **One batch of real questions**')[1].split('\n5. ')[0]
+  assert.match(step, /oldest first/)
+  assert.ok(step.indexOf('gh pr edit <pr> --base') >= 0 && step.indexOf('gh pr edit <pr> --base') < step.indexOf('reconcile.mjs'))
 })

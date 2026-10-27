@@ -24,7 +24,7 @@ export function newRun({ runId, repo, baseBranch, phases }, now) {
     rev: 0,
     phases: phases.map(({ n, slug, type }) => ({
       n, slug, type, status: 'pending', verified: false, branch: null, worktree: null,
-      pr: null, pr_state: null, ci: null, sessions: [], auto_continuations: 0,
+      pr: null, pr_state: null, pr_base: null, ci: null, sessions: [], auto_continuations: 0,
     })),
     created_at: at,
     updated_at: at,

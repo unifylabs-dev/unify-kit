@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { readRun } from '../scripts/lib/run-state.mjs'
-import { ciFromRollup, derivePhase, gatherFacts, liveSessions, nextAction, reconcile } from '../scripts/reconcile.mjs'
+import { ciFromRollup, derivePhase, gatherFacts, liveSessions, nextAction, readAgents, reconcile } from '../scripts/reconcile.mjs'
 import { NOW, fakeDeps, seedRun, tmpDir } from './helpers.mjs'
 
 const s = name => ({ name, id: null, started_at: NOW.toISOString(), auto: false })
@@ -80,7 +80,7 @@ test('no PR for the branch is null, not unknown', () => {
 test('live sessions match on name and worktree cwd', () => {
   const { runDir, r } = runWithBranch()
   r.phases[0].branch = null
-  const elsewhere = [{ name: 'phase-1-setup', cwd: '/other', state: 'working', startedAt: 1 }]
+  const elsewhere = [{ id: 'a1', name: 'phase-1-setup', cwd: '/other', state: 'working', startedAt: 1 }]
   const deps = fakeDeps({ rules: [[/^git remote/, { stdout: '' }], [/^claude agents/, { stdout: JSON.stringify(elsewhere) }]] })
   assert.equal(gatherFacts(r, runDir, deps).phases[1].live, 'no')
   assert.deepEqual(liveSessions([...elsewhere, { name: 'phase-1-setup', cwd: '/wt/p1', state: 'blocked', startedAt: 2 }], r.phases[0]).map(a => a.cwd), ['/wt/p1'])
@@ -161,4 +161,49 @@ test('no remote is one flag, and PRs read as none', () => {
   const { flags } = reconcile(r, facts)
   assert.equal(flags.filter(f => f.code === 'no-remote' && f.n === null).length, 1)
   assert.equal(flags.some(f => f.code === 'gh-unavailable'), false)
+})
+
+// Final review: facts that drift, and sessions newer than the handoff's writer.
+test('a session newer than the handoff writer keeps its status while agents are unknown, and fails when it is gone', () => {
+  // A fix or relaunch session (c1) started after the writer's handoff; the old handoff does not speak for it.
+  const phase = ph({ status: 'running', sessions: [s('phase-1-setup'), s('phase-1-setup-c1')] })
+  for (const old of ['complete', 'failed', 'partial']) {
+    assert.deepEqual(derivePhase(phase, pf({ handoff: h(old), live: 'unknown' })), { status: 'running', flags: ['agents-unavailable'] }, old)
+    assert.deepEqual(derivePhase(phase, pf({ handoff: h(old), live: 'no' })), { status: 'failed', flags: ['session-ended-without-handoff'] }, old)
+    // Only the old writer still idles in agent view.
+    assert.deepEqual(derivePhase(phase, pf({ handoff: h(old), live: 'yes', liveName: 'phase-1-setup', liveState: 'blocked' })),
+      { status: 'failed', flags: ['session-ended-without-handoff'] }, old)
+  }
+})
+
+test('agent view in an unknown shape is unavailable, not "no live session"', () => {
+  const read = out => readAgents(fakeDeps({ rules: [[/^claude agents/, { stdout: JSON.stringify(out) }]] }))
+  const bg = { id: 'a1', cwd: '/wt/p1', kind: 'background', name: 'phase-1-setup', state: 'working', startedAt: 1 }
+  assert.equal(read([bg, { id: 'i1', cwd: '/x', kind: 'interactive', name: 'x', status: 'idle' }]).length, 2)
+  assert.equal(read({ agents: [bg] }), null)
+  assert.equal(read([{ ...bg, state: undefined, status: 'working' }]), null)
+  assert.equal(read([{ ...bg, state: 'thinking' }]), null)
+  assert.equal(read([{ ...bg, cwd: undefined }]), null)
+})
+
+test('when gh fails, a recorded PR keeps its number but its CI reads unknown', () => {
+  const { runDir, r } = runWithBranch()
+  r.phases[0] = { ...r.phases[0], pr: 7, pr_state: 'OPEN', ci: 'pass' }
+  const deps = fakeDeps({ rules: [[/^git remote/, { stdout: 'origin\n' }], [/^git rev-list/, { stdout: '0\n' }],
+    [/^gh /, { code: 4, stderr: 'authentication required' }], [/^claude agents/, { stdout: '[]' }]] })
+  const p = reconcile(r, gatherFacts(r, runDir, deps)).run.phases[0]
+  assert.deepEqual([p.pr, p.pr_state, p.ci], [7, 'OPEN', 'unknown'])
+})
+
+test('reconcile records the branch each PR targets', () => {
+  const { runDir, r } = runWithBranch()
+  const deps = fakeDeps({ rules: [[/^git remote/, { stdout: 'origin\n' }], [/^git rev-list/, { stdout: '0\n' }],
+    [/^gh pr view .*baseRefName/, { stdout: '{"number":7,"state":"MERGED","baseRefName":"phase/demo-run/p0-x","statusCheckRollup":[]}' }],
+    [/^claude agents/, { stdout: '[]' }]] })
+  const p = reconcile(r, gatherFacts(r, runDir, deps)).run.phases[0]
+  assert.deepEqual([p.pr, p.pr_state, p.pr_base], [7, 'MERGED', 'phase/demo-run/p0-x'])
+})
+
+test('a run that is not in progress has nothing next', () => {
+  for (const status of ['parked', 'abandoned', 'complete']) assert.deepEqual(nextAction({ ...run(['pending']), status }), { kind: 'inactive', n: null }, status)
 })

@@ -12,11 +12,12 @@ export const phaseBranch = (runId, n, slug) => `phase/${runId}/p${n}-${slug}`
 export const worktreePath = (repo, runId, n) => join(repo, '.claude', 'worktrees', `${runId}-p${n}`)
 
 // Phase 1 starts from the base branch. A later phase starts from the base branch once the previous
-// phase's PR is merged, and stacks on the previous phase's branch while it is not.
+// phase's PR is merged into it, and stacks on the previous phase's branch otherwise. A PR merged into
+// an earlier phase's branch has not reached the base branch yet.
 export function baseFor(run, n) {
   if (n === 1) return run.base_branch
   const prev = phaseOf(run, n - 1)
-  if (prev.pr_state === 'MERGED' || prev.branch === null) return run.base_branch
+  if (prev.branch === null || (prev.pr_state === 'MERGED' && prev.pr_base === run.base_branch)) return run.base_branch
   return prev.branch
 }
 

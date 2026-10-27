@@ -10,10 +10,10 @@ import { NOW, fakeDeps, seedRun, tmpDir, tmpRepo } from './helpers.mjs'
 
 const gitDeps = () => fakeDeps({ passthrough: ['git'] })
 
-function run2({ prState }) {
+function run2({ prState, prBase = 'main' }) {
   const { dir } = tmpRepo()
   const r = readRun(seedRun(dir))
-  r.phases[0] = { ...r.phases[0], branch: 'phase/demo-run/p1-setup', pr_state: prState }
+  r.phases[0] = { ...r.phases[0], branch: 'phase/demo-run/p1-setup', pr_state: prState, pr_base: prBase }
   return r
 }
 
@@ -49,6 +49,12 @@ test('baseFor stacks on an unmerged previous phase', () => {
   assert.equal(baseFor(run2({ prState: null }), 1), 'main')
   assert.equal(baseFor(run2({ prState: 'MERGED' }), 2), 'main')
   assert.equal(baseFor(run2({ prState: 'OPEN' }), 2), 'phase/demo-run/p1-setup')
+})
+
+test('baseFor leaves the stack only once the previous PR merged into the base branch', () => {
+  // Merged into an earlier phase branch, the work is not on the base branch yet: stay stacked.
+  assert.equal(baseFor(run2({ prState: 'MERGED', prBase: 'phase/demo-run/p0-x' }), 2), 'phase/demo-run/p1-setup')
+  assert.equal(baseFor(run2({ prState: 'MERGED', prBase: null }), 2), 'phase/demo-run/p1-setup')
 })
 
 test('CLI create defaults to baseFor and prints the result', () => {

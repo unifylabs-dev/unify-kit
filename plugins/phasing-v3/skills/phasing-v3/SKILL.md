@@ -54,12 +54,15 @@ prints one JSON object. Call them with `node <plugin>/scripts/<name>.mjs ...`:
 ## `/ph3 [task]`: start a run
 
 1. **Intent.** Run the conversation with the brainstorming skill when it is available. Aim for one
-   approval of the whole master plan, not one per section.
+   approval of the whole master plan, not one per section. Use that skill for the conversation
+   only: skip its spec file, its commit and its hand-off to writing-plans. The output is
+   `master-plan.md`.
 2. **Research** what the plan depends on: the repo, accounts, deploy targets, constraints.
 3. **Draft** `master-plan.md`, `decisions.md` and `acceptance.json` from the templates. Apply the
    defaults in the master-plan template. In short:
    - setup and integration come first (a deployed walking skeleton, or a live install for tooling);
    - every phase ends with a pull request;
+   - every phase owns at least one acceptance row;
    - an open row carries at most one phase;
    - the plan states run success criteria for closeout.
 
@@ -69,7 +72,9 @@ prints one JSON object. Call them with `node <plugin>/scripts/<name>.mjs ...`:
    `run-state.mjs init <repo>/.claude/phasing/<run-id> --run-id <run-id> --repo <repo> --base <branch> --phases '<json>'`.
    Use a run id like `2026-11-02-billing` and slugs in lowercase with dashes. Each phase in the
    JSON is `{"n": 1, "slug": "setup", "type": "setup"}`. The types are `setup`, `design`, `build`
-   and `tooling`.
+   and `tooling`. Write the three drafts into the run folder. Then run
+   `acceptance.mjs check <run-dir> 1` and fix any `errors` it lists, so a broken row does not show
+   up later as a phase's gap.
 6. Continue as `/ph3-next`.
 
 ## `/ph3-next [run-id]`: between phases
@@ -88,10 +93,12 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
    - `verify`: phase `next.n` says it is complete. Check it as a second pair of eyes, without
      redoing it:
      1. `acceptance.mjs check <run-dir> <N>` gives `complete: true`. It lists row ids only, so
-        read those rows in `acceptance.json` for their evidence. When `valid` is false, the rows
-        are broken, and each of its `errors` is a gap.
-     2. CI on its pull request passes: the reconciled `ci` is `pass`. With `pending`, say so and
-        stop; the user runs `/ph3-next` again when the checks finish. `null` means there is
+        read those rows in `acceptance.json` for their evidence. When `valid` is false, read its
+        `errors`: an error in this phase's rows is a gap. Fix an error in other rows' shape
+        yourself (the file belongs to the run), then check again.
+     2. CI on its pull request passes: the reconciled `ci` is `pass`. With `pending`, or with
+        `unknown` (gh failed, so the last result may be from an older commit), say so and stop;
+        the user runs `/ph3-next` again later. `null` means there is
         nothing to read (no remote, no pull request, or no checks). A missing pull request is a
         gap when the repo has a remote.
      3. Two or three claims in the handoff match the diff (`git diff <base>...<branch>`).
@@ -100,21 +107,29 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
      When it holds, run `run-state.mjs mark-verified <run-dir> <N>`, then curate (step 3) and ask
      (step 4). Then launch the next phase (step 5), or follow closeout after the last phase.
      When it does not hold, show the gaps and ask: fix in a fresh session of this phase, accept as
-     is, or amend the plan. For a fix, add the gaps to the brief under a `## Fix after verify`
-     heading. Then run `launch.mjs <run-dir> <N> --exclude-handed-over` and report it as in step 5.
+     is, or amend the plan.
+     - **Fix:** add the gaps to the brief under a `## Fix after verify` heading. Then run
+       `launch.mjs <run-dir> <N> --exclude-handed-over` and report it as in step 5.
+     - **Accept as is:** run `mark-verified`, then curate (step 3); open rows are carried or
+       dropped there.
+     - **Amend the plan:** as in step 4, then run `/ph3-next` again.
    - `continue`: phase `next.n` paused (`partial`) and nothing is running. Show the handoff summary
      and the reason it stopped. Its open questions, and whether to start a fresh session now, go
      into the one batch of step 4. Write the answers to `decisions.md`, where the next session
      looks for them. On yes, run `continue.mjs <run-dir> <N> --human-launch` and report its
      `launched` as in step 5. A `stop` names its `reason`: `launch-unconfirmed`, `launch-failed`
      and `launch-refused-*` are the step 5 cases; `not-partial` or `handoff-unreadable` means the
-     handoff changed, so reconcile again.
+     handoff changed, so reconcile again. An open row that waits on someone outside the run is a
+     step 4 question: the user drops it, or the run is parked.
    - `relaunch`: phase `next.n` failed, or its session ended without a handoff. Show the flags and
      the handoff. Ask: relaunch with the same brief, amend the brief first, or stop the run.
      Relaunch with `launch.mjs <run-dir> <N> --exclude-handed-over` and report it as in step 5.
      Why the flag: the sessions that wrote handoffs idle in agent view, and would block the new one.
+     To stop the run, park or abandon it as in [closeout](references/closeout.md).
    - `launch`: phase `next.n` has not started. Go to step 5.
    - `closeout`: every phase is verified. Follow [closeout](references/closeout.md).
+   - `inactive`: the run's `status` is parked, abandoned or closed. Report it and stop. A parked
+     run resumes as in [closeout](references/closeout.md), "Park or abandon".
 3. **Curate** after a verify:
    - `acceptance.mjs due <run-dir> <next N>` lists overdue and uncarried rows. An overdue row
      becomes one decision: drop it, or turn it into a root-cause ruling. An uncarried row needs the
@@ -126,12 +141,15 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
    - open questions from the handoff;
    - the calls made for the user that they may want to reverse (default: keep);
    - amendments to the master plan (copy it to `master-plan.md.bak` first);
-   - whether to merge the finished phase's pull request, unless the master plan sets a merge rule.
+   - whether to merge the run's open phase pull requests, oldest first, unless the master plan
+     sets a merge rule.
 
-   Merging is outward-facing, so it happens only on the user's yes:
+   Merging is outward-facing, so it happens only on the user's yes. Merge in phase order with
    `gh pr merge <pr> --merge`, or the method the master plan names. A merge commit keeps a phase
-   stacked on this one clean. Then run `reconcile.mjs <run-dir> --write` again, so the next
-   worktree starts from the merged base branch, not from the merged phase branch.
+   stacked on this one clean. A pull request stacked on a phase that has just merged still targets
+   that phase's branch: retarget it first with `gh pr edit <pr> --base <base branch>`, so it merges
+   into the base branch, not into the older branch. Then run `reconcile.mjs <run-dir> --write`
+   again, so the next worktree starts from the right base.
 5. **Launch the next phase:**
    1. Run `worktree.mjs create <run-dir> <N>`. By default it starts from the base branch when the
       previous pull request is merged (fetched fresh from the remote), and stacks on the previous
@@ -163,7 +181,8 @@ finished. Why: the user decides at each phase boundary, and a run left alone sho
 ## `/ph3-status [run-id]`
 
 Run `status.mjs [run-id]` and print its `text` as it is. It changes nothing. Without a run id it
-lists the in-flight runs in this repo and flags any run idle for more than 7 days.
+lists the in-flight runs in this repo and flags any run idle for more than 7 days. Offer to park or
+abandon a flagged run, as in [closeout](references/closeout.md).
 
 ## Old runs and limits
 
