@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { readRun, writeRun } from '../scripts/lib/run-state.mjs'
 import { baseFor, createPhaseWorktree, ensureIgnored, main } from '../scripts/worktree.mjs'
-import { NOW, fakeDeps, seedRun, tmpRepo } from './helpers.mjs'
+import { NOW, fakeDeps, seedRun, tmpDir, tmpRepo } from './helpers.mjs'
 
 const gitDeps = () => fakeDeps({ passthrough: ['git'] })
 
@@ -55,4 +57,39 @@ test('CLI create defaults to baseFor and prints the result', () => {
   const r = readRun(runDir)
   writeRun(runDir, r, NOW)
   assert.equal(main(['create', runDir, '1'], gitDeps()).branch, 'phase/demo-run/p1-setup')
+})
+
+test('the base branch comes from the remote, so a merge done on GitHub is included', () => {
+  const origin = tmpDir()
+  execFileSync('git', ['init', '-q', '--bare', '-b', 'main', origin])
+  const { dir: repo, git } = tmpRepo()
+  git('remote', 'add', 'origin', origin)
+  git('push', '-q', 'origin', 'main')
+  const other = tmpDir()
+  execFileSync('git', ['clone', '-q', origin, other])
+  writeFileSync(join(other, 'merged.txt'), 'merged on the remote\n')
+  const g = (...a) => execFileSync('git', ['-C', other, '-c', 'user.email=t@example.com', '-c', 'user.name=T', ...a])
+  g('add', '.'); g('commit', '-q', '-m', 'merge'); g('push', '-q', 'origin', 'main')
+  const r = createPhaseWorktree(seedRun(repo), 1, 'main', gitDeps())
+  assert.ok(existsSync(join(r.path, 'merged.txt')))
+  // The phase branch does not track origin/main, so a bare `git push` cannot land on main.
+  const upstream = spawnSync('git', ['-C', r.path, 'rev-parse', '--abbrev-ref', '@{upstream}'], { encoding: 'utf8' })
+  assert.notEqual(upstream.stdout.trim(), 'origin/main')
+})
+
+test('a leftover plain folder is reported; a stale registration is pruned', () => {
+  const { dir: repo } = tmpRepo()
+  const runDir = seedRun(repo)
+  const path = join(repo, '.claude', 'worktrees', 'demo-run-p1')
+  mkdirSync(path, { recursive: true })
+  assert.throws(() => createPhaseWorktree(runDir, 1, 'main', gitDeps()), /not a git worktree/)
+  rmSync(path, { recursive: true })
+  createPhaseWorktree(runDir, 1, 'main', gitDeps())
+  rmSync(path, { recursive: true, force: true })
+  assert.equal(createPhaseWorktree(runDir, 1, 'main', gitDeps()).created, true)
+})
+
+test('--base with no value is a usage error', () => {
+  const { dir: repo } = tmpRepo()
+  assert.throws(() => main(['create', seedRun(repo), '1', '--base'], gitDeps()), /--base/)
 })
