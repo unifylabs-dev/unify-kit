@@ -1,0 +1,9 @@
+{
+  "name": "phasing-v3",
+  "version": "0.1.0",
+  "description": "Pilot of phasing v3: master plan, just-in-time briefs, background phase sessions, state read from git, GitHub and the run folder.",
+  "author": {
+    "name": "Tomer Kurman",
+    "url": "https://github.com/unifylabs-dev"
+  }
+}
