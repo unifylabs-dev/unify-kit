@@ -91,7 +91,9 @@ When context-watch says context is at about 50%, or when the user asks for a pau
 
 1. Finish the task in hand. Start no new task.
 2. If `phase-N-handoff.md` already exists, move it to `phase-N-audit/handoff-<k>.md`.
-3. Write a `partial` handoff (`references/handoff.md`) with concrete Next steps.
+3. Write a `partial` handoff (`references/handoff.md`) with concrete Next steps, using the Write
+   tool, not a shell command. Why: context-watch records the handoff only from a Write, and
+   without that record no fresh session starts.
 4. Commit the work in the worktree.
 5. Stop the background shells, servers and monitors you started, by PID, and let your subagents
    finish. Why: the fresh session starts only once none run, so two sessions never edit one

@@ -237,3 +237,9 @@ test('a launch refused for an untrusted workspace tells the user how to trust th
   const launchStep = read(ORCH).split('3. Run `launch.mjs <run-dir> <N>`.')[1].split('\n6. ')[0]
   assert.match(launchStep, /not trusted/)
 })
+
+test('the partial handoff is written with the Write tool, which context-watch records', () => {
+  // Task 13: a phase session wrote its handoff through Bash; the mod sees only a Write.
+  const pause = read(EXECUTOR).split('## Pause at about half the context')[1].split('\n## ')[0]
+  assert.match(pause.split('3. ')[1].split('\n4. ')[0], /Write\s+tool/)
+})
