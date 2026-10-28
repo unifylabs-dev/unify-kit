@@ -165,6 +165,9 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
       - `refused` `live-session`: another session is live in that worktree (`live` names it).
         Report and stop.
       - `refused` `agents-unavailable`, or an `error` (`launch-failed`): give the manual line.
+        When the error says the workspace is not trusted, the manual line fails the same way: the
+        user runs `claude` once in the repo and accepts the trust prompt (the phase worktrees
+        inside it inherit that trust), then you launch again.
 6. **End with the table** from `status.mjs <run-id>`.
 
 The next phase never starts on its own. The user runs `/ph3-next` when agent view says a phase

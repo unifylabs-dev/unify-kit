@@ -231,3 +231,9 @@ test('the pause stops this session\'s background work before the fresh session c
 test('no phase type claims to run in the cloud while the run folder is local', () => {
   assert.doesNotMatch(read(join(ROOT, 'skills', 'phasing-v3-execute', 'references', 'phase-types.md')), /Cloud-capable: (usually )?yes/)
 })
+
+test('a launch refused for an untrusted workspace tells the user how to trust the repo', () => {
+  // Task 13: claude --bg refuses an untrusted cwd; trust carries from the repo to its phase worktrees.
+  const launchStep = read(ORCH).split('3. Run `launch.mjs <run-dir> <N>`.')[1].split('\n6. ')[0]
+  assert.match(launchStep, /not trusted/)
+})
