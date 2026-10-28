@@ -11,7 +11,7 @@ const PASSED_CONCLUSIONS = ['SUCCESS', 'NEUTRAL', 'SKIPPED']
 const LIVE_STATES = ['working', 'blocked']
 // Every background state the scripts know. Agent view is a research preview: a renamed field or a new
 // state would make live sessions look dead, so anything else reads as "unavailable", never as "no".
-const KNOWN_STATES = [...LIVE_STATES, 'failed', 'stopped']
+const KNOWN_STATES = [...LIVE_STATES, 'done', 'failed', 'stopped']
 const isBackground = a => (a.kind ?? 'background') === 'background'
 const knownShape = a => a !== null && typeof a === 'object' && (!isBackground(a) ||
   (['id', 'name', 'cwd'].every(k => typeof a[k] === 'string') && KNOWN_STATES.includes(a.state)))

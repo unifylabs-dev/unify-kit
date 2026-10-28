@@ -207,3 +207,10 @@ test('reconcile records the branch each PR targets', () => {
 test('a run that is not in progress has nothing next', () => {
   for (const status of ['parked', 'abandoned', 'complete']) assert.deepEqual(nextAction({ ...run(['pending']), status }), { kind: 'inactive', n: null }, status)
 })
+
+test('a finished background session (state done, seen live in Task 13) is known and not live', () => {
+  const done = { id: 'd1', cwd: '/wt/p1', kind: 'background', name: 'phase-1-setup', state: 'done', startedAt: 1 }
+  const agents = readAgents(fakeDeps({ rules: [[/^claude agents/, { stdout: JSON.stringify([done]) }]] }))
+  assert.equal(agents?.length, 1)
+  assert.deepEqual(liveSessions(agents, ph({})), [])
+})
