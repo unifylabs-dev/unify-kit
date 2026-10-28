@@ -19,6 +19,9 @@ CI or live use found real defects.
   phase diff against its PR base. Why: code review hunts correctness bugs. In the pilot, the
   exposures it did catch (a table open to a public API, costly endpoints with no guard) were
   found by chance.
+  The skill diffs against `origin/HEAD`. When that ref is missing or is not the PR base, apply
+  its method by hand to `git diff <PR base>...HEAD`. Why: in the pilot the skill failed on a
+  new repo with no `origin/HEAD`.
 - Reviewers report correctness bugs, security findings and requirement gaps only.
 - Fix the important findings now. Fix or drop minor ones; do not carry them.
 - One round. A second review round churned without finding more in past runs.

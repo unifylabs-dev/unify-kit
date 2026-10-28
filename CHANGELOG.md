@@ -15,6 +15,7 @@ New entries land here per-PR. The kit's own CI (.github/workflows/changelog-chec
 
 ### Changed (phasing-v3 — a security review in every code phase)
 - **A phase that changes code now ends with the built-in `/security-review` on its diff**, in a fresh subagent, beside `/code-review` in the one review round (`verification.md` §b, executor Finish step 3, handoff §5). `/ph3-next` verify treats a code phase without a reported security round as a gap.
+- **`/security-review` diffs against `origin/HEAD`**; when that ref is missing or is not the PR base, the executor applies its method by hand to `git diff <PR base>...HEAD` (it failed on a new repo with no `origin/HEAD` in the pilot).
 - **Closeout starts with one whole-codebase security review** for a run that produced code, over everything the run changed; it also covers phases that ended before this rule. The master-plan template lists both as defaults.
 - Why: code review hunts correctness bugs; in the pilot's first phase the exposures it caught (a table open to Supabase's Data API, unguarded costly probes) were found by chance. One new skill-text test.
 
