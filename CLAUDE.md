@@ -119,6 +119,11 @@ kit — one repo, three roles. No runtime, no DB.
   unrestricted-MCP scan + optional `--check-plugin`), and the kit-author
   `dev-symlink-skills.sh` (one-time `~/.claude/skills/*` ↔ plugin symlink
   migration; not a consumer-facing script).
+- **Pilot plugin** (`plugins/phasing-v3/`): phasing v3 beside `phasing`, under
+  `/ph3*` names. Not in the marketplace; loaded locally by a skills-dir symlink
+  during the pilot; folds into `unifylabs-workflow` (taking the `phasing` names)
+  after the pilot. Zero-dep Node scripts + `node:test`, run by the `loop-harness`
+  CI job. Not counted in the plugin's skill/command totals.
 - **Data layer**: none. Per-project state lives in
   `<consumer>/.unify-kit-project-manifest.json` (SHA-256 + applied profiles
   + includes + snippets — basis for idempotent re-runs).

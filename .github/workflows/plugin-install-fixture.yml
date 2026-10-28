@@ -352,6 +352,23 @@ jobs:
           fi
           node --test "${tests[@]}"
 
+      # phasing-v3 pilot plugin: zero-dep state scripts and skill-text checks.
+      - name: phasing-v3 scripts parse cleanly (node --check)
+        run: |
+          set -euxo pipefail
+          while IFS= read -r f; do node --check "$f"; done < <(find plugins/phasing-v3/scripts -name '*.mjs' -type f)
+
+      - name: phasing-v3 tests (node --test, zero-dep)
+        run: |
+          set -euxo pipefail
+          shopt -s nullglob
+          tests=(plugins/phasing-v3/tests/*.test.mjs)
+          if [ ${#tests[@]} -eq 0 ]; then
+            echo "::error::no phasing-v3 tests found"
+            exit 1
+          fi
+          node --test "${tests[@]}"
+
       # PARITY GUARD: the committed iterative-review.workflow.mjs bundle is the
       # script the Workflow tool actually runs (the runtime VM cannot import, so
       # the tested kernel + glue are INLINED into it). Regenerate from source and
