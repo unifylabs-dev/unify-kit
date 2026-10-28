@@ -243,3 +243,12 @@ test('the partial handoff is written with the Write tool, which context-watch re
   const pause = read(EXECUTOR).split('## Pause at about half the context')[1].split('\n## ')[0]
   assert.match(pause.split('3. ')[1].split('\n4. ')[0], /Write\s+tool/)
 })
+
+test('a phase that changed code gets a security review, and closeout reviews the whole codebase', () => {
+  // Founder ask, 2026-10-28: /security-review beside /code-review, and one pass over the run.
+  const v = read(join(ROOT, 'skills', 'phasing-v3-execute', 'references', 'verification.md'))
+  assert.match(v.split('## b.')[1].split('\n## ')[0], /`\/security-review`/)
+  assert.match(bullet(read(ORCH), 'verify'), /`\/security-review` round/)
+  const close = read(join(ROOT, 'skills', 'phasing-v3', 'references', 'closeout.md')).split('## When every phase is verified')[1]
+  assert.ok(close.indexOf('security review of the whole codebase') < close.indexOf('closeout.mjs status'), 'the codebase review comes before the status is set')
+})

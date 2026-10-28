@@ -37,7 +37,8 @@ Use these sections, in this order:
 4. **Calls made for you**: each reversible choice made without asking, with one line of why, so
    the user can reverse it at `/ph3-next`.
 5. **Verification evidence**: each check, the command, and its result. Include test files run
-   against the number expected. Include review findings and what was done about each.
+   against the number expected. Include the code-review and security-review findings and what
+   was done about each.
 6. **Acceptance**: each row of this phase with its status and evidence.
 7. **Open questions**: questions for the user, each with your recommendation.
 8. **Next steps** (`partial` only): concrete, ordered steps for the next session, starting

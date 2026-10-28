@@ -102,7 +102,9 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
         nothing to read (no remote, no pull request, or no checks). A missing pull request is a
         gap when the repo has a remote.
      3. Two or three claims in the handoff match the diff (`git diff <base>...<branch>`).
-     4. For a high-stakes phase (data, auth, migrations, money), re-run the key commands.
+     4. When the phase changed code, the handoff reports a `/security-review` round and what was
+        done about each finding. A missing round is a gap.
+     5. For a high-stakes phase (data, auth, migrations, money), re-run the key commands.
 
      When it holds, run `run-state.mjs mark-verified <run-dir> <N>`, then curate (step 3) and ask
      (step 4). Then launch the next phase (step 5), or follow closeout after the last phase.

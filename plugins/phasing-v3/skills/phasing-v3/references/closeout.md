@@ -4,18 +4,23 @@ A run ends on purpose. In a past run, a run left open was forgotten for months.
 
 ## When every phase is verified
 
-1. Check the run success criteria in the master plan with the user. Then set the status:
+1. For a run that produced code, run one security review of the whole codebase first: the
+   built-in `/security-review` in a fresh subagent, on the base branch, over everything the run
+   changed (from the base branch as it was at the run's `created_at`). Show the findings, fix
+   the important ones in a fix session, and record the rest. Why: phase reviews see one diff at
+   a time; this pass also covers any phase that ended before the per-phase review existed.
+2. Check the run success criteria in the master plan with the user. Then set the status:
    `closeout.mjs status <run-dir> complete`, or `complete_unmet` with a reason when some
    criteria were not met.
-2. List the run's open pull requests with
+3. List the run's open pull requests with
    `gh pr list --state open --search "head:phase/<run-id>/"` (`--head` matches one exact branch
    name, so it finds none), and add any issues the handoffs name. Ask the user what to do with
    each: merge, close, or leave open with a note.
-3. Archive: `closeout.mjs archive <run-dir>`. It stops the run's idle sessions, removes worktrees
+4. Archive: `closeout.mjs archive <run-dir>`. It stops the run's idle sessions, removes worktrees
    that hold nothing to lose, and moves the run folder to `.claude/phasing/archive/<year>/`.
    Report any worktree it kept, and why (uncommitted work, or ignored files such as env files).
    It refuses while a session is still working.
-4. Commit the archive from a worktree of its own, so the user's checkout stays on its branch.
+5. Commit the archive from a worktree of its own, so the user's checkout stays on its branch.
    From the main checkout, with `<base>` the run's base branch:
    1. `git fetch origin <base>`, then
       `git worktree add --no-track -b phase/<run-id>/closeout .claude/worktrees/<run-id>-closeout origin/<base>`.

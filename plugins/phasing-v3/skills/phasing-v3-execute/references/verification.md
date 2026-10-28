@@ -15,7 +15,11 @@ CI or live use found real defects.
 
 - Fresh reviewers that did not write the code: the built-in `/code-review`, plus one reviewer
   who reads the acceptance rows and checks the handoff draft's claims against the code.
-- Reviewers report correctness bugs and requirement gaps only.
+- When the phase changed code, the built-in `/security-review` too, in a fresh subagent, on the
+  phase diff against its PR base. Why: code review hunts correctness bugs. In the pilot, the
+  exposures it did catch (a table open to a public API, costly endpoints with no guard) were
+  found by chance.
+- Reviewers report correctness bugs, security findings and requirement gaps only.
 - Fix the important findings now. Fix or drop minor ones; do not carry them.
 - One round. A second review round churned without finding more in past runs.
 

@@ -120,8 +120,8 @@ phase is `met` with evidence (or `dropped` with the user's agreement). Otherwise
    request against the PR base the brief names (`gh pr create --base <base>`). With no remote,
    skip the pull request and CI, and say so in the handoff.
 2. Draft the handoff in `phase-N-audit/handoff-draft.md`. The review checks its claims.
-3. Run the checks (`references/verification.md`): the one review round, and CI on the pull
-   request. Commit and push the fixes.
+3. Run the checks (`references/verification.md`): the one review round (with the security
+   review when the phase changed code), and CI on the pull request. Commit and push the fixes.
 4. Update `acceptance.json`: status and evidence for each row.
 5. Write the final `phase-N-handoff.md` last. That file is the signal `/ph3-next` reads, so never
    put a draft there. Why: a draft in place once made a finished-phase check fire while work was

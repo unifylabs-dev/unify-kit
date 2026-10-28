@@ -9,6 +9,9 @@ one sitting. Executors read only its TL;DR, Decisions and Facts.
   and CI, and ends with a deployed walking skeleton, or a live install for tooling. Why: every
   past run left integration to the end, and the last phase stalled on it.
 - **One pull request per phase.** Every phase ends pushed, with a pull request and CI.
+- **Security review.** Every phase that changes code ends with `/security-review` on its diff,
+  and a run that produced code gets one whole-codebase security review at closeout. Why: phase
+  reviews see one diff at a time, and a run's exposures can span phases.
 - **One-phase carry.** An open requirement moves forward at most one phase; then it is met,
   dropped, or turned into a decision.
 - **Closeout.** The plan states the run success criteria, so the run can be closed on purpose.

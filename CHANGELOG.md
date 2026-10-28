@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+### Changed (phasing-v3 — a security review in every code phase)
+- **A phase that changes code now ends with the built-in `/security-review` on its diff**, in a fresh subagent, beside `/code-review` in the one review round (`verification.md` §b, executor Finish step 3, handoff §5). `/ph3-next` verify treats a code phase without a reported security round as a gap.
+- **Closeout starts with one whole-codebase security review** for a run that produced code, over everything the run changed; it also covers phases that ended before this rule. The master-plan template lists both as defaults.
+- Why: code review hunts correctness bugs; in the pilot's first phase the exposures it caught (a table open to Supabase's Data API, unguarded costly probes) were found by chance. One new skill-text test.
+
 ### Added (phasing-v3 pilot plugin)
 - **`plugins/phasing-v3/`: a pilot of phasing v3 beside the current `phasing` skill**, under its own names (`/ph3`, `/ph3-next`, `/ph3-execute`, `/ph3-status`; skills `phasing-v3` and `phasing-v3-execute`), so `/phase*` keeps working. Not in the marketplace; loaded locally through a skills-dir symlink during the pilot. After the pilot it takes the `phasing` names inside `unifylabs-workflow`.
 - **What changes from v2:** each phase runs as a background session (`claude --bg`) in its own git worktree and ends with a pushed branch and a PR; `/ph3-next` is a stateless between-phases command that reads state from git, GitHub, agent view and the run folder; briefs are written just in time; requirements live in `acceptance.json` with a one-phase carry limit; no plan mode inside phases; reversible calls are made and reported; a paused phase continues on its own at most twice in a row; runs close out or park on purpose.
