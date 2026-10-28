@@ -8,7 +8,7 @@ how the work is checked.
 Autonomous. The user checks at phase end. Work through the acceptance rows in order of
 dependency. Reversible calls are yours; record them.
 
-Cloud-capable: usually yes.
+Cloud-capable: not yet. A cloud thread cannot see the run folder, which stays local during a run.
 
 ## design
 

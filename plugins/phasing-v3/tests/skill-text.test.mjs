@@ -227,3 +227,7 @@ test('the pause stops this session\'s background work before the fresh session c
   const stop = pause.indexOf('background')
   assert.ok(stop >= 0 && stop < pause.indexOf('End the turn'), 'background work stops before the turn ends')
 })
+
+test('no phase type claims to run in the cloud while the run folder is local', () => {
+  assert.doesNotMatch(read(join(ROOT, 'skills', 'phasing-v3-execute', 'references', 'phase-types.md')), /Cloud-capable: (usually )?yes/)
+})
