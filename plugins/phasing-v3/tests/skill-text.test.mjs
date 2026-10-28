@@ -252,3 +252,10 @@ test('a phase that changed code gets a security review, and closeout reviews the
   const close = read(join(ROOT, 'skills', 'phasing-v3', 'references', 'closeout.md')).split('## When every phase is verified')[1]
   assert.ok(close.indexOf('security review of the whole codebase') < close.indexOf('closeout.mjs status'), 'the codebase review comes before the status is set')
 })
+
+test('UI work loads impeccable, in every phase type and first in a design phase', () => {
+  // Founder standard, 2026-10-28.
+  assert.match(read(EXECUTOR).split('## Work')[1].split('\n## ')[0], /UI work[\s\S]*`impeccable`/)
+  const design = read(join(ROOT, 'skills', 'phasing-v3-execute', 'references', 'phase-types.md')).split('## design')[1].split('\n## ')[0]
+  assert.ok(design.indexOf('`impeccable`') < design.indexOf('1. **Decide.**'), 'impeccable comes before the Decide step')
+})

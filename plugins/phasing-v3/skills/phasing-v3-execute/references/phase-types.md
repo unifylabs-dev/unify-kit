@@ -12,7 +12,8 @@ Cloud-capable: not yet. A cloud thread cannot see the run folder, which stays lo
 
 ## design
 
-Hands-on. Three past runs invented these steps on their own; follow them:
+Hands-on. Load the `impeccable` skill first when it is installed: it sets the directions, the
+critique and the polish. Three past runs invented these steps on their own; follow them:
 
 1. **Decide.** Show options on real routes or screens, each with a recommendation and your
    critique first.

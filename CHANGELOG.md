@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+### Changed (phasing-v3 — UI work loads `impeccable`)
+- **Any phase task that designs, builds, reviews or polishes a screen loads the `impeccable` skill first**, when it is installed (executor Work section; the `design` phase type names it at its first step). Founder standard, 2026-10-28; the pilot's design phase reached for it on its own. One new skill-text test.
+
 ### Changed (phasing-v3 — a security review in every code phase)
 - **A phase that changes code now ends with the built-in `/security-review` on its diff**, in a fresh subagent, beside `/code-review` in the one review round (`verification.md` §b, executor Finish step 3, handoff §5). `/ph3-next` verify treats a code phase without a reported security round as a gap.
 - **Closeout starts with one whole-codebase security review** for a run that produced code, over everything the run changed; it also covers phases that ended before this rule. The master-plan template lists both as defaults.

@@ -74,6 +74,9 @@ Each rule below says why it exists, so it can be dropped when the reason goes aw
 ## Work
 
 - Work according to the phase type (the brief's title): `references/phase-types.md`.
+- UI work (any task that designs, builds, reviews or polishes a screen) loads the `impeccable`
+  skill first, when it is installed, in every phase type. Why: it is the founder's standard for
+  UI, and it carries the project's design system and its anti-pattern checks.
 - Build inline when tasks depend on each other. Use subagents for independent work, for the
   independent review, and for a per-task review after a risky task (data integrity, auth,
   migrations, concurrency). Subagents run on Opus, like every agent in a run. Why: splitting
