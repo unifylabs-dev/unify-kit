@@ -2,7 +2,7 @@
 // worktree: one git worktree and branch per phase, inside the main checkout under
 // .claude/worktrees/. A continuation reuses the same worktree, so the phase keeps its place.
 //   create <run-dir> <n> [--base <ref>]
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 import { cli, parseFlags } from './lib/deps.mjs'
@@ -48,6 +48,27 @@ function resolveBase(run, base, deps) {
   return `origin/${base}`
 }
 
+// Gitignored files the repo lists in `.worktreeinclude` (env files, local keys) are copied into a
+// new phase worktree, as Claude Code does for its own worktrees. They are copied, never read or
+// printed: a session that may not read an env file can still start with one. A file git does not
+// ignore is the branch's business and is left alone, and an existing copy is never overwritten.
+export function copyIncluded(repo, path, deps) {
+  if (!existsSync(join(repo, '.worktreeinclude'))) return []
+  const listed = deps.exec('git', ['ls-files', '--others', '--ignored', '--exclude-from=.worktreeinclude'], { cwd: repo })
+  if (listed.code !== 0) return []
+  const copied = []
+  for (const rel of listed.stdout.split('\n').filter(Boolean)) {
+    if (rel.startsWith('.claude/')) continue
+    if (deps.exec('git', ['check-ignore', '-q', rel], { cwd: repo }).code !== 0) continue
+    const to = join(path, rel)
+    if (existsSync(to)) continue
+    mkdirSync(dirname(to), { recursive: true })
+    copyFileSync(join(repo, rel), to)
+    copied.push(rel)
+  }
+  return copied
+}
+
 const registeredWorktrees = (repo, deps) =>
   new Set(git(deps, repo, 'worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => l.slice(9)))
 
@@ -80,8 +101,9 @@ export function createPhaseWorktree(runDir, n, base, deps) {
     phase.worktree = path
     writeRun(runDir, run, deps.now())
   }
+  const copied = created ? copyIncluded(run.repo, path, deps) : []
   // base is the branch the phase's pull request targets: the base branch, or the stacked branch.
-  return { branch, path, created, base }
+  return { branch, path, created, base, copied }
 }
 
 export function main(argv, deps) {

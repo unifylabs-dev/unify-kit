@@ -22,7 +22,7 @@ test('createPhaseWorktree makes the branch and worktree, records them, and is id
   const runDir = seedRun(repo)
   const deps = gitDeps()
   const first = createPhaseWorktree(runDir, 1, 'main', deps)
-  assert.deepEqual(first, { branch: 'phase/demo-run/p1-setup', path: `${repo}/.claude/worktrees/demo-run-p1`, created: true, base: 'main' })
+  assert.deepEqual(first, { branch: 'phase/demo-run/p1-setup', path: `${repo}/.claude/worktrees/demo-run-p1`, created: true, base: 'main', copied: [] })
   assert.equal(readRun(runDir).phases[0].worktree, first.path)
   assert.equal(readRun(runDir).phases[0].branch, first.branch)
   assert.equal(createPhaseWorktree(runDir, 1, 'main', deps).created, false)
@@ -105,4 +105,33 @@ test('createPhaseWorktree reports the PR base: the base branch, or the stacked b
   const runDir = seedRun(repo)
   assert.equal(createPhaseWorktree(runDir, 1, 'main', gitDeps()).base, 'main')
   assert.equal(createPhaseWorktree(runDir, 2, 'phase/demo-run/p1-setup', gitDeps()).base, 'phase/demo-run/p1-setup')
+})
+
+test('a new worktree gets the gitignored files .worktreeinclude lists, and only those', () => {
+  // Pilot, 2026-11-02: a deny rule kept phase sessions from copying .env.local themselves.
+  const { dir: repo } = tmpRepo()
+  writeFileSync(join(repo, '.gitignore'), '.env*.local\n.claude/\n')
+  writeFileSync(join(repo, '.worktreeinclude'), '.env.local\nnotes.txt\n')
+  writeFileSync(join(repo, '.env.local'), 'SECRET=1\n')
+  writeFileSync(join(repo, '.env.other.local'), 'X=1\n')
+  writeFileSync(join(repo, 'notes.txt'), 'listed, but git does not ignore it\n')
+  const runDir = seedRun(repo)
+  const r = createPhaseWorktree(runDir, 1, 'main', gitDeps())
+  assert.deepEqual(r.copied, ['.env.local'])
+  assert.equal(readFileSync(join(r.path, '.env.local'), 'utf8'), 'SECRET=1\n')
+  assert.ok(!existsSync(join(r.path, '.env.other.local')))
+  assert.ok(!existsSync(join(r.path, 'notes.txt')))
+  // A continuation reuses the worktree: nothing is copied again, and the copy there is kept.
+  writeFileSync(join(r.path, '.env.local'), 'CHANGED=1\n')
+  assert.deepEqual(createPhaseWorktree(runDir, 1, 'main', gitDeps()).copied, [])
+  assert.equal(readFileSync(join(r.path, '.env.local'), 'utf8'), 'CHANGED=1\n')
+})
+
+test('without .worktreeinclude nothing is copied', () => {
+  const { dir: repo } = tmpRepo()
+  writeFileSync(join(repo, '.gitignore'), '.env*.local\n.claude/\n')
+  writeFileSync(join(repo, '.env.local'), 'SECRET=1\n')
+  const r = createPhaseWorktree(seedRun(repo), 1, 'main', gitDeps())
+  assert.deepEqual(r.copied, [])
+  assert.ok(!existsSync(join(r.path, '.env.local')))
 })

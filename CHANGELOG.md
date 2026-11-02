@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+### Added (phasing-v3 — phase worktrees get their env files)
+- **`worktree.mjs create` copies the gitignored files the repo's `.worktreeinclude` lists** into a new phase worktree, as Claude Code does for its own worktrees, and reports them in `copied`. Files are copied, never read or printed, and never overwritten; a file git does not ignore is left alone. Why: in the pilot, a `Read(**/.env.local)` deny rule kept phase sessions from copying their env file, and the founder had to copy it by hand. Two new tests.
+
 ### Changed (phasing-v3 — UI work loads `impeccable`)
 - **Any phase task that designs, builds, reviews or polishes a screen loads the `impeccable` skill first**, when it is installed (executor Work section; the `design` phase type names it at its first step). Founder standard, 2026-10-28; the pilot's design phase reached for it on its own. One new skill-text test.
 

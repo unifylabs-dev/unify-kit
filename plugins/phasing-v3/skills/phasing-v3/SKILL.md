@@ -156,6 +156,8 @@ ask which. `/ph3-next` is a command, not a long-running session: each call reads
    1. Run `worktree.mjs create <run-dir> <N>`. By default it starts from the base branch when the
       previous pull request is merged (fetched fresh from the remote), and stacks on the previous
       branch when it is not. Its `base` is the branch the phase's pull request targets.
+      It also copies the gitignored files the repo's `.worktreeinclude` lists (env files), as Claude
+      Code does for its own worktrees, and names them in `copied`. The source is the main checkout.
    2. Write `phase-N-brief.md` from the [brief template](references/brief.md), with that PR base.
       Write it now, not earlier: in past runs, specs written up front were stale by the time their
       phase started.
