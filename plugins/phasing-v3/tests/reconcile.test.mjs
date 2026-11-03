@@ -214,3 +214,15 @@ test('a finished background session (state done, seen live in Task 13) is known 
   assert.equal(agents?.length, 1)
   assert.deepEqual(liveSessions(agents, ph({})), [])
 })
+
+test('a session older than the handoff writer is not live, even when agent view lists it as working', () => {
+  // Pilot, 2026-11-03: the session that handed over stayed `working`, and held a complete phase at `wait`.
+  const sessions = [s('phase-1-setup'), s('phase-1-setup-c1')]
+  const finished = h('complete', 'phase-1-setup-c1')
+  assert.deepEqual(derivePhase(ph({ status: 'running', sessions }), pf({ handoff: finished, live: 'yes', liveName: 'phase-1-setup', liveState: 'working' })),
+    { status: 'complete', flags: [] })
+  assert.deepEqual(derivePhase(ph({ status: 'running', sessions }), pf({ handoff: finished, live: 'yes', liveName: 'phase-1-setup', liveState: 'blocked' })),
+    { status: 'complete', flags: [] })
+  // A session nobody recorded is still newer work.
+  assert.equal(derivePhase(ph({ sessions }), pf({ handoff: finished, live: 'yes', liveName: 'run-by-hand' })).status, 'running')
+})

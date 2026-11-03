@@ -114,20 +114,24 @@ export function gatherFacts(run, runDir, deps) {
 // the newest live session, it is gone, or agent view cannot tell.
 export function derivePhase(phase, f) {
   const h = f.handoff
-  const waiting = f.liveState === 'blocked' ? ['session-waiting-for-input'] : []
   if (h?.status === 'invalid') return { status: phase.status, flags: ['handoff-unreadable'] }
-  if (h !== null && f.live === 'yes' && f.liveName !== h.session) return { status: 'running', flags: waiting }
   const writerAt = h === null ? -1 : phase.sessions.findIndex(s => s.name === h.session)
+  // A session recorded before the handoff's writer has handed over, even if agent view still lists
+  // it as working. Only a newer or unrecorded session is newer work.
+  const liveAt = phase.sessions.findIndex(s => s.name === f.liveName)
+  const live = f.live === 'yes' && liveAt !== -1 && liveAt < writerAt ? 'no' : f.live
+  const waiting = live === 'yes' && f.liveState === 'blocked' ? ['session-waiting-for-input'] : []
+  if (h !== null && live === 'yes' && f.liveName !== h.session) return { status: 'running', flags: waiting }
   if (writerAt !== -1 && writerAt < phase.sessions.length - 1) {
-    return f.live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'failed', flags: ['session-ended-without-handoff'] }
+    return live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'failed', flags: ['session-ended-without-handoff'] }
   }
   if (h?.status === 'complete' || h?.status === 'failed') return { status: h.status, flags: [] }
   if (h?.status === 'partial') {
-    return f.live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'partial', flags: [] }
+    return live === 'unknown' ? { status: phase.status, flags: ['agents-unavailable'] } : { status: 'partial', flags: [] }
   }
-  if (f.live === 'yes') return { status: 'running', flags: waiting }
+  if (live === 'yes') return { status: 'running', flags: waiting }
   if (phase.sessions.length === 0) return { status: 'pending', flags: [] }
-  if (f.live === 'unknown') return { status: phase.status, flags: ['agents-unavailable'] }
+  if (live === 'unknown') return { status: phase.status, flags: ['agents-unavailable'] }
   return { status: 'failed', flags: ['session-ended-without-handoff'] }
 }
 

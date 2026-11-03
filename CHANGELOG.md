@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 New entries land here per-PR. The kit's own CI (.github/workflows/changelog-check.yml) will fail any PR that touches templates/, plugins/, scripts/, github-actions/, specs/, or docs/methodology.md|philosophy.md without updating [Unreleased]. Use [skip-changelog] in PR title to bypass for purely infrastructural PRs.
 -->
 
+### Fixed (phasing-v3 — a stale session no longer holds a finished phase)
+- **`derivePhase` ignores a live session older than the handoff's writer.** Agent view can leave a session that handed over listed as `working`. It then read as newer work, and a complete phase stayed at `wait` until someone stopped the session by hand (pilot, phase 6). A newer or unrecorded session still counts. One new test.
+
 ### Added (phasing-v3 — phase worktrees get their env files)
 - **`worktree.mjs create` copies the gitignored files the repo's `.worktreeinclude` lists** into a new phase worktree, as Claude Code does for its own worktrees, and reports them in `copied`. Files are copied, never read or printed, and never overwritten; a file git does not ignore is left alone. Why: in the pilot, a `Read(**/.env.local)` deny rule kept phase sessions from copying their env file, and the founder had to copy it by hand. Two new tests.
 
